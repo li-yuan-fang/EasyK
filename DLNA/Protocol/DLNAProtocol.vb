@@ -48,12 +48,12 @@ Namespace DLNA.Protocol
 
         '广播循环
         Private Sub BroadcastLoop()
-            Dim i As Integer
+            Dim i As Long
             While Running
                 i = 0
                 While i < Settings.Settings.DLNA.EventInterval
                     Threading.Thread.Sleep(10)
-                    i += 1
+                    i += 10
 
                     If Not Running Then Return
                 End While

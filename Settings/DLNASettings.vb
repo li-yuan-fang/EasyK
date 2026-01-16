@@ -13,7 +13,7 @@ Public Class DLNASettings
     Public Property SSDPMaxAge As Integer = 66
 
     <JsonProperty("event_interval")>
-    Public Property EventInterval As Integer = 100
+    Public Property EventInterval As Integer = 1000
 
     <JsonProperty("event_default_expire")>
     Public Property EventDefaultExpire As Integer = 900
