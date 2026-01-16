@@ -48,7 +48,6 @@
             .Add(New CommandPause(K))
             .Add(New CommandSeek(K))
             .Add(New CommandRemove(K))
-            .Add(New CommandTop(K))
             .Add(New CommandOutdated(K))
             .Add(New CommandReorder(K))
         End With
