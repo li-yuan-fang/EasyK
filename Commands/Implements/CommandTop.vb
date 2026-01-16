@@ -1,0 +1,24 @@
+﻿Public Class CommandTop
+    Inherits Command
+
+    Private ReadOnly K As EasyK
+
+    Public Sub New(K As EasyK)
+        MyBase.New("top", "top <ID> - 顶歌", CommandType.User)
+        Me.K = K
+    End Sub
+
+    Protected Overrides Sub Process(Args() As String)
+        If Args.Length < 2 Then
+            InvalidUsage()
+            Return
+        End If
+
+        If (K.SendToTop(Args(1))) Then
+            Console.WriteLine("顶歌成功 - {0}", Args(1))
+        Else
+            Console.WriteLine("顶歌失败 ID不存在 - {0}", Args(1))
+        End If
+    End Sub
+
+End Class
