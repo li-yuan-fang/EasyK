@@ -13,9 +13,6 @@ Public Class KSettings
     <JsonProperty("allow_volume")>
     Public Property AllowVolumeUpdate As Boolean = True
 
-    <JsonProperty("cookies")>
-    Public Property Cookies As CookieContainer = New CookieContainer()
-
     <JsonProperty("web")>
     Public Property Web As KWebSettings = New KWebSettings()
 

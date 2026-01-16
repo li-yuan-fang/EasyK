@@ -33,7 +33,7 @@
             .Add(New CommandHelp(Commands))
 
             .Add(New CommandPass(Settings))
-            .Add(New CommandBili(K, Settings))
+            .Add(New CommandBili(K))
             .Add(New CommandClean(K, Web, Settings))
             .Add(New CommandLock(K))
             .Add(New CommandQR(K, Settings))

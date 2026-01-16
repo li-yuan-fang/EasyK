@@ -507,7 +507,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Settings\CookieContainer.vb" />
     <Compile Include="Settings\DLNASettings.vb" />
     <Compile Include="Settings\KSettings.vb" />
     <Compile Include="Settings\KWebSettings.vb" />

@@ -5,38 +5,7 @@ Imports CefSharp.WinForms
 
 Public Class FrmLogin
 
-    Private Class CookieVisitor
-        Implements ICookieVisitor
-
-        Private ReadOnly Cookies As New List(Of Cookie)
-
-        Public Event OnVisitComplete(Cookies As List(Of Cookie))
-
-        Public Function Visit(cookie As Cookie, count As Integer, total As Integer, ByRef deleteCookie As Boolean) As Boolean Implements ICookieVisitor.Visit
-            Cookies.Add(cookie)
-
-            If count = total - 1 Then RaiseEvent OnVisitComplete(Cookies)
-
-            Return True
-        End Function
-
-        Public Sub Dispose() Implements IDisposable.Dispose
-            Cookies.Clear()
-        End Sub
-
-    End Class
-
     Friend WithEvents Browser As ChromiumWebBrowser
-
-    Private Prevent As Boolean = True
-
-    Private WithEvents Visitor As New CookieVisitor()
-
-    ''' <summary>
-    ''' 获取Cookie成功事件
-    ''' </summary>
-    ''' <param name="Cookies"></param>
-    Public Event SaveCookies(Cookies As List(Of Cookie))
 
     Public Sub New(Url As String)
 
@@ -62,34 +31,5 @@ Public Class FrmLogin
         End With
         Controls.Add(Browser)
     End Sub
-
-    Public Overloads Sub Dispose()
-        With Browser
-            .CloseDevTools()
-            .GetBrowser().CloseBrowser(True)
-            '此处不能调用.Dispose()
-            '否则会卡死
-            '疑似CEFSharp Bug
-        End With
-
-        MyBase.Dispose()
-    End Sub
-
-    Private Sub FrmLogin_Closing(sender As Object, e As CancelEventArgs) Handles Me.Closing
-        If Prevent Then
-            e.Cancel = True
-            Prevent = False
-
-            Browser.GetCookieManager().VisitAllCookies(Visitor)
-        End If
-    End Sub
-
-    Private Sub Visitor_OnVisitComplete(Cookies As List(Of Cookie)) Handles Visitor.OnVisitComplete
-        RaiseEvent SaveCookies(Cookies)
-        Prevent = False
-        Invoke(Sub() Close())
-    End Sub
-
-    'TODO:加载本地储存的Cookies
 
 End Class
