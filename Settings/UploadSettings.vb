@@ -10,7 +10,7 @@ Public Class UploadSettings
     Public Property ExpireDuration As Long = 2 * 60 * 10 ^ 7
 
     <JsonProperty("clean_interval")>
-    Public Property CleanDuration As Integer = 10 * 10
+    Public Property CleanDuration As Integer = 10 * 1000
 
     <JsonProperty("flush_count")>
     Public Property RefreshThreshold As Integer = 10

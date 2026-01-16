@@ -160,12 +160,12 @@ Public Class UploadManager
     End Sub
 
     Private Sub Clean()
-        Dim cnt As Integer
+        Dim cnt As Long
         While Not ExitFlag
             cnt = 0
             While Not ExitFlag AndAlso cnt < Settings.Settings.Web.Upload.CleanDuration
                 Thread.Sleep(100)
-                cnt += 1
+                cnt += 100
             End While
 
             If ExitFlag Then Return
