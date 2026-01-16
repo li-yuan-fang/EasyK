@@ -119,14 +119,16 @@ Public Class FrmMain
             Dim x As Integer = _Base.Left + _Base.Width / 2 - 1
             Dim y As Integer = _Base.Top + _Base.Height / 2 - 1
 
-            With _Base
-                .Invoke(Sub()
-                            .BringToFront()
-                            .TopMost = True
-                            MouseUtils.MouseClick(x, y)
-                            .TopMost = False
-                        End Sub)
-            End With
+            Task.Run(Sub()
+                         With _Base
+                             .Invoke(Sub()
+                                         .BringToFront()
+                                         .TopMost = True
+                                         MouseUtils.MouseClick(x, y)
+                                         .TopMost = False
+                                     End Sub)
+                         End With
+                     End Sub)
         End Sub
 
     End Class

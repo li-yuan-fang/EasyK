@@ -421,8 +421,11 @@ Public Class EasyK
     ''' </summary>
     ''' <returns></returns>
     Public Function Lock() As Boolean
+        If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return False
+
         With PlayerForm
-            .TopMost = Not .TopMost
+            .Invoke(Sub() .TopMost = Not .TopMost)
+
             Return .TopMost
         End With
     End Function
