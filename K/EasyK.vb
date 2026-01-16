@@ -80,10 +80,10 @@ Public Class EasyK
     ''' <returns></returns>
     Friend Property PlayingPosition As Single
         Get
-            Return If(PlayerForm Is Nothing, 0, PlayerForm.Position)
+            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Position)
         End Get
         Set(value As Single)
-            If PlayerForm Is Nothing Then Return
+            If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
 
             With PlayerForm
                 .Invoke(Sub() .Position = value)
@@ -97,10 +97,10 @@ Public Class EasyK
     ''' <returns></returns>
     Friend Property PlayingRate As Single
         Get
-            Return If(PlayerForm Is Nothing, 0, PlayerForm.Rate)
+            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Rate)
         End Get
         Set(value As Single)
-            If PlayerForm Is Nothing Then Return
+            If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
 
             With PlayerForm
                 .Invoke(Sub() .Rate = value)
@@ -114,7 +114,7 @@ Public Class EasyK
     ''' <returns></returns>
     Friend ReadOnly Property PlayingDuration As Long
         Get
-            Return If(PlayerForm Is Nothing, 0, PlayerForm.Duration)
+            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Duration)
         End Get
     End Property
 
