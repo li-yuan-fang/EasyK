@@ -27,4 +27,7 @@ Public Class DLNASettings
     <JsonProperty("strict_permission")>
     Public Property StrictPermission As Boolean = False
 
+    <JsonProperty("prevent_continue_range")>
+    Public Property PreventContinueRange As Single = 4.0F
+
 End Class

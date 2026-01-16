@@ -64,6 +64,11 @@
         Protected Function SetAVTransportURI(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
                 With .DLNA.K
+                    '投屏连播(比如B站多集连播)
+                    Dim Remain As Single = (1 - .PlayingPosition) * .PlayingDuration
+                    If Remain > 0 AndAlso Remain < Settings.Settings.DLNA.PreventContinueRange Then _
+                        Throw New InvalidOperationException("禁止连续投屏")
+
                     If .CanMirror() Then .TriggerMirrorPlay(Args("CurrentURI"))
                 End With
             End With

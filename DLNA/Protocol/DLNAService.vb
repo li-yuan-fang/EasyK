@@ -450,8 +450,6 @@ Namespace DLNA.Protocol
             Dim Args As Dictionary(Of String, String) = Action.GetValidArgs(Content)
 
             If Protocol.Settings.Settings.DebugMode Then
-                Console.WriteLine("远程调用 - {0}:{1}", ServiceName, Action.Name)
-                Console.WriteLine(String.Join(vbCrLf, Args.Select(Function(kvp) $"{kvp.Key}: {kvp.Value}")))
             End If
 
             Dim Caller As MethodInfo = Me.GetType().GetMethod(xn.LocalName, BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
@@ -463,12 +461,18 @@ Namespace DLNA.Protocol
 
                 Try
                     Returns = Caller.Invoke(Me, {Handled, Args})
-                Catch ex As Exception
-                    Return vbNullString
-
+                Catch ex As TargetInvocationException
                     If Protocol.Settings.Settings.DebugMode Then
-                        Console.WriteLine("DLNA远程调用中断 - {0}", ex.Message)
+                        Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
                     End If
+
+                    Return vbNullString
+                Catch ex As Exception
+                    If Protocol.Settings.Settings.DebugMode Then
+                        Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
+                    End If
+
+                    Return vbNullString
                 End Try
             End If
 
@@ -482,6 +486,14 @@ Namespace DLNA.Protocol
                     If Not Returns.ContainsKey(r.Key) Then Returns.Add(r.Key, r.Value)
                 Next
             End If
+
+            If Protocol.Settings.Settings.DebugMode Then
+                Console.WriteLine("远程调用 - {0}:{1}", ServiceName, Action.Name)
+                Console.WriteLine(String.Join(vbCrLf, Args.Select(Function(kvp) $"{kvp.Key}: {kvp.Value}")))
+                Console.WriteLine("返回值:")
+                Console.WriteLine(String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {If(Not String.IsNullOrEmpty(kvp.Value) AndAlso kvp.Value.Length > 100, $"{kvp.Value.Substring(0, 100)}...", kvp.Value)}")))
+            End If
+
 
             Return Action.GetXmlReturns(Returns)
         End Function
