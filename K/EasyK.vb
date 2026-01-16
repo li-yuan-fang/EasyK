@@ -550,8 +550,10 @@ Public Class EasyK
     Public Sub Dispose() Implements IDisposable.Dispose
         With PlayerForm
             Try
-                .Invoke(Sub() .Close())
-                Cef.Shutdown()
+                .Invoke(Sub()
+                            Cef.Shutdown()
+                            .Close()
+                        End Sub)
             Catch ex As Exception
                 If Settings.Settings.DebugMode Then
                     Console.WriteLine("释放主窗体出错 - {0}", ex.Message)
