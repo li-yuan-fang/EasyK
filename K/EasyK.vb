@@ -549,10 +549,15 @@ Public Class EasyK
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
         With PlayerForm
-            .Invoke(Sub()
-                        .Close()
-                        Cef.Shutdown()
-                    End Sub)
+            Try
+                .Invoke(Sub() .Close())
+                Cef.Shutdown()
+            Catch ex As Exception
+                If Settings.Settings.DebugMode Then
+                    Console.WriteLine("释放主窗体出错 - {0}", ex.Message)
+                End If
+            End Try
+
             .Dispose()
         End With
         PlayerForm = Nothing

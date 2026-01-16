@@ -67,7 +67,9 @@ Public Class FrmLogin
         With Browser
             .CloseDevTools()
             .GetBrowser().CloseBrowser(True)
-            .Dispose()
+            '此处不能调用.Dispose()
+            '否则会卡死
+            '疑似CEFSharp Bug
         End With
 
         MyBase.Dispose()
