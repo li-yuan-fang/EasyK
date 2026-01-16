@@ -24,7 +24,7 @@
 
 ## 要怎么用
 
-参考用户指南➡️
+参考➡️[**⭐用户指南⭐**](https://github.com/li-yuan-fang/EasyK/wiki/EasyK-%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97)
 
 ## TODO
 
