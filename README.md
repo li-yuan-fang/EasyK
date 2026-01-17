@@ -2,6 +2,8 @@
 
 **轻松随地大小K**
 
+## 🌟当前版本🌟 ➡️ [✌v1.0.0 最速先行体验版🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/Release)
+
 ## 为什么要做这个
 
 众所周知，大部分的KTV歌都不多，很多小众歌覆盖不到，而且不少都不能像纯K那样简单的投屏，更有甚者声称**能投屏**但是一堆广告而且投出来到电视上永远是竖屏😡😡😡
@@ -71,3 +73,5 @@
 [Universal Plug and Play Device Architecture](https://upnp.org/specs/arch/UPnP-arch-DeviceArchitecture-v1.1.pdf)
 
 **还有很多零星的参考资料，太多了没办法一一列举见谅**
+
+
