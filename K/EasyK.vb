@@ -49,7 +49,7 @@ Public Class EasyK
 
     Private ReadOnly OutdatedQueue As New LinkedList(Of EasyKBookRecord)
 
-    Private ReadOnly Settings As SettingContainer
+    Friend ReadOnly Settings As SettingContainer
 
     ''' <summary>
     ''' 播放器暂停事件
@@ -444,7 +444,7 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Content">内容</param>
     Public Sub TriggerMirrorPlay(Content As String)
-        RaiseEvent OnPlayerPlay(EasyKType.DLNA, If(String.IsNullOrEmpty(Content), Nothing, $"@{Content}"))
+        RaiseEvent OnPlayerPlay(EasyKType.DLNA, Content)
     End Sub
 
 

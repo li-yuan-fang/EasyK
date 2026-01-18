@@ -456,6 +456,9 @@
     <Compile Include="Commands\Implements\CommandSeek.vb" />
     <Compile Include="Commands\Implements\CommandStrict.vb" />
     <Compile Include="Commands\Implements\CommandTop.vb" />
+    <Compile Include="DLNA\Music\DLNAMusicAttribute.vb" />
+    <Compile Include="DLNA\Music\DLNAMusicProvider.vb" />
+    <Compile Include="DLNA\Music\DLNAMusicProviders.vb" />
     <Compile Include="K\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </Compile>
@@ -518,6 +521,7 @@
     <Compile Include="Utils\MouseUtils.vb" />
     <Compile Include="Utils\NetUtils.vb" />
     <Compile Include="Utils\TimeUtils.vb" />
+    <Compile Include="Utils\XmlUtils.vb" />
     <Compile Include="Web\KWebCore.vb" />
     <Compile Include="Web\Serializable\RequestBook.vb" />
     <Compile Include="Web\Serializable\RequestId.vb" />
@@ -568,6 +572,9 @@
     <Content Include="wwwroot\dlna\AVTransport.xml" />
     <Content Include="wwwroot\dlna\ConnectionManager.xml" />
     <Content Include="wwwroot\dlna\RenderingControl.xml" />
+    <None Include="wwwroot\dlna\music_box.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

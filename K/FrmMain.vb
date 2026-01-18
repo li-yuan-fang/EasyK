@@ -3,8 +3,8 @@ Imports System.Drawing
 Imports System.Windows.Forms
 Imports CefSharp
 Imports CefSharp.WinForms
+Imports EasyK.DLNA.MusicProvider
 Imports LibVLCSharp.Shared
-Imports Microsoft.Kiota.Serialization
 
 Public Class FrmMain
 
@@ -100,6 +100,33 @@ Public Class FrmMain
     'DLNA初次等待标志
     Private DLNA_Waiting As Boolean = True
 
+    'DLNA音频流模式标志
+    Private DLNA_Music As Boolean = False
+
+    'DLNA音频流信息
+    Private DLNA_Music_Meta As String = vbNullString
+
+    '空白右键菜单
+    Private Class BrowserMenuHandler
+        Implements IContextMenuHandler
+
+        Public Sub OnBeforeContextMenu(chromiumWebBrowser As IWebBrowser, browser As IBrowser, frame As IFrame, parameters As IContextMenuParams, model As IMenuModel) Implements IContextMenuHandler.OnBeforeContextMenu
+            model.Clear()
+        End Sub
+
+        Public Sub OnContextMenuDismissed(chromiumWebBrowser As IWebBrowser, browser As IBrowser, frame As IFrame) Implements IContextMenuHandler.OnContextMenuDismissed
+        End Sub
+
+        Public Function OnContextMenuCommand(chromiumWebBrowser As IWebBrowser, browser As IBrowser, frame As IFrame, parameters As IContextMenuParams, commandId As CefMenuCommand, eventFlags As CefEventFlags) As Boolean Implements IContextMenuHandler.OnContextMenuCommand
+            Return False
+        End Function
+
+        Public Function RunContextMenu(chromiumWebBrowser As IWebBrowser, browser As IBrowser, frame As IFrame, parameters As IContextMenuParams, model As IMenuModel, callback As IRunContextMenuCallback) As Boolean Implements IContextMenuHandler.RunContextMenu
+            Return False
+        End Function
+
+    End Class
+
     Private Class BrowserCallback
 
         Private ReadOnly _Base As FrmMain
@@ -108,7 +135,11 @@ Public Class FrmMain
             _Base = Base
         End Sub
 
+        'B站相关调用
+
         Public Sub onComplete()
+            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+
             With _Base
                 .OnPlayerTerminated()
                 .K.Push()
@@ -116,19 +147,52 @@ Public Class FrmMain
         End Sub
 
         Public Sub tryClick()
+            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+
             Dim x As Integer = _Base.Left + _Base.Width / 2 - 1
             Dim y As Integer = _Base.Top + _Base.Height / 2 - 1
 
-            Task.Run(Sub()
-                         With _Base
-                             .Invoke(Sub()
-                                         .BringToFront()
-                                         .TopMost = True
-                                         MouseUtils.MouseClick(x, y)
-                                         .TopMost = False
-                                     End Sub)
-                         End With
-                     End Sub)
+            With _Base
+                .Invoke(Sub()
+                            .BringToFront()
+                            .TopMost = True
+                            MouseUtils.MouseClick(x, y)
+                            .TopMost = False
+                        End Sub)
+            End With
+        End Sub
+
+        'DLNA音频流相关调用
+
+        Public Sub queryState()
+            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+
+            Try
+                With _Base
+                    .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(.Playing, .Position)))
+                End With
+            Catch ex As Exception
+                If KCore.Settings.Settings.DebugMode Then
+                    Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
+                End If
+            End Try
+        End Sub
+
+        Public Sub queryMusic()
+            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+
+            Dim Music As DLNAMusicAttribute = DLNAMusicProviders.ParseMusicAttribute(_Base.DLNA_Music_Meta)
+            If Music Is Nothing Then Return
+
+            Try
+                With _Base
+                    .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music)))
+                End With
+            Catch ex As Exception
+                If KCore.Settings.Settings.DebugMode Then
+                    Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
+                End If
+            End Try
         End Sub
 
     End Class
@@ -163,6 +227,7 @@ Public Class FrmMain
             .Visible = False
             .Dock = DockStyle.Fill
 
+            .MenuHandler = New BrowserMenuHandler()
             .JavascriptObjectRepository.Settings.LegacyBindingEnabled = True
             .JavascriptObjectRepository.Register("easy_k", New BrowserCallback(Me), False, BindingOptions.DefaultBinder)
         End With
@@ -277,8 +342,8 @@ Public Class FrmMain
         K.Play()
     End Sub
 
-    Private Sub Browser_LoadingStateChanged(sender As Object, e As LoadingStateChangedEventArgs) Handles Browser.LoadingStateChanged
-        If Not e.IsLoading AndAlso Not Browser_Loaded Then
+    Private Sub Browser_FrameLoadEnd(sender As Object, e As FrameLoadEndEventArgs) Handles Browser.FrameLoadEnd
+        If Browser_Playing AndAlso Not Browser_Loaded AndAlso Not DLNA_Music Then
             Browser_Loaded = True
 
             With e.Browser
@@ -354,7 +419,7 @@ Public Class FrmMain
                 Invoke(Sub()
                            With Browser
                                .Visible = True
-                               .LoadUrl($"https://www.bilibili.com/video/{Content}/")
+                               .LoadUrl($"https://www.bilibili.com/video/{Content}")
                            End With
                        End Sub)
             Case EasyKType.DLNA
@@ -375,12 +440,13 @@ Public Class FrmMain
                     Invoke(Sub()
                                With VLCPlayer
                                    .MediaPlayer().Play()
-                                   .Visible = True
+
+                                   If Not DLNA_Music Then .Visible = True
                                End With
 
                                Refresh()
                            End Sub)
-                Else
+                ElseIf Content.StartsWith("@") Then
                     '设置资源
                     DLNA_Waiting = False
 
@@ -392,10 +458,24 @@ Public Class FrmMain
                                             .ContinueWith(Sub() _Duration = .Media.Duration / 1000)
                                    End With
 
-                                   .Visible = True
+                                   If Not DLNA_Music Then .Visible = True
                                End With
 
                                Refresh()
+                           End Sub)
+                ElseIf Content.StartsWith("<") Then
+                    '音乐模式
+                    DLNA_Music = True
+                    DLNA_Music_Meta = Content
+                    Browser_Playing = True
+
+                    Invoke(Sub()
+                               VLCPlayer.Visible = False
+
+                               With Browser
+                                   .LoadUrl($"file:///{IO.Path.Combine(Application.StartupPath, "wwwroot", "dlna", "music_box.html").Replace("\", "/")}")
+                                   .Visible = True
+                               End With
                            End Sub)
                 End If
         End Select
@@ -403,6 +483,8 @@ Public Class FrmMain
 
     Private Sub OnPlayerTerminated()
         DLNA_Waiting = True
+        DLNA_Music = False
+        DLNA_Music_Meta = vbNullString
 
         If Browser_Playing Then
             Browser_Playing = False

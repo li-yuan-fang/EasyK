@@ -6,6 +6,9 @@
 #Markdown
 docs/user-guide.md
 
+#MusicBox
+wwwroot/dlna/music_box.html
+
 # User-specific files
 *.rsuser
 *.suo

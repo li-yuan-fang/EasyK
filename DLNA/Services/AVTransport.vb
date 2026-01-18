@@ -69,7 +69,16 @@
                     If Remain > 0 AndAlso Remain < Settings.Settings.DLNA.PreventContinueRange Then _
                         Throw New InvalidOperationException("禁止连续投屏")
 
-                    If .CanMirror() Then .TriggerMirrorPlay(Args("CurrentURI"))
+                    If .CanMirror() Then
+                        '设置资源路径
+                        .TriggerMirrorPlay($"@{Args("CurrentURI")}")
+
+                        '检查是否为音乐模式
+                        If MusicProvider.DLNAMusicProviders.IsMusicMeta(Args("CurrentURIMetaData")) Then
+                            '设置音乐模式资源
+                            .TriggerMirrorPlay(Args("CurrentURIMetaData"))
+                        End If
+                    End If
                 End With
             End With
 

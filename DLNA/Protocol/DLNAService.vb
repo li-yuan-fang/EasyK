@@ -420,7 +420,8 @@ Namespace DLNA.Protocol
         ''' <param name="Request">远程调用请求Xml</param>
         ''' <returns>返回值</returns>
         Public Function RemoteCall(Request As String) As String
-            Dim Doc As XDocument = XDocument.Parse(Request)
+            Dim Doc As XDocument = XmlUtils.SafeParseXml(Request)
+            If Doc Is Nothing Then Return vbNullString
 
             Dim Elements = From el In Doc.Descendants(SOAPNamespaceX + "Body")
                            Select el

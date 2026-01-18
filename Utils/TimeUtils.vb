@@ -2,7 +2,7 @@
 
 Public Class TimeUtils
 
-    Private Shared ReadOnly TimeStringRegex As New Regex("^[\d\:]+$")
+    Private Shared ReadOnly TimeStringRegex As New Regex("^[\d\:\.]+$")
 
     ''' <summary>
     ''' 秒转换为时分秒
@@ -28,16 +28,20 @@ Public Class TimeUtils
         Dim Power As Long = 0
         Dim Buffer As String = vbNullString
         For i = Str.Length - 1 To 0 Step -1
-            If Str(i) = ":"c Then
-                If Not String.IsNullOrEmpty(Buffer) Then
-                    Sum += Long.Parse(Buffer) * (60 ^ Power)
-                    Buffer = vbNullString
-                End If
+            Select Case Str(i)
+                Case ":"c
+                    If Not String.IsNullOrEmpty(Buffer) Then
+                        Sum += Long.Parse(Buffer) * (60 ^ Power)
+                        Buffer = vbNullString
+                    End If
 
-                Power += 1
-            Else
-                Buffer = Str(i) & Buffer
-            End If
+                    Power += 1
+                Case "."c
+                    Buffer = vbNullString
+                    Power = 0
+                Case Else
+                    Buffer = Str(i) & Buffer
+            End Select
         Next
 
         If Not String.IsNullOrEmpty(Buffer) Then

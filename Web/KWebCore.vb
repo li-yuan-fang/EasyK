@@ -14,7 +14,7 @@ Public Class KWebCore
 
     Private ReadOnly Uploader As UploadManager
 
-    Private Shared ContentRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d]+$")
+    Private Shared ContentRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d]+(?:\?p=\d+)?$")
 
     Private ReadOnly Settings As SettingContainer
 
