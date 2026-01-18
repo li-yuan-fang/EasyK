@@ -167,15 +167,21 @@ Public Class FrmMain
         Public Sub queryState()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
 
-            Try
-                With _Base
-                    .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(.Playing, .Position)))
-                End With
-            Catch ex As Exception
-                If KCore.Settings.Settings.DebugMode Then
-                    Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
-                End If
-            End Try
+            Task.Run(Sub()
+                         With _Base
+                             While Not .Browser_Loaded
+                                 Threading.Thread.Sleep(10)
+                             End While
+
+                             Try
+                                 .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(.VLCPlayer.MediaPlayer.IsPlaying, .Position)))
+                             Catch ex As Exception
+                                 If KCore.Settings.Settings.DebugMode Then
+                                     Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
+                                 End If
+                             End Try
+                         End With
+                     End Sub)
         End Sub
 
         Public Sub queryMusic()
@@ -184,15 +190,26 @@ Public Class FrmMain
             Dim Music As DLNAMusicAttribute = DLNAMusicProviders.ParseMusicAttribute(_Base.DLNA_Music_Meta)
             If Music Is Nothing Then Return
 
-            Try
-                With _Base
-                    .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music)))
-                End With
-            Catch ex As Exception
-                If KCore.Settings.Settings.DebugMode Then
-                    Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
-                End If
-            End Try
+            Task.Run(Sub()
+                         With _Base
+                             While Not .Browser_Loaded
+                                 Threading.Thread.Sleep(10)
+                             End While
+
+                             Try
+                                 .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music)))
+
+                                 Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(.DLNA_Music_Meta)
+                                 If Not String.IsNullOrEmpty(Lyric) Then
+                                     .Invoke(Sub() .Browser.EvaluateScriptAsync(Lyric))
+                                 End If
+                             Catch ex As Exception
+                                 If KCore.Settings.Settings.DebugMode Then
+                                     Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
+                                 End If
+                             End Try
+                         End With
+                     End Sub)
         End Sub
 
     End Class
@@ -343,20 +360,22 @@ Public Class FrmMain
     End Sub
 
     Private Sub Browser_FrameLoadEnd(sender As Object, e As FrameLoadEndEventArgs) Handles Browser.FrameLoadEnd
-        If Browser_Playing AndAlso Not Browser_Loaded AndAlso Not DLNA_Music Then
+        If Browser_Playing AndAlso Not Browser_Loaded AndAlso e.Frame.IsMain Then
             Browser_Loaded = True
 
-            With e.Browser
-                '全屏&进度检查
-                .EvaluateScriptAsync("let interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].firstChild.data === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].firstChild.data) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 1000);")
-                '播完暂停
-                .EvaluateScriptAsync("let interval2 = setInterval(() => document.getElementsByName('bui-radio1')?.forEach((item) => { if (item.value === '2') { item.click(); clearInterval(interval2); } }), 500);")
+            If Not DLNA_Music Then
+                With e.Browser
+                    '全屏&进度检查
+                    .EvaluateScriptAsync("let interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].firstChild.data === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].firstChild.data) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 1000);")
+                    '播完暂停
+                    .EvaluateScriptAsync("let interval2 = setInterval(() => document.getElementsByName('bui-radio1')?.forEach((item) => { if (item.value === '2') { item.click(); clearInterval(interval2); } }), 500);")
 
-                '关闭弹幕
-                .EvaluateScriptAsync("let interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 500);")
-                '开启声音
-                .EvaluateScriptAsync("let interval4 = setInterval(() => { let group = document.getElementsByClassName('bpx-player-ctrl-volume-icon'); if (group.length > 0) { if (group[0].style['display'] == 'none') { group[0].click(); setTimeout(() => easy_k.tryClick(), 500)} clearInterval(interval4); }  }, 500);")
-            End With
+                    '关闭弹幕
+                    .EvaluateScriptAsync("let interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 500);")
+                    '开启声音
+                    .EvaluateScriptAsync("let interval4 = setInterval(() => { let group = document.getElementsByClassName('bpx-player-ctrl-volume-icon'); if (group.length > 0) { if (group[0].style['display'] == 'none') { group[0].click(); setTimeout(() => easy_k.tryClick(), 500)} clearInterval(interval4); }  }, 500);")
+                End With
+            End If
         End If
     End Sub
 

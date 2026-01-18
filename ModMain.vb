@@ -26,6 +26,9 @@ Module ModMain
         '运行网络服务器
         WebServer = New KWebCore(KCore, Settings)
 
+        '加载DLNA插件
+        DLNA.MusicProvider.DLNAMusicProviders.LoadProviders()
+
         '运行DLNA服务器
         DLNAServer = New DLNA.DLNA(KCore, Settings)
 

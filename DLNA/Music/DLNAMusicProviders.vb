@@ -1,5 +1,6 @@
-﻿Imports System.Text
-Imports LibVLCSharp.Shared
+﻿Imports System.Reflection
+Imports System.Text
+Imports System.Windows.Forms
 
 Namespace DLNA.MusicProvider
 
@@ -15,6 +16,42 @@ Namespace DLNA.MusicProvider
         Friend Shared ReadOnly DCNamespace As XNamespace = XNamespace.Get("http://purl.org/dc/elements/1.1/")
 
         Private Const AudioPrefix As String = "http-get:*:audio/"
+
+        Private Shared ReadOnly Providers As New List(Of DLNALyricProvider)
+
+        ''' <summary>
+        ''' 加载插件
+        ''' </summary>
+        Public Shared Sub LoadProviders()
+            Dim Folder As String = IO.Path.Combine(Application.StartupPath, "plugins")
+            If Not IO.Directory.Exists(Folder) Then
+                Try
+                    IO.Directory.CreateDirectory(Folder)
+                Catch ex As Exception
+                    Console.WriteLine("加载DLNA插件时出错 - {0}", ex.Message)
+                End Try
+
+                Return
+            End If
+
+            For Each File In IO.Directory.GetFiles(Folder, "*.dll")
+                Try
+                    Dim asm = Assembly.LoadFrom(File)
+
+                    For Each T As Type In asm.GetTypes()
+                        With T
+                            If .IsClass AndAlso Not .IsAbstract AndAlso .IsSubclassOf(GetType(DLNALyricProvider)) Then
+                                '获取插件类
+                                Providers.Add(Activator.CreateInstance(T))
+                            End If
+                        End With
+                    Next
+                Catch ex As Exception
+                    Console.WriteLine("加载DLNA插件时出错 - {0}", ex.Message)
+                End Try
+            Next
+        End Sub
+
 
         ''' <summary>
         ''' 检查是否是音乐流
@@ -104,6 +141,26 @@ Namespace DLNA.MusicProvider
                 .Append($"window.setCurrent({Position.ToString("0.000")});")
             End With
             Return Builder.ToString()
+        End Function
+
+        ''' <summary>
+        ''' 生成更新歌词脚本
+        ''' </summary>
+        ''' <param name="Meta">元数据</param>
+        ''' <returns></returns>
+        Public Shared Function GenerateUpdateLyricScript(Meta As String) As String
+            For Each Provider In Providers
+                With Provider
+                    If Not .IsMatch(Meta) Then Continue For
+
+                    Dim Lyrics = .GetLyric(Meta)
+                    If String.IsNullOrEmpty(Lyrics) Then Continue For
+
+                    Return $"window.setLyric(""{ .Id}"", {Lyrics});"
+                End With
+            Next
+
+            Return vbNullString
         End Function
 
     End Class
