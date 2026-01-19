@@ -46,6 +46,7 @@ Public Class FrmMain
         End Get
         Set(value As Single)
             VLCPlayer.MediaPlayer.Position = value
+            UpdateDLNAMusicState()
         End Set
     End Property
 
@@ -59,6 +60,7 @@ Public Class FrmMain
         End Get
         Set(value As Single)
             VLCPlayer.MediaPlayer.SetRate(value)
+            UpdateDLNAMusicState()
         End Set
     End Property
 
@@ -167,21 +169,7 @@ Public Class FrmMain
         Public Sub queryState()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
 
-            Task.Run(Sub()
-                         With _Base
-                             While Not .Browser_Loaded
-                                 Threading.Thread.Sleep(10)
-                             End While
-
-                             Try
-                                 .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(.VLCPlayer.MediaPlayer.IsPlaying, .Position)))
-                             Catch ex As Exception
-                                 If KCore.Settings.Settings.DebugMode Then
-                                     Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
-                                 End If
-                             End Try
-                         End With
-                     End Sub)
+            _Base.UpdateDLNAMusicState()
         End Sub
 
         Public Sub queryMusic()
@@ -192,24 +180,29 @@ Public Class FrmMain
 
             Task.Run(Sub()
                          With _Base
+                             Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(.DLNA_Music_Meta)
+
                              While Not .Browser_Loaded
                                  Threading.Thread.Sleep(10)
                              End While
 
                              Try
-                                 .Invoke(Sub() .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music)))
+                                 .Invoke(Sub()
+                                             .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music))
 
-                                 Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(.DLNA_Music_Meta)
-                                 If Not String.IsNullOrEmpty(Lyric) Then
-                                     .Invoke(Sub() .Browser.EvaluateScriptAsync(Lyric))
-                                 End If
+                                             If Not String.IsNullOrEmpty(Lyric) Then
+                                                 .Browser.EvaluateScriptAsync(Lyric)
+                                             End If
+                                         End Sub)
                              Catch ex As Exception
-                                 If KCore.Settings.Settings.DebugMode Then
+                                 If .K.Settings.Settings.DebugMode Then
                                      Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
                                  End If
                              End Try
                          End With
                      End Sub)
+
+            _Base.UpdateDLNAMusicState()
         End Sub
 
     End Class
@@ -359,6 +352,26 @@ Public Class FrmMain
         K.Play()
     End Sub
 
+    Private Sub UpdateDLNAMusicState()
+        If Not DLNA_Music Then Return
+
+        Task.Run(Sub()
+                     While Not Browser_Loaded
+                         Threading.Thread.Sleep(10)
+                     End While
+
+                     If IsDisposed Then Return
+
+                     Try
+                         Invoke(Sub() Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(VLCPlayer.MediaPlayer.IsPlaying, Rate, Position)))
+                     Catch ex As Exception
+                         If K.Settings.Settings.DebugMode Then
+                             Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
+                         End If
+                     End Try
+                 End Sub)
+    End Sub
+
     Private Sub Browser_FrameLoadEnd(sender As Object, e As FrameLoadEndEventArgs) Handles Browser.FrameLoadEnd
         If Browser_Playing AndAlso Not Browser_Loaded AndAlso e.Frame.IsMain Then
             Browser_Loaded = True
@@ -399,6 +412,7 @@ Public Class FrmMain
                 Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click();"))
             Case EasyKType.Video, EasyKType.DLNA
                 Invoke(Sub() VLCPlayer.MediaPlayer.Pause())
+                UpdateDLNAMusicState()
         End Select
     End Sub
 
@@ -465,6 +479,8 @@ Public Class FrmMain
 
                                Refresh()
                            End Sub)
+
+                    UpdateDLNAMusicState()
                 ElseIf Content.StartsWith("@") Then
                     '设置资源
                     DLNA_Waiting = False

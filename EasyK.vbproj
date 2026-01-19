@@ -101,9 +101,6 @@
     <Reference Include="CefSharp.WinForms, Version=109.1.110.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
       <HintPath>packages\CefSharp.WinForms.109.1.110\lib\net462\CefSharp.WinForms.dll</HintPath>
     </Reference>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=1.4.2.13, Culture=neutral, PublicKeyToken=1b03e6acf1164f73, processorArchitecture=MSIL">
-      <HintPath>packages\SharpZipLib.1.4.2\lib\netstandard2.0\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
     <Reference Include="LibVLCSharp, Version=3.9.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\LibVLCSharp.3.9.5\lib\net471\LibVLCSharp.dll</HintPath>
     </Reference>
@@ -574,6 +571,9 @@
   <ItemGroup>
     <Content Include="logo.ico" />
     <Content Include="plugins\LyricNumeric.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="plugins\LyricQueue.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="wwwroot\dlna\AVTransport.xml" />

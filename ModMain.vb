@@ -54,6 +54,7 @@ Module ModMain
 
     Private Sub ExitApplication() Handles Commands.OnExit
         DLNAServer.Dispose()
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders()
         WebServer.Dispose()
         KCore.Dispose()
 

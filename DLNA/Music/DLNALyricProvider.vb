@@ -6,8 +6,12 @@ Imports Newtonsoft.Json
 Namespace DLNA.MusicProvider
 
     Public MustInherit Class DLNALyricProvider
+        Implements IDisposable
 
-        Protected Const UserAgent As String = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36"
+        Protected Const UserAgent As String = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36"
+
+        '缓存
+        Protected ReadOnly RequestCache As New Dictionary(Of String, String)
 
         ''' <summary>
         ''' Cookie
@@ -38,7 +42,7 @@ Namespace DLNA.MusicProvider
         ''' </summary>
         ''' <param name="Meta">元数据</param>
         ''' <returns>Json格式数据</returns>
-        Public MustOverride Function GetLyric(Meta As String) As String
+        Protected MustOverride Function GetLyric(Meta As String) As String
 
         ''' <summary>
         ''' 发送POST请求
@@ -86,6 +90,33 @@ Namespace DLNA.MusicProvider
                 Return wc.UploadString(url, JsonConvert.SerializeObject(paramDict))
             End Using
         End Function
+
+        ''' <summary>
+        ''' 请求歌词数据
+        ''' </summary>
+        ''' <param name="Meta">元数据</param>
+        ''' <returns>Json格式数据</returns>
+        Public Function QueryLyrics(Meta As String) As String
+            If String.IsNullOrEmpty(Meta) Then Return vbNullString
+
+            If RequestCache.ContainsKey(Meta) Then
+                Return RequestCache(Meta)
+            Else
+                Dim Result = GetLyric(Meta)
+                If String.IsNullOrEmpty(Result) Then Return vbNullString
+
+                RequestCache.Add(Meta, Result)
+
+                Return Result
+            End If
+        End Function
+
+        ''' <summary>
+        ''' 释放资源
+        ''' </summary>
+        Public Sub Dispose() Implements IDisposable.Dispose
+            RequestCache.Clear()
+        End Sub
 
     End Class
 

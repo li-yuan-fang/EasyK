@@ -13,23 +13,30 @@ Namespace DLNA.MusicProvider
         Public ReadOnly Property Time As Double
 
         ''' <summary>
-        ''' 获取歌词行
+        ''' 获取简单歌词行
         ''' </summary>
         ''' <returns></returns>
-        <JsonProperty("text")>
-        Public ReadOnly Property Text As List(Of String)
+        <JsonProperty("plain")>
+        Public ReadOnly Property Plain As List(Of String)
 
-        Protected Sub New(Time As Double, Text As List(Of String))
+        ''' <summary>
+        ''' 获取逐字歌词行
+        ''' </summary>
+        ''' <returns></returns>
+        <JsonProperty("verbatim")>
+        Public ReadOnly Property Verbatim As List(Of String)
+
+        Protected Sub New(Time As Double, Plain As List(Of String))
             Me.Time = Time
-            Me.Text = Text
+            Me.Plain = Plain
         End Sub
 
         ''' <summary>
-        ''' 生成歌词对象
+        ''' 生成简单歌词对象
         ''' </summary>
         ''' <param name="Lyrics">歌词列表</param>
         ''' <returns></returns>
-        Public Shared Function Generate(Lyrics As Dictionary(Of Double, List(Of String))) As List(Of DLNALyric)
+        Public Shared Function GeneratePlain(Lyrics As Dictionary(Of Double, List(Of String))) As List(Of DLNALyric)
             Dim Result As New List(Of DLNALyric)
 
             For Each l In Lyrics

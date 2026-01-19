@@ -17,7 +17,7 @@ Namespace DLNA.MusicProvider
 
         Private Const AudioPrefix As String = "http-get:*:audio/"
 
-        Private Shared ReadOnly Providers As New List(Of DLNALyricProvider)
+        Public Shared ReadOnly Providers As New List(Of DLNALyricProvider)
 
         ''' <summary>
         ''' 加载插件
@@ -52,6 +52,16 @@ Namespace DLNA.MusicProvider
             Next
         End Sub
 
+        ''' <summary>
+        ''' 卸载插件
+        ''' </summary>
+        Public Shared Sub UnloadProviders()
+            For Each Provider In Providers
+                Provider.Dispose()
+            Next
+
+            Providers.Clear()
+        End Sub
 
         ''' <summary>
         ''' 检查是否是音乐流
@@ -116,11 +126,11 @@ Namespace DLNA.MusicProvider
         Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute) As String
             Dim Builder As New StringBuilder()
             With Builder
-                .Append($"window.setTitle(""{Attribute.Title}"");")
-                .Append($"window.setArtist(""{Attribute.Artist}"");")
+                .Append($"window.setTitle(""{Attribute.Title.Replace("""", "\""")}"");")
+                .Append($"window.setArtist(""{Attribute.Artist.Replace("""", "\""")}"");")
 
                 If Not String.IsNullOrEmpty(Attribute.Album) Then
-                    .Append($"window.setAlbum(""{Attribute.Album}"");")
+                    .Append($"window.setAlbum(""{Attribute.Album.Replace("""", "\""")}"");")
                 End If
 
                 .Append($"window.setTotal({Attribute.Duration});")
@@ -132,13 +142,15 @@ Namespace DLNA.MusicProvider
         ''' 生成更新状态脚本
         ''' </summary>
         ''' <param name="Playing">播放状态</param>
+        ''' <param name="Rate">播放速度</param>
         ''' <param name="Position">播放进度</param>
         ''' <returns></returns>
-        Public Shared Function GenerateUpdateStateScript(Playing As Boolean, Position As Single) As String
+        Public Shared Function GenerateUpdateStateScript(Playing As Boolean, Rate As Single, Position As Single) As String
             Dim Builder As New StringBuilder()
             With Builder
                 .Append($"window.setPlaying({Playing.ToString().ToLower()});")
-                .Append($"window.setCurrent({Position.ToString("0.000")});")
+                .Append($"window.setCurrent({Position.ToString()});")
+                .Append($"window.setRate({Rate.ToString()});")
             End With
             Return Builder.ToString()
         End Function
@@ -153,7 +165,7 @@ Namespace DLNA.MusicProvider
                 With Provider
                     If Not .IsMatch(Meta) Then Continue For
 
-                    Dim Lyrics = .GetLyric(Meta)
+                    Dim Lyrics = .QueryLyrics(Meta)
                     If String.IsNullOrEmpty(Lyrics) Then Continue For
 
                     Return $"window.setLyric(""{ .Id}"", {Lyrics});"
