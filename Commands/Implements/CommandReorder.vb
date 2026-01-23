@@ -1,25 +1,29 @@
-﻿Public Class CommandReorder
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly K As EasyK
+    Public Class CommandReorder
+        Inherits Command
 
-    Public Sub New(K As EasyK)
-        MyBase.New("reorder", "reorder <ID> - 重新点歌", CommandType.User)
-        Me.K = K
-    End Sub
+        Private ReadOnly K As EasyK
 
-    Protected Overrides Sub Process(Args() As String)
-        If Args.Length < 2 Then
-            InvalidUsage()
-            Return
-        End If
+        Public Sub New(K As EasyK)
+            MyBase.New("reorder", "reorder <ID> - 重新点歌", CommandType.User)
+            Me.K = K
+        End Sub
 
-        Dim Id As String = K.Reorder(Args(1), "控制台")
-        If Not String.IsNullOrEmpty(Id) Then
-            Console.WriteLine("重新点歌成功 - {0} => {1}", Args(1), Id)
-        Else
-            Console.WriteLine("重新点歌失败 ID不存在 - {0}", Args(1))
-        End If
-    End Sub
+        Protected Overrides Sub Process(Args() As String)
+            If Args.Length < 2 Then
+                InvalidUsage()
+                Return
+            End If
 
-End Class
+            Dim Id As String = K.Reorder(Args(1), "控制台")
+            If Not String.IsNullOrEmpty(Id) Then
+                Console.WriteLine("重新点歌成功 - {0} => {1}", Args(1), Id)
+            Else
+                Console.WriteLine("重新点歌失败 ID不存在 - {0}", Args(1))
+            End If
+        End Sub
+
+    End Class
+
+End Namespace

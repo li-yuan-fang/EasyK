@@ -450,9 +450,6 @@ Namespace DLNA.Protocol
 
             Dim Args As Dictionary(Of String, String) = Action.GetValidArgs(Content)
 
-            If Protocol.Settings.Settings.DebugMode Then
-            End If
-
             Dim Caller As MethodInfo = Me.GetType().GetMethod(xn.LocalName, BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
             Dim Returns As Dictionary(Of String, String) = Nothing
             Dim Handled As Boolean = False

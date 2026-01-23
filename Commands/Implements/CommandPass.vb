@@ -1,21 +1,25 @@
-﻿Public Class CommandPass
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly Settings As SettingContainer
+    Public Class CommandPass
+        Inherits Command
 
-    Public Sub New(Settings As SettingContainer)
-        MyBase.New("pass", "pass [授权码] - 设置/清除授权码", CommandType.System)
-        Me.Settings = Settings
-    End Sub
+        Private ReadOnly Settings As SettingContainer
 
-    Protected Overrides Sub Process(Args() As String)
-        If Args.Length < 2 OrElse String.IsNullOrEmpty(Args(1)) Then
-            Settings.Settings.Web.PassKey = vbNullString
-            Console.WriteLine("授权码已清除")
-        Else
-            Settings.Settings.Web.PassKey = Args(1)
-            Console.WriteLine("授权码已更新")
-        End If
-    End Sub
+        Public Sub New(Settings As SettingContainer)
+            MyBase.New("pass", "pass [授权码] - 设置/清除授权码", CommandType.System)
+            Me.Settings = Settings
+        End Sub
 
-End Class
+        Protected Overrides Sub Process(Args() As String)
+            If Args.Length < 2 OrElse String.IsNullOrEmpty(Args(1)) Then
+                Settings.Settings.Web.PassKey = vbNullString
+                Console.WriteLine("授权码已清除")
+            Else
+                Settings.Settings.Web.PassKey = Args(1)
+                Console.WriteLine("授权码已更新")
+            End If
+        End Sub
+
+    End Class
+
+End Namespace

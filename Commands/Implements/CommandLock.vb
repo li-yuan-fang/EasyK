@@ -1,15 +1,19 @@
-﻿Public Class CommandLock
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly K As EasyK
+    Public Class CommandLock
+        Inherits Command
 
-    Public Sub New(K As EasyK)
-        MyBase.New("lock", "lock - 更改播放器置顶锁定状态", CommandType.System)
-        Me.K = K
-    End Sub
+        Private ReadOnly K As EasyK
 
-    Protected Overrides Sub Process(Args() As String)
-        Console.WriteLine("播放器窗体置顶锁定状态已更改: {0}", K.Lock())
-    End Sub
+        Public Sub New(K As EasyK)
+            MyBase.New("lock", "lock - 更改播放器置顶锁定状态", CommandType.System)
+            Me.K = K
+        End Sub
 
-End Class
+        Protected Overrides Sub Process(Args() As String)
+            Console.WriteLine("播放器窗体置顶锁定状态已更改: {0}", K.Lock())
+        End Sub
+
+    End Class
+
+End Namespace

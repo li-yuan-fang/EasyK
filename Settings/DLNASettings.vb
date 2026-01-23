@@ -22,12 +22,18 @@ Public Class DLNASettings
     Public Property EventMaxExpire As Integer = 3600
 
     <JsonProperty("event_notify_fails")>
-    Public Property EventNotifyFails As Integer = 5
+    Public Property EventNotifyFails As Integer = 3
 
     <JsonProperty("strict_permission")>
     Public Property StrictPermission As Boolean = False
 
     <JsonProperty("prevent_continue_range")>
     Public Property PreventContinueRange As Single = 4.0F
+
+    <JsonProperty("lyric_colorful")>
+    Public Property LyricColorful As Boolean = True
+
+    <JsonProperty("lyric_highlight")>
+    Public Property LyricHighlight As Boolean = True
 
 End Class

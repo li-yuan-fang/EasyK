@@ -1,74 +1,81 @@
-﻿Public Class CommandParser
+﻿Namespace Commands
 
-    Private ReadOnly K As EasyK
+    Public Class CommandParser
 
-    Private ReadOnly Web As KWebCore
+        Private ReadOnly K As EasyK
 
-    Private ReadOnly Settings As SettingContainer
+        Private ReadOnly Web As KWebCore
 
-    Private ReadOnly Commands As New List(Of Command)
+        Private ReadOnly Settings As SettingContainer
 
-    Private ReadOnly ExitAction As New Action(Sub() RaiseEvent OnExit())
+        Private ReadOnly Commands As New List(Of Command)
 
-    ''' <summary>
-    ''' 退出事件
-    ''' </summary>
-    Public Event OnExit()
+        Private ReadOnly ExitAction As New Action(Sub() RaiseEvent OnExit())
 
-    ''' <summary>
-    ''' 初始化
-    ''' </summary>
-    ''' <param name="K"></param>
-    ''' <param name="Web"></param>
-    Public Sub New(K As EasyK, Web As KWebCore, Settings As SettingContainer)
-        Me.K = K
-        Me.Web = Web
-        Me.Settings = Settings
+        ''' <summary>
+        ''' 退出事件
+        ''' </summary>
+        Public Event OnExit()
 
-        LoadCommands()
-    End Sub
+        ''' <summary>
+        ''' 初始化
+        ''' </summary>
+        ''' <param name="K"></param>
+        ''' <param name="Web"></param>
+        Public Sub New(K As EasyK, Web As KWebCore, Settings As SettingContainer)
+            Me.K = K
+            Me.Web = Web
+            Me.Settings = Settings
 
-    Private Sub LoadCommands()
-        With Commands
-            .Add(New CommandHelp(Commands))
+            LoadCommands()
+        End Sub
 
-            .Add(New CommandPass(Settings))
-            .Add(New CommandBili(K))
-            .Add(New CommandClean(K, Web, Settings))
-            .Add(New CommandLock(K))
-            .Add(New CommandQR(K, Settings))
-            .Add(New CommandStrict(Settings))
-            .Add(New CommandReset(K))
-            .Add(New CommandExit(ExitAction))
+        Private Sub LoadCommands()
+            With Commands
+                .Add(New CommandHelp(Commands))
 
-            .Add(New CommandList(K))
-            .Add(New CommandBook(K))
-            .Add(New CommandTop(K))
-            .Add(New CommandPush(K))
-            .Add(New CommandPause(K))
-            .Add(New CommandSeek(K))
-            .Add(New CommandRemove(K))
-            .Add(New CommandOutdated(K))
-            .Add(New CommandReorder(K))
-        End With
-    End Sub
+                .Add(New CommandPort(Web, Settings))
+                .Add(New CommandPass(Settings))
+                .Add(New CommandBili(K))
+                .Add(New CommandClean(K, Web, Settings))
+                .Add(New CommandLock(K))
+                .Add(New CommandQR(K, Settings))
+                .Add(New CommandStrict(Settings))
+                .Add(New CommandPlugin())
+                .Add(New CommandPull(K))
+                .Add(New CommandReset(K))
+                .Add(New CommandExit(ExitAction))
 
-    ''' <summary>
-    ''' 运行指令系统
-    ''' </summary>
-    Public Sub Run()
-        Do
-            Dim cmd As String = Console.ReadLine()
-            Dim Success As Boolean = False
-            For Each Parser As Command In Commands
-                If Parser.Match(cmd) Then
-                    Success = True
-                    Exit For
-                End If
-            Next
+                .Add(New CommandList(K))
+                .Add(New CommandBook(K))
+                .Add(New CommandTop(K))
+                .Add(New CommandPush(K))
+                .Add(New CommandPause(K))
+                .Add(New CommandSeek(K))
+                .Add(New CommandRemove(K))
+                .Add(New CommandOutdated(K))
+                .Add(New CommandReorder(K))
+            End With
+        End Sub
 
-            If Not Success Then Console.WriteLine("未知指令 帮助指令为: help")
-        Loop
-    End Sub
+        ''' <summary>
+        ''' 运行指令系统
+        ''' </summary>
+        Public Sub Run()
+            Do
+                Dim cmd As String = Console.ReadLine()
+                Dim Success As Boolean = False
+                For Each Parser As Command In Commands
+                    If Parser.Match(cmd) Then
+                        Success = True
+                        Exit For
+                    End If
+                Next
 
-End Class
+                If Not Success Then Console.WriteLine("未知指令 帮助指令为: help")
+            Loop
+        End Sub
+
+    End Class
+
+End Namespace

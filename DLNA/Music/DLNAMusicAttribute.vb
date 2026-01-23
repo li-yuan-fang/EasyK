@@ -40,7 +40,7 @@ Namespace DLNA.MusicProvider
         ''' <param name="Title">标题</param>
         ''' <param name="Artist">创作者</param>
         ''' <param name="Duration">歌曲长度</param>
-        Friend Sub New(Album As String, Title As String, Artist As String, Duration As Long)
+        Public Sub New(Album As String, Title As String, Artist As String, Duration As Long)
             Me.Album = Album
             Me.Title = Title
             Me.Artist = Artist

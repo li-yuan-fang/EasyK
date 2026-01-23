@@ -5,6 +5,16 @@
 
         Public Event OnPlay()
 
+        Private Sub OnPause(Type As EasyKType)
+            If Type <> EasyKType.DLNA Then Return
+
+            Task.Run(Sub()
+                         Threading.Thread.Sleep(20)
+
+                         SetState("TransportState", If(Protocol.DLNA.K.IsPlaying(), "PLAYING", "PAUSED_PLAYBACK"))
+                     End Sub)
+        End Sub
+
         ''' <summary>
         ''' 构建服务
         ''' </summary>
@@ -30,6 +40,9 @@
             SetStateEvent("CurrentTrackDuration", True)
             SetStateEvent("CurrentTrack", True)
             SetStateEvent("NumberOfTracks", True)
+
+            '绑定事件
+            AddHandler Protocol.DLNA.K.OnPlayerPause, AddressOf OnPause
         End Sub
 
         ''' <summary>
@@ -125,7 +138,11 @@
         Protected Function Pause(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
                 With .DLNA.K
-                    If .IsPlaying() Then .Pause()
+                    If .IsPlaying() Then
+                        RemoveHandler .OnPlayerPause, AddressOf OnPause
+                        .Pause()
+                        AddHandler .OnPlayerPause, AddressOf OnPause
+                    End If
                 End With
             End With
 
@@ -150,7 +167,7 @@
             Dim Duration As String
             Dim Progress As String
             With Protocol.DLNA.K
-                Duration = TimeUtils.SecondToString(.PlayingDuration)
+                Duration = TimeUtils.SecondToString(Math.Round(.PlayingDuration))
 
                 Dim p As Double = Math.Round(.PlayingDuration * .PlayingPosition)
                 Progress = TimeUtils.SecondToString(p)
@@ -169,9 +186,19 @@
         End Function
 
         Protected Function GetMediaInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            SetState("CurrentMediaDuration", TimeUtils.SecondToString(Protocol.DLNA.K.PlayingDuration))
+            SetState("CurrentMediaDuration", TimeUtils.SecondToString(Math.Round(Protocol.DLNA.K.PlayingDuration)))
 
             Return Nothing
+        End Function
+
+        Protected Function GetTransportInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
+            With Protocol.DLNA.K
+                Return If(.DLNALoading,
+                    New Dictionary(Of String, String) From {
+                        {"CurrentTransportState", "TRANSITIONING"}
+                    },
+                    Nothing)
+            End With
         End Function
 
     End Class

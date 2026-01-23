@@ -14,18 +14,23 @@ Public Class WebServer
     Public ReadOnly Property Port As Integer
 
     ''' <summary>
+    ''' 服务器出错事件
+    ''' </summary>
+    ''' <param name="Exceptions">错误</param>
+    Public Event OnErrorTrigger(Exceptions As Exception())
+
+    ''' <summary>
     ''' 初始化Web服务端
     ''' </summary>
     ''' <param name="Port">端口</param>
     Public Sub New(Port As Integer, DebugMode As Boolean)
-        Me.Port = Port
+        Me.Port = Math.Min(Math.Max(Port, 1), 65535)
 
         Dim builder As New WebHostBuilder()
 
         With builder
             .UseKestrel(Sub(options)
                             options.Listen(IPAddress.Any, Port)
-
                         End Sub)
             .UseStartup(Of WebStartup)()
             .ConfigureLogging(Sub(Logging)
@@ -34,7 +39,13 @@ Public Class WebServer
         End With
 
         Host = builder.Build()
-        Host.RunAsync()
+        Dim ServerTask = Host.RunAsync()
+        ServerTask.ContinueWith(Sub()
+                                    '错误检测
+                                    If ServerTask.Exception IsNot Nothing Then
+                                        RaiseEvent OnErrorTrigger(ServerTask.Exception.InnerExceptions.ToArray())
+                                    End If
+                                End Sub)
     End Sub
 
     ''' <summary>

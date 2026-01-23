@@ -448,6 +448,9 @@
     <Compile Include="Commands\CommandParser.vb" />
     <Compile Include="Commands\Implements\CommandPass.vb" />
     <Compile Include="Commands\Implements\CommandPause.vb" />
+    <Compile Include="Commands\Implements\CommandPlugin.vb" />
+    <Compile Include="Commands\Implements\CommandPort.vb" />
+    <Compile Include="Commands\Implements\CommandPull.vb" />
     <Compile Include="Commands\Implements\CommandPush.vb" />
     <Compile Include="Commands\Implements\CommandQR.vb" />
     <Compile Include="Commands\Implements\CommandRemove.vb" />
@@ -516,6 +519,7 @@
     <Compile Include="Settings\KWebSettings.vb" />
     <Compile Include="Settings\SettingContainer.vb" />
     <Compile Include="Settings\UploadSettings.vb" />
+    <Compile Include="Utils\ColorUtils.vb" />
     <Compile Include="Utils\FormUtils.vb" />
     <Compile Include="Utils\HashUtils.vb" />
     <Compile Include="Utils\KeyboardUtils.vb" />
@@ -526,6 +530,7 @@
     <Compile Include="Web\KWebCore.vb" />
     <Compile Include="Web\Serializable\RequestBook.vb" />
     <Compile Include="Web\Serializable\RequestId.vb" />
+    <Compile Include="Web\Serializable\RequestPlugin.vb" />
     <Compile Include="Web\Serializable\RequestSize.vb" />
     <Compile Include="Web\Serializable\RequestVolume.vb" />
     <Compile Include="Web\UploadManager.vb" />
@@ -570,6 +575,9 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="logo.ico" />
+    <Content Include="plugins\LyricKernel.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="plugins\LyricNumeric.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

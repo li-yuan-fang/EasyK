@@ -1,16 +1,20 @@
-﻿Public Class CommandExit
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly ExitAction As Action
+    Public Class CommandExit
+        Inherits Command
 
-    Public Sub New(ExitAction)
-        MyBase.New("exit", "exit - 退出", CommandType.System)
-        Me.ExitAction = ExitAction
-    End Sub
+        Private ReadOnly ExitAction As Action
 
-    Protected Overrides Sub Process(Args() As String)
-        Console.WriteLine("正在关闭点歌系统...")
-        ExitAction.Invoke()
-    End Sub
+        Public Sub New(ExitAction)
+            MyBase.New("exit", "exit - 退出", CommandType.System)
+            Me.ExitAction = ExitAction
+        End Sub
 
-End Class
+        Protected Overrides Sub Process(Args() As String)
+            Console.WriteLine("正在关闭点歌系统...")
+            ExitAction.Invoke()
+        End Sub
+
+    End Class
+
+End Namespace

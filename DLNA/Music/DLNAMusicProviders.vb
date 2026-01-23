@@ -17,12 +17,13 @@ Namespace DLNA.MusicProvider
 
         Private Const AudioPrefix As String = "http-get:*:audio/"
 
-        Public Shared ReadOnly Providers As New List(Of DLNALyricProvider)
+        Private Shared ReadOnly Providers As New List(Of DLNALyricProvider)
 
         ''' <summary>
         ''' 加载插件
         ''' </summary>
-        Public Shared Sub LoadProviders()
+        Public Shared Sub LoadProviders(Settings As SettingContainer)
+            '目录检查
             Dim Folder As String = IO.Path.Combine(Application.StartupPath, "plugins")
             If Not IO.Directory.Exists(Folder) Then
                 Try
@@ -34,6 +35,7 @@ Namespace DLNA.MusicProvider
                 Return
             End If
 
+            '扫描插件
             For Each File In IO.Directory.GetFiles(Folder, "*.dll")
                 Try
                     Dim asm = Assembly.LoadFrom(File)
@@ -41,23 +43,76 @@ Namespace DLNA.MusicProvider
                     For Each T As Type In asm.GetTypes()
                         With T
                             If .IsClass AndAlso Not .IsAbstract AndAlso .IsSubclassOf(GetType(DLNALyricProvider)) Then
-                                '获取插件类
+                                '注册插件
                                 Providers.Add(Activator.CreateInstance(T))
                             End If
                         End With
                     Next
                 Catch ex As Exception
                     Console.WriteLine("加载DLNA插件时出错 - {0}", ex.Message)
+                    Console.WriteLine(File)
                 End Try
+            Next
+
+            '加载配置信息
+            With Settings.Settings.Plugins
+                For Each Provider In Providers
+                    Dim Id As String = Provider.Id
+
+                    Try
+                        Dim Setting As String = If(.ContainsKey(Id), .Item(Id), vbNullString)
+                        Provider.LoadSettings(Setting)
+                        Provider.TryUpdateSetting(Settings.Settings.PluginCommon)
+                    Catch ex As Exception
+                        Console.WriteLine("加载DLNA插件配置信息时出错 - {0}: {1}", Id, ex.Message)
+                    End Try
+                Next
+            End With
+        End Sub
+
+        ''' <summary>
+        ''' 尝试更新配置项
+        ''' </summary>
+        Public Shared Sub TryUpdateSettings()
+            For Each Provider In Providers
+                Provider.TryUpdateSetting(Settings.Settings.PluginCommon)
             Next
         End Sub
 
         ''' <summary>
+        ''' 运行插件指令
+        ''' </summary>
+        ''' <param name="Id">插件ID</param>
+        ''' <param name="Args">参数</param>
+        ''' <returns></returns>
+        Public Shared Function RunCommand(Id As String, Args As String()) As String
+            For Each Provider In Providers
+                With Provider
+                    If .Id.ToLower() = Id.ToLower() Then Return .RunCommand(Args)
+                End With
+            Next
+
+            Return $"找不到指定的插件 - {Id}"
+        End Function
+
+        ''' <summary>
         ''' 卸载插件
         ''' </summary>
-        Public Shared Sub UnloadProviders()
+        Public Shared Sub UnloadProviders(Settings As SettingContainer)
             For Each Provider In Providers
-                Provider.Dispose()
+                With Provider
+                    .Dispose()
+
+                    Dim Id As String = .Id
+                    Dim Saved As String = .Save()
+                    With Settings.Settings.Plugins
+                        If .ContainsKey(Id) Then
+                            .Item(Id) = Saved
+                        Else
+                            .Add(Id, Saved)
+                        End If
+                    End With
+                End With
             Next
 
             Providers.Clear()
@@ -84,12 +139,7 @@ Namespace DLNA.MusicProvider
             Return False
         End Function
 
-        ''' <summary>
-        ''' 解析音乐流元数据
-        ''' </summary>
-        ''' <param name="Meta">元数据</param>
-        ''' <returns></returns>
-        Public Shared Function ParseMusicAttribute(Meta As String) As DLNAMusicAttribute
+        Friend Shared Function ParseMusicAttributeDefault(Meta As String) As DLNAMusicAttribute
             Dim Doc As XDocument = XmlUtils.SafeParseXml(Meta)
             If Doc Is Nothing Then Return Nothing
 
@@ -119,14 +169,37 @@ Namespace DLNA.MusicProvider
         End Function
 
         ''' <summary>
+        ''' 解析音乐流元数据
+        ''' </summary>
+        ''' <param name="Meta">元数据</param>
+        ''' <returns></returns>
+        Public Shared Function ParseMusicAttribute(Meta As String) As DLNAMusicAttribute
+            Dim Attribute As DLNAMusicAttribute = Nothing
+            For Each Provider In Providers
+                With Provider
+                    If .IsMatch(Meta) Then
+                        Attribute = .ParseMusicAttribute(Meta)
+                        Exit For
+                    End If
+                End With
+            Next
+
+            If Attribute Is Nothing Then Attribute = ParseMusicAttributeDefault(Meta)
+
+            Return Attribute
+        End Function
+
+        ''' <summary>
         ''' 生成更新音乐信息脚本
         ''' </summary>
-        ''' <param name="Attribute">音乐信息</param>
+        ''' <param name="Attribute">属性</param>
+        ''' <param name="DefaultTitle">默认标题</param>
         ''' <returns></returns>
-        Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute) As String
+        Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute, DefaultTitle As String) As String
             Dim Builder As New StringBuilder()
             With Builder
-                .Append($"window.setTitle(""{Attribute.Title.Replace("""", "\""")}"");")
+                Dim Title As String = If(String.IsNullOrEmpty(Attribute.Title), DefaultTitle, Attribute.Title)
+                .Append($"window.setTitle(""{Title.Replace("""", "\""")}"");")
                 .Append($"window.setArtist(""{Attribute.Artist.Replace("""", "\""")}"");")
 
                 If Not String.IsNullOrEmpty(Attribute.Album) Then
@@ -168,7 +241,29 @@ Namespace DLNA.MusicProvider
                     Dim Lyrics = .QueryLyrics(Meta)
                     If String.IsNullOrEmpty(Lyrics) Then Continue For
 
-                    Return $"window.setLyric(""{ .Id}"", {Lyrics});"
+                    Return $"window.setLyric({Lyrics});"
+                End With
+            Next
+
+            Return vbNullString
+        End Function
+
+        ''' <summary>
+        ''' 获取歌词颜色脚本
+        ''' </summary>
+        ''' <param name="Meta">元数据</param>
+        ''' <param name="Attritube">属性</param>
+        ''' <param name="Highlight">颜色高亮校正</param>
+        ''' <returns></returns>
+        Public Shared Function GenerateUpdateLyricColorScript(Meta As String, Attritube As DLNAMusicAttribute, Highlight As Boolean) As String
+            For Each Provider In Providers
+                With Provider
+                    If Not .IsMatch(Meta) Then Continue For
+
+                    Dim LyricColor = .GetLyricColor(Attritube, Highlight)
+                    If String.IsNullOrEmpty(LyricColor) Then Continue For
+
+                    Return $"window.setLyricColor({LyricColor});"
                 End With
             Next
 

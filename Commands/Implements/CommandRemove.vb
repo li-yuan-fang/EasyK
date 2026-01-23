@@ -1,24 +1,28 @@
-﻿Public Class CommandRemove
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly K As EasyK
+    Public Class CommandRemove
+        Inherits Command
 
-    Public Sub New(K As EasyK)
-        MyBase.New("remove", "remove <ID> - 删除", CommandType.User)
-        Me.K = K
-    End Sub
+        Private ReadOnly K As EasyK
 
-    Protected Overrides Sub Process(Args() As String)
-        If Args.Length < 2 Then
-            InvalidUsage()
-            Return
-        End If
+        Public Sub New(K As EasyK)
+            MyBase.New("remove", "remove <ID> - 删除", CommandType.User)
+            Me.K = K
+        End Sub
 
-        If (K.Remove(Args(1))) Then
-            Console.WriteLine("移除成功 - {0}", Args(1))
-        Else
-            Console.WriteLine("移除失败 ID不存在 - {0}", Args(1))
-        End If
-    End Sub
+        Protected Overrides Sub Process(Args() As String)
+            If Args.Length < 2 Then
+                InvalidUsage()
+                Return
+            End If
 
-End Class
+            If (K.Remove(Args(1))) Then
+                Console.WriteLine("移除成功 - {0}", Args(1))
+            Else
+                Console.WriteLine("移除失败 ID不存在 - {0}", Args(1))
+            End If
+        End Sub
+
+    End Class
+
+End Namespace

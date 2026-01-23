@@ -112,9 +112,19 @@ Public Class EasyK
     ''' 获取视频长度(仅VLC)
     ''' </summary>
     ''' <returns></returns>
-    Friend ReadOnly Property PlayingDuration As Long
+    Friend ReadOnly Property PlayingDuration As Double
         Get
             Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Duration)
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' 获取DLNA加载状态
+    ''' </summary>
+    ''' <returns></returns>
+    Friend ReadOnly Property DLNALoading As Boolean
+        Get
+            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), True, PlayerForm.DLNALoading)
         End Get
     End Property
 
@@ -181,7 +191,7 @@ Public Class EasyK
         End SyncLock
 
         SyncLock OutdatedQueue
-            OutdatedQueue.AddLast(Current)
+            OutdatedQueue.AddFirst(Current)
         End SyncLock
 
         Task.Run(Sub()
@@ -358,7 +368,7 @@ Public Class EasyK
         If Not IsPlaying() Then Return
 
         PlayerForm.Invoke(Sub()
-                              Dim Offset As Single = 5000L / PlayingDuration
+                              Dim Offset As Single = 5000D / PlayingDuration
                               If Prev Then
                                   PlayingPosition = Math.Max(Math.Min(PlayingPosition - Offset, 1), 0)
                               Else

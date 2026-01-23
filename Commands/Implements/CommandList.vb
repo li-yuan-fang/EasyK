@@ -1,31 +1,35 @@
-﻿Public Class CommandList
-    Inherits Command
+﻿Namespace Commands
 
-    Private ReadOnly K As EasyK
+    Public Class CommandList
+        Inherits Command
 
-    Public Sub New(K As EasyK)
-        MyBase.New("list", "list - 列出已点歌曲", CommandType.User)
-        Me.K = K
-    End Sub
+        Private ReadOnly K As EasyK
 
-    Protected Overrides Sub Process(Args() As String)
-        Dim List As List(Of EasyKBookRecord) = K.GetBookList()
-        If List.Count = 0 Then
-            Console.WriteLine("已点列表为空")
-            Return
-        End If
+        Public Sub New(K As EasyK)
+            MyBase.New("list", "list - 列出已点歌曲", CommandType.User)
+            Me.K = K
+        End Sub
 
-        Console.WriteLine("=====已点歌曲=====")
-        Dim i As Integer = 1
-        For Each Record As EasyKBookRecord In List
-            With Record
-                Console.WriteLine("#{0}  {1} (ID:{2} Content:{3})", i, .Title, .Id, .Content)
-                Console.WriteLine("来源: {0} 播放方式: {1}", .Order, If(.Type = EasyKType.Bilibili, "bilibili", "本地"))
-            End With
+        Protected Overrides Sub Process(Args() As String)
+            Dim List As List(Of EasyKBookRecord) = K.GetBookList()
+            If List.Count = 0 Then
+                Console.WriteLine("已点列表为空")
+                Return
+            End If
 
-            i += 1
-        Next
-        Console.WriteLine("共 {0} 首待播放", List.Count)
-    End Sub
+            Console.WriteLine("=====已点歌曲=====")
+            Dim i As Integer = 1
+            For Each Record As EasyKBookRecord In List
+                With Record
+                    Console.WriteLine("#{0}  {1} (ID:{2} Content:{3})", i, .Title, .Id, .Content)
+                    Console.WriteLine("来源: {0} 播放方式: {1}", .Order, If(.Type = EasyKType.Bilibili, "bilibili", "本地"))
+                End With
 
-End Class
+                i += 1
+            Next
+            Console.WriteLine("共 {0} 首待播放", List.Count)
+        End Sub
+
+    End Class
+
+End Namespace

@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.0.0 最速先行体验版🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/Release)
+## 🌟当前版本🌟 ➡️ [✌v1.0.1🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/Release)
 
 ## 为什么要做这个
 
@@ -30,7 +30,9 @@
 
 ## TODO
 
-- [ ] 适配音乐软件（解决只有音频流时候播放黑屏的问题）
+- [ ] 增加歌词时间偏移功能
+
+- [ ] 适配更多音乐软件
 
 - [ ] 尝试解决CEFSharp登录问题
 
@@ -56,15 +58,19 @@
 
 ## 如何编译
 
-1. 编译EasyK主程序
+1. 编译[内置音乐播放器](https://github.com/li-yuan-fang/easyk-musicbox/)为静态页面
 
-2. 复制[**CefSharp.H264.x64**](https://www.nuget.org/packages/CefSharp.H264.x64/109.1.110)到输出目录并替换（可参考[这篇](https://www.cnblogs.com/wintertone/p/18416085)）
+2. 将编译好的播放器静态页面复制到主程序源代码目录下的```wwwroot/dlna```目录
 
-3. 编译[前端页面](https://github.com/li-yuan-fang/easyk-frontend/)为静态页面
+3. 编译EasyK主程序
 
-4. 在输出目录创建子目录**wwwroot**，并将编译好的前端页面复制进去
+4. 复制[**CefSharp.H264**](https://www.nuget.org/packages/CefSharp.H264.x64/109.1.110)到输出目录并替换（可参考[这篇](https://www.cnblogs.com/wintertone/p/18416085)）
 
-5. Enjoy
+5. 编译[前端页面](https://github.com/li-yuan-fang/easyk-frontend/)为静态页面
+
+6. 在输出目录创建子目录**wwwroot**，并将编译好的前端页面复制进去
+
+7. Enjoy
 
 ## 参考了这些
 
@@ -73,5 +79,3 @@
 [Universal Plug and Play Device Architecture](https://upnp.org/specs/arch/UPnP-arch-DeviceArchitecture-v1.1.pdf)
 
 **还有很多零星的参考资料，太多了没办法一一列举见谅**
-
-

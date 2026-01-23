@@ -5,6 +5,7 @@ Imports CefSharp
 Imports CefSharp.WinForms
 Imports EasyK.DLNA.MusicProvider
 Imports LibVLCSharp.Shared
+Imports Newtonsoft.Json
 
 Public Class FrmMain
 
@@ -32,7 +33,7 @@ Public Class FrmMain
     ''' <returns></returns>
     Public ReadOnly Property Playing As Boolean
         Get
-            Return Setuped AndAlso (Browser_Playing OrElse VLCPlayer.MediaPlayer.IsPlaying)
+            Return Setuped AndAlso VLCPlayer.MediaPlayer.IsPlaying
         End Get
     End Property
 
@@ -51,6 +52,16 @@ Public Class FrmMain
     End Property
 
     ''' <summary>
+    ''' DLNA加载模式
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property DLNALoading As Boolean
+        Get
+            Return DLNA_Loading
+        End Get
+    End Property
+
+    ''' <summary>
     ''' 获取或设置播放速度
     ''' </summary>
     ''' <returns></returns>
@@ -64,15 +75,15 @@ Public Class FrmMain
         End Set
     End Property
 
-    Private _Duration As Long = 0
+    Private _Duration As Double = 0
 
     ''' <summary>
     ''' 获取时长
     ''' </summary>
     ''' <returns></returns>
-    Public ReadOnly Property Duration As Long
+    Public ReadOnly Property Duration As Double
         Get
-            Return _Duration
+            Return Math.Max(_Duration, 0)
         End Get
     End Property
 
@@ -101,6 +112,9 @@ Public Class FrmMain
 
     'DLNA初次等待标志
     Private DLNA_Waiting As Boolean = True
+
+    'DLNA加载标志
+    Private DLNA_Loading As Boolean = True
 
     'DLNA音频流模式标志
     Private DLNA_Music As Boolean = False
@@ -168,39 +182,6 @@ Public Class FrmMain
 
         Public Sub queryState()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
-
-            _Base.UpdateDLNAMusicState()
-        End Sub
-
-        Public Sub queryMusic()
-            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
-
-            Dim Music As DLNAMusicAttribute = DLNAMusicProviders.ParseMusicAttribute(_Base.DLNA_Music_Meta)
-            If Music Is Nothing Then Return
-
-            Task.Run(Sub()
-                         With _Base
-                             Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(.DLNA_Music_Meta)
-
-                             While Not .Browser_Loaded
-                                 Threading.Thread.Sleep(10)
-                             End While
-
-                             Try
-                                 .Invoke(Sub()
-                                             .Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateMusicScript(Music))
-
-                                             If Not String.IsNullOrEmpty(Lyric) Then
-                                                 .Browser.EvaluateScriptAsync(Lyric)
-                                             End If
-                                         End Sub)
-                             Catch ex As Exception
-                                 If .K.Settings.Settings.DebugMode Then
-                                     Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
-                                 End If
-                             End Try
-                         End With
-                     End Sub)
 
             _Base.UpdateDLNAMusicState()
         End Sub
@@ -333,11 +314,6 @@ Public Class FrmMain
             .Dispose()
         End With
 
-        With Browser
-            If .IsBrowserInitialized Then .GetBrowser().CloseBrowser(True)
-            .Dispose()
-        End With
-
         With K
             RemoveHandler .OnPlayerPause, AddressOf OnPlayerPause
             RemoveHandler .OnPlayerPlay, AddressOf OnPlayerPlay
@@ -352,6 +328,95 @@ Public Class FrmMain
         K.Play()
     End Sub
 
+    '更新内置音乐播放器信息
+    Private Sub UpdateDLNAMusic()
+        Task.Run(Sub()
+                     '获取属性
+                     Dim Attribute = DLNAMusicProviders.ParseMusicAttribute(DLNA_Music_Meta)
+                     If Attribute Is Nothing Then Return
+
+                     '调用歌词更新
+                     UpdateLyrics()
+                     UpdateLyricColor(Attribute)
+
+                     '生成音乐信息脚本
+                     Dim Current = K.GetCurrent()
+                     Dim DefaultTitle As String = If(Current Is Nothing, vbNullString, Current.Title)
+
+                     Dim MusicScript As String = DLNAMusicProviders.GenerateUpdateMusicScript(Attribute, DefaultTitle)
+
+                     '等待
+                     While Not Browser_Loaded
+                         Threading.Thread.Sleep(10)
+                     End While
+
+                     '执行脚本
+                     Try
+                         Invoke(Sub() Browser.EvaluateScriptAsync(MusicScript))
+                     Catch ex As Exception
+                         If K.Settings.Settings.DebugMode Then
+                             Console.WriteLine("DLNA音乐模式获取音乐信息出错 - {0}", ex.Message)
+                         End If
+                     End Try
+                 End Sub)
+    End Sub
+
+    Private Sub UpdateLyrics()
+        Task.Run(Sub()
+                     Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(DLNA_Music_Meta)
+                     If String.IsNullOrEmpty(Lyric) Then
+                         If K.Settings.Settings.DebugMode Then Console.WriteLine("DLNA音乐模式无法获取歌词")
+                         Return
+                     End If
+
+                     '等待
+                     While Not Browser_Loaded
+                         Threading.Thread.Sleep(10)
+                     End While
+
+                     '执行脚本
+                     Try
+                         Invoke(Sub() Browser.EvaluateScriptAsync(Lyric))
+                     Catch ex As Exception
+                         If K.Settings.Settings.DebugMode Then
+                             Console.WriteLine("DLNA音乐模式获取歌词出错 - {0}", ex.Message)
+                         End If
+                     End Try
+                 End Sub)
+    End Sub
+
+    Private Sub UpdateLyricColor(Attribute As DLNAMusicAttribute)
+        If Not K.Settings.Settings.DLNA.LyricColorful Then Return
+
+        Task.Run(Sub()
+                     Dim LyricColor As String = DLNAMusicProviders.GenerateUpdateLyricColorScript(
+                                DLNA_Music_Meta,
+                                Attribute,
+                                K.Settings.Settings.DLNA.LyricHighlight
+                            )
+                     If String.IsNullOrEmpty(LyricColor) Then
+                         If K.Settings.Settings.DebugMode Then Console.WriteLine("DLNA音乐模式无法获取歌词颜色")
+                         Return
+                     End If
+
+                     '等待
+                     While Not Browser_Loaded
+                         Threading.Thread.Sleep(10)
+                     End While
+
+                     '执行脚本
+                     Try
+                         Invoke(Sub() Browser.EvaluateScriptAsync(LyricColor))
+                     Catch ex As Exception
+                         If K.Settings.Settings.DebugMode Then
+                             Console.WriteLine("DLNA音乐模式获取歌词颜色出错 - {0}", ex.Message)
+                         End If
+                     End Try
+
+                 End Sub)
+    End Sub
+
+    '更新内置音乐播放器状态
     Private Sub UpdateDLNAMusicState()
         If Not DLNA_Music Then Return
 
@@ -363,7 +428,7 @@ Public Class FrmMain
                      If IsDisposed Then Return
 
                      Try
-                         Invoke(Sub() Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(VLCPlayer.MediaPlayer.IsPlaying, Rate, Position)))
+                         Invoke(Sub() Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateStateScript(Playing, Rate, Position)))
                      Catch ex As Exception
                          If K.Settings.Settings.DebugMode Then
                              Console.WriteLine("DLNA音乐模式获取播放状态出错 - {0}", ex.Message)
@@ -376,7 +441,11 @@ Public Class FrmMain
         If Browser_Playing AndAlso Not Browser_Loaded AndAlso e.Frame.IsMain Then
             Browser_Loaded = True
 
-            If Not DLNA_Music Then
+            If DLNA_Music Then
+                'DLNA音乐模式
+                UpdateDLNAMusicState()
+            Else
+                'B站模式
                 With e.Browser
                     '全屏&进度检查
                     .EvaluateScriptAsync("let interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].firstChild.data === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].firstChild.data) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 1000);")
@@ -390,6 +459,62 @@ Public Class FrmMain
                 End With
             End If
         End If
+    End Sub
+
+    '尝试先下载VLC无法直接解析的远程资源
+    Private Sub TryDownloadFirst(Url As String)
+        If Not NetUtils.IsURL(Url) Then Return
+
+        Console.WriteLine("远程资源不可用 尝试先行下载...")
+        With VLCPlayer.MediaPlayer
+            RemoveHandler .Stopped, AddressOf VLC_Stopped
+            BeginInvoke(Sub() .Stop())
+
+            '生成可用文件名
+            Dim TempFolder As String = IO.Path.Combine(Application.StartupPath, K.Settings.Settings.TempFolder)
+            Dim FileName As String = vbNullString
+            While String.IsNullOrEmpty(FileName) OrElse IO.File.Exists(IO.Path.Combine(TempFolder, FileName))
+                FileName = Guid.NewGuid().ToString()
+            End While
+
+            FileName = IO.Path.Combine(TempFolder, FileName)
+
+            Try
+                Using wc As New Net.WebClient()
+                    wc.DownloadFile(Url, FileName)
+                End Using
+
+                If Not IO.File.Exists(FileName) Then
+                    Throw New DataException("获取远程资源失败")
+                End If
+
+                If .Media IsNot Nothing Then .Media.Dispose()
+
+                .Media = New Media(VLCLib, FileName)
+                .Media.Parse().Wait()
+
+                _Duration = .Media.Duration / 1000
+                If _Duration <= 0 Then
+                    Throw New DataException("无法解析的资源")
+                End If
+
+                .Play()
+
+                DLNA_Loading = False
+                If DLNA_Music Then UpdateDLNAMusicState()
+            Catch ex As Exception
+                Console.WriteLine("先行下载失败 - {0}", ex.Message)
+
+                Invoke(Sub()
+                           .Stop()
+                           VLCPlayer.Visible = False
+                           If .Media IsNot Nothing Then .Media.Dispose()
+                       End Sub)
+                K.Push()
+            End Try
+
+            AddHandler .Stopped, AddressOf VLC_Stopped
+        End With
     End Sub
 
     Private Sub VLC_Stopped(sender As Object, e As EventArgs)
@@ -481,6 +606,11 @@ Public Class FrmMain
                            End Sub)
 
                     UpdateDLNAMusicState()
+                ElseIf Content = "Refresh" Then
+                    '刷新DLNA音乐播放器信息
+                    If Not DLNA_Music Then Return
+
+                    UpdateDLNAMusic()
                 ElseIf Content.StartsWith("@") Then
                     '设置资源
                     DLNA_Waiting = False
@@ -489,8 +619,23 @@ Public Class FrmMain
                                With VLCPlayer
                                    With .MediaPlayer
                                        .Media = New Media(VLCLib, Content.Substring(1), FromType.FromLocation)
-                                       .Media.Parse(MediaParseOptions.ParseLocal Or MediaParseOptions.ParseNetwork) _
-                                            .ContinueWith(Sub() _Duration = .Media.Duration / 1000)
+                                       Dim ParseTask = .Media.Parse(MediaParseOptions.ParseLocal Or MediaParseOptions.ParseNetwork)
+                                       ParseTask.ContinueWith(Sub()
+                                                                  _Duration = .Media.Duration / 1000D
+
+                                                                  If _Duration <= 0 Then
+                                                                      '主要是网易云已缓存的flac资源
+                                                                      '网易云会通过app局域网传输资源
+                                                                      '但是Content-Type: audio/mpeg
+                                                                      '而不是audio/flac
+                                                                      '导致VLC无法正常识别
+
+                                                                      '无法识别资源 尝试先下载
+                                                                      TryDownloadFirst(Content.Substring(1))
+                                                                  Else
+                                                                      DLNA_Loading = False
+                                                                  End If
+                                                              End Sub)
                                    End With
 
                                    If Not DLNA_Music Then .Visible = True
@@ -503,6 +648,10 @@ Public Class FrmMain
                     DLNA_Music = True
                     DLNA_Music_Meta = Content
                     Browser_Playing = True
+                    Browser_Loaded = False
+
+                    '拉取音乐信息
+                    UpdateDLNAMusic()
 
                     Invoke(Sub()
                                VLCPlayer.Visible = False
@@ -518,6 +667,7 @@ Public Class FrmMain
 
     Private Sub OnPlayerTerminated()
         DLNA_Waiting = True
+        DLNA_Loading = True
         DLNA_Music = False
         DLNA_Music_Meta = vbNullString
 

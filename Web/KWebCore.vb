@@ -6,17 +6,30 @@ Imports HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.Http
 Public Class KWebCore
     Implements IDisposable
 
+    Private Enum ServerErrorHandler
+        None
+        BannedHyperV
+        SearchPort
+    End Enum
+
     Private Const APIPrefix As String = "/api"
 
     Private ReadOnly K As EasyK
 
-    Private ReadOnly Server As WebServer
+    Private WithEvents Server As WebServer
 
     Private ReadOnly Uploader As UploadManager
 
     Private Shared ContentRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d]+(?:\?p=\d+)?$")
 
     Private ReadOnly Settings As SettingContainer
+
+    Private Handler As ServerErrorHandler
+
+    ''' <summary>
+    ''' 发生无法处理的错误
+    ''' </summary>
+    Public Event OnUncaughtError()
 
     ''' <summary>
     ''' 初始化
@@ -32,7 +45,101 @@ Public Class KWebCore
 
         Uploader = New UploadManager(Settings)
 
+        Handler = ServerErrorHandler.None
         Server = New WebServer(Settings.Settings.Web.Port, Settings.Settings.DebugMode)
+        AddHandler Server.OnErrorTrigger, AddressOf OnServerError
+    End Sub
+
+    '自动处理服务器错误
+    Private Sub OnServerError(Exceptions As Exception())
+        For Each e In Exceptions
+            If e.GetType() = GetType(Net.Sockets.SocketException) AndAlso e.HResult = -2147467259 Then
+                '端口绑定错误
+                If Settings.Settings.Web.AutoDebug Then
+                    HandleServerSocketError()
+                    Return
+                Else
+                    Console.WriteLine("服务器错误自动除错已关闭 无法自动除错")
+                End If
+            End If
+
+            Console.WriteLine("服务器错误 #{0}: {1}(0x{2})", e.GetType().FullName, e.Message, e.HResult.ToString("x2"))
+        Next
+
+        Console.WriteLine("检测到无法处理的服务器错误 需要人工介入处理")
+        RaiseEvent OnUncaughtError()
+    End Sub
+
+    ''' <summary>
+    ''' 重启HTTP服务器
+    ''' </summary>
+    Public Sub RestartServer()
+        RemoveHandler Server.OnErrorTrigger, AddressOf OnServerError
+        Server.Dispose()
+        Server = New WebServer(Settings.Settings.Web.Port, Settings.Settings.DebugMode)
+        AddHandler Server.OnErrorTrigger, AddressOf OnServerError
+    End Sub
+
+    '处理端口占用错误
+    Private Sub HandleServerSocketError()
+        RemoveHandler Server.OnErrorTrigger, AddressOf OnServerError
+
+        Select Case Handler
+            Case ServerErrorHandler.None
+                Console.WriteLine("HTTP服务器端口被占用")
+                Console.WriteLine("正在尝试调整Hyper-V端口占用...")
+
+                '调整Hyper-V端口占用
+                Shell("netsh int ipv4 set dynamic tcp start=49152 num=16384", AppWinStyle.Hide, True)
+                Shell("netsh int ipv4 set dynamic tcp start=49152 num=16384", AppWinStyle.Hide, True)
+
+                Console.WriteLine("Hyper-V端口占用调整完成")
+                Console.WriteLine("正在尝试重启WinNAT服务...")
+
+                '重启WinNAT服务
+                Shell("net stop winnat", AppWinStyle.Hide, True)
+                Shell("net start winnat", AppWinStyle.Hide, True)
+
+                Console.WriteLine("重启WinNAT服务完成")
+                Console.WriteLine("正在尝试重启HTTP服务端...")
+
+                '更新进度
+                Handler = ServerErrorHandler.BannedHyperV
+
+                '重启服务器
+                RestartServer()
+            Case ServerErrorHandler.BannedHyperV
+                Console.WriteLine("HTTP服务器端口仍被占用")
+                Console.WriteLine("正在尝试自动查找可用端口...")
+
+                Dim Used = NetUtils.GetUsedTcpPorts()
+                With Settings.Settings.Web
+                    For i = .AutoPortMin To .AutoPortMax
+                        If Not Used.Contains(i) Then
+                            '更新配置
+                            .Port = i
+
+                            '更新进度
+                            Handler = ServerErrorHandler.SearchPort
+
+                            Console.WriteLine("HTTP服务器端口更改为 {0}", i)
+                            Console.WriteLine("正在尝试重启HTTP服务端...")
+
+                            '重启服务器
+                            RestartServer()
+
+                            Return
+                        End If
+                    Next
+                End With
+
+                Console.WriteLine("未在配置的范围内找到可用端口")
+                Console.WriteLine("无法处理服务器错误 需要人工介入处理")
+                RaiseEvent OnUncaughtError()
+            Case Else
+                Console.WriteLine("无法处理服务器错误 需要人工介入处理")
+                RaiseEvent OnUncaughtError()
+        End Select
     End Sub
 
     ''' <summary>
@@ -47,8 +154,12 @@ Public Class KWebCore
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
+        With Server
+            RemoveHandler .OnErrorTrigger, AddressOf OnServerError
+            .Dispose()
+        End With
+
         Uploader.Dispose()
-        Server.Dispose()
     End Sub
 
     <WebApi("/current", HttpMethod.Get)>
@@ -166,6 +277,29 @@ Public Class KWebCore
         K.UpdateVolume(DirectCast(v.VolumeAction, FormUtils.VolumeAction), v.VolumeValue)
 
         Return WebStartup.RespondJson(ctx, "{""success"":true}")
+    End Function
+
+    <WebApi("/plugin")>
+    Private Function Plugin(ctx As HttpContext) As Task
+        Select Case ctx.Request.Method.ToUpper()
+            Case "GET"
+                Return WebStartup.RespondJson(ctx, JsonConvert.SerializeObject(Settings.Settings.PluginCommon))
+            Case "POST"
+                Dim Request As String = WebStartup.GetRequestBody(ctx)
+
+                Dim p As RequestPlugin = JsonConvert.DeserializeObject(Of RequestPlugin)(Request)
+                If p Is Nothing OrElse Not Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
+                    Return WebStartup.RespondStatusOnly(ctx)
+                End If
+
+                Settings.Settings.PluginCommon(p.Id) = p.Value
+                DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
+                K.TriggerMirrorPlay("Refresh")
+
+                Return WebStartup.RespondJson(ctx, JsonConvert.SerializeObject(Settings.Settings.PluginCommon))
+        End Select
+
+        Return WebStartup.RespondStatusOnly(ctx)
     End Function
 
 End Class

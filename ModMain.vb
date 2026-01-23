@@ -1,8 +1,11 @@
-﻿Imports System.Windows.Forms
+﻿Imports System.Net
+Imports System.Net.NetworkInformation
+Imports System.Windows.Forms
+Imports Newtonsoft.Json
 
 Module ModMain
 
-    Public WithEvents Commands As CommandParser
+    Public WithEvents Commands As Commands.CommandParser
 
     Public KCore As EasyK
 
@@ -25,15 +28,16 @@ Module ModMain
 
         '运行网络服务器
         WebServer = New KWebCore(KCore, Settings)
+        AddHandler WebServer.OnUncaughtError, AddressOf ExitApplication
 
         '加载DLNA插件
-        DLNA.MusicProvider.DLNAMusicProviders.LoadProviders()
+        DLNA.MusicProvider.DLNAMusicProviders.LoadProviders(Settings)
 
         '运行DLNA服务器
         DLNAServer = New DLNA.DLNA(KCore, Settings)
 
         '运行指令系统
-        Commands = New CommandParser(KCore, WebServer, Settings)
+        Commands = New Commands.CommandParser(KCore, WebServer, Settings)
         With Commands
             AddHandler .OnExit, AddressOf ExitApplication
             Task.Run(Sub() .Run())
@@ -53,8 +57,12 @@ Module ModMain
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
+        '解除事件关联
+        RemoveHandler Commands.OnExit, AddressOf ExitApplication
+        RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
+
         DLNAServer.Dispose()
-        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders()
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
         WebServer.Dispose()
         KCore.Dispose()
 

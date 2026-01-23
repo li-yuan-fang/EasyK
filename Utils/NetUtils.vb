@@ -1,8 +1,11 @@
 ﻿Imports System.Management
+Imports System.Net
 Imports System.Net.NetworkInformation
-Imports CefSharp.DevTools.CSS
+Imports System.Text.RegularExpressions
 
 Public Class NetUtils
+
+    Private Shared ReadOnly UrlRegex As New Regex("^https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$")
 
     Private Shared ReadOnly ValidDevices As String() = {"USB", "PCI", "BTH"}
 
@@ -117,6 +120,40 @@ Public Class NetUtils
         End Try
 
         Return Nothing
+    End Function
+
+    ''' <summary>
+    ''' 获取已占用TCP端口
+    ''' </summary>
+    ''' <returns></returns>
+    Public Shared Function GetUsedTcpPorts() As HashSet(Of Integer)
+        Dim usedPorts As New HashSet(Of Integer)()
+        Dim ipProps As IPGlobalProperties = IPGlobalProperties.GetIPGlobalProperties()
+
+        ' 获取所有监听中的TCP连接（已占用端口）
+        Dim tcpListeners = ipProps.GetActiveTcpListeners()
+        For Each endpoint As IPEndPoint In tcpListeners
+            usedPorts.Add(endpoint.Port)
+        Next
+
+        ' 获取所有已建立的TCP连接（补充占用端口）
+        Dim tcpConnections = ipProps.GetActiveTcpConnections()
+        For Each conn As TcpConnectionInformation In tcpConnections
+            If conn.LocalEndPoint IsNot Nothing Then
+                usedPorts.Add(conn.LocalEndPoint.Port)
+            End If
+        Next
+
+        Return usedPorts
+    End Function
+
+    ''' <summary>
+    ''' 检测URL是否合法
+    ''' </summary>
+    ''' <param name="Url"></param>
+    ''' <returns></returns>
+    Public Shared Function IsURL(Url As String) As Boolean
+        Return UrlRegex.IsMatch(Url)
     End Function
 
 End Class

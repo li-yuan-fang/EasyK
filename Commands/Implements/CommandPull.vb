@@ -1,21 +1,18 @@
 ﻿Namespace Commands
 
-    Public Class CommandBili
+    Public Class CommandPull
         Inherits Command
 
         Private ReadOnly K As EasyK
 
         Public Sub New(K As EasyK)
-            MyBase.New("bili", "bili - 登录bilibili", CommandType.System)
+            MyBase.New("pull", "pull - 重新拉取音乐信息(仅限DLNA音乐模式)", CommandType.System)
             Me.K = K
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            Using Login As New FrmLogin("https://www.bilibili.com/")
-                Login.ShowDialog()
-            End Using
-
-            K.Reset(False)
+            K.TriggerMirrorPlay("Refresh")
+            Console.WriteLine("刷新指令已发送")
         End Sub
 
     End Class

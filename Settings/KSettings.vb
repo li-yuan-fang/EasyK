@@ -19,6 +19,16 @@ Public Class KSettings
     <JsonProperty("dlna")>
     Public Property DLNA As DLNASettings = New DLNASettings()
 
+    <JsonProperty("plugins")>
+    Public Property Plugins As Dictionary(Of String, String) = New Dictionary(Of String, String)
+
+    <JsonProperty("plugin_common")>
+    Public Property PluginCommon As Dictionary(Of String, Object) = New Dictionary(Of String, Object) From {
+        {"kana", True},
+        {"translated", True},
+        {"roma", False}
+    }
+
     <JsonProperty("clean_exit")>
     Public Property CleanOnExit As Boolean = True
 
