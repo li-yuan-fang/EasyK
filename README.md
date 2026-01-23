@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.0.1🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/Release)
+## 🌟当前版本🌟 ➡️ [✌v1.0.1🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.0.1)
 
 ## 为什么要做这个
 
