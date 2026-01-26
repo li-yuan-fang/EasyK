@@ -130,21 +130,21 @@ Namespace DLNA.MusicProvider
             Dim Doc As XDocument = XmlUtils.SafeParseXml(Meta)
             If Doc Is Nothing Then Return False
 
-            Dim Elements = From el In Doc.Descendants(MetaNamespace + "res")
+            Dim Elements = From el In Doc.Descendants(UpnpNamespace + "class")
                            Where el.Parent.Name = MetaNamespace + "item"
                            Select el
+
+            For Each c In Elements
+                If Not String.IsNullOrEmpty(c.Value) AndAlso c.Value.StartsWith(ClassAudioPrefix) Then Return True
+            Next
+
+            Elements = From el In Doc.Descendants(MetaNamespace + "res")
+                       Where el.Parent.Name = MetaNamespace + "item"
+                       Select el
 
             For Each Resource In Elements
                 Dim pi = Resource.Attribute("protocolInfo")
                 If pi IsNot Nothing AndAlso pi.Value.StartsWith(ResAudioPrefix) Then Return True
-            Next
-
-            Elements = From el In Doc.Descendants(UpnpNamespace + "class")
-                       Where el.Parent.Name = MetaNamespace + "item"
-                       Select el
-
-            For Each c In Elements
-                If Not String.IsNullOrEmpty(c.Value) AndAlso c.Value.StartsWith(ClassAudioPrefix) Then Return True
             Next
 
             Return False
