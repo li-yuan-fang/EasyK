@@ -1,6 +1,28 @@
 ﻿Imports System.Drawing
+Imports System.Runtime.InteropServices
 
 Public Class ColorUtils
+
+    Public Class ColorSchema
+
+        ''' <summary>
+        ''' 获取前景颜色
+        ''' </summary>
+        ''' <returns></returns>
+        Public ReadOnly Property ForeColor As Color
+
+        ''' <summary>
+        ''' 获取背景遮罩
+        ''' </summary>
+        ''' <returns></returns>
+        Public ReadOnly Property BackAlpha As Double
+
+        Friend Sub New(Fore As Color, Back As Double)
+            ForeColor = Fore
+            BackAlpha = Back
+        End Sub
+
+    End Class
 
     ' 高饱和度阈值（0-1，可根据需求调整，0.5 代表只保留饱和度≥50%的像素）
     Private Const MinSaturation As Double = 0.6
@@ -8,72 +30,95 @@ Public Class ColorUtils
     Private Const MinLightness As Double = 0.2
     Private Const MaxLightness As Double = 0.7
 
+    '亮度要求
+    Private Const LuminanceThreshold As Double = 0.1
+    '背景遮罩透明度范围
+    Private Const MinAlpha As Double = 0.2
+    Private Const MaxAlpha As Double = 0.9
+
+    Private Shared Function CalcLuminance(R As Byte, G As Byte, B As Byte) As Double
+        Return (0.299 * R + 0.587 * G + 0.114 * B) / Byte.MaxValue
+    End Function
+
+    Private Shared Function CalcBackAlpha(Luminance As Double, Fore As Color) As Double
+        Dim fl = CalcLuminance(Fore.R, Fore.G, Fore.B)
+        If fl - Luminance > LuminanceThreshold Then Return MinAlpha
+
+        Dim a As Double = 1 - (fl - LuminanceThreshold) / Luminance
+        Return Math.Max(Math.Min(a, MaxAlpha), MinAlpha)
+    End Function
+
     ''' <summary>
     ''' 计算图片的高饱和度代表色
     ''' </summary>
     ''' <param name="image">图片</param>
-    ''' <returns>高饱和度代表色（Color类型），无符合条件像素时返回透明色</returns>
-    Public Shared Function GetHighSaturationDominantColor(image As Image) As Color
-        Try
-            Using bmp As New Bitmap(image)
-                Dim rect As New Rectangle(0, 0, bmp.Width, bmp.Height)
-                Dim bmpData = bmp.LockBits(rect, Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat)
-                Dim stride As Integer = bmpData.Stride
-                Dim pixelBuffer As Byte() = New Byte(stride * bmp.Height - 1) {}
-                System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, pixelBuffer, 0, pixelBuffer.Length)
-                bmp.UnlockBits(bmpData)
+    ''' <param name="highlight">校正颜色</param>
+    ''' <returns>色彩方案</returns>
+    ''' <exception cref="Exception">生成失败</exception>
+    Public Shared Function CalcColorSchemaFromImage(image As Image, highlight As Boolean) As ColorSchema
+        Using bmp As New Bitmap(image)
+            Dim rect As New Rectangle(0, 0, bmp.Width, bmp.Height)
+            Dim bmpData = bmp.LockBits(rect, Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat)
+            Dim stride As Integer = bmpData.Stride
+            Dim pixelBuffer As Byte() = New Byte(stride * bmp.Height - 1) {}
 
-                ' 统计高饱和度像素的色相出现次数
-                Dim hueCount As New Dictionary(Of Integer, Integer)()
-                Dim bytesPerPixel As Integer = If(bmp.PixelFormat = Imaging.PixelFormat.Format32bppArgb, 4, 3)
+            Marshal.Copy(bmpData.Scan0, pixelBuffer, 0, pixelBuffer.Length)
+            bmp.UnlockBits(bmpData)
 
-                For y As Integer = 0 To bmp.Height - 1
-                    For x As Integer = 0 To bmp.Width - 1
-                        ' 计算像素在缓冲区中的位置
-                        Dim pos As Integer = y * stride + x * bytesPerPixel
-                        ' 提取 BGR 通道（注意：Bitmap 存储顺序是 BGR 而非 RGB）
-                        Dim b As Byte = pixelBuffer(pos)
-                        Dim g As Byte = pixelBuffer(pos + 1)
-                        Dim r As Byte = pixelBuffer(pos + 2)
+            ' 统计高饱和度像素的色相出现次数
+            Dim hueCount As New Dictionary(Of Integer, Integer)
+            Dim bytesPerPixel As Integer = If(bmp.PixelFormat = Imaging.PixelFormat.Format32bppArgb, 4, 3)
 
-                        ' 转换为 HSL
-                        Dim h, s, l As Double
-                        RgbToHsl(r, g, b, h, s, l)
+            Dim Luminance As Double = 0
 
-                        ' 过滤高饱和度、适中明度的像素
-                        If s >= MinSaturation AndAlso l >= MinLightness AndAlso l <= MaxLightness Then
-                            ' 将色相取整（0-359），减少聚类维度
-                            Dim hueInt As Integer = CInt(Math.Round(h)) Mod 360
-                            If hueCount.ContainsKey(hueInt) Then
-                                hueCount(hueInt) += 1
-                            Else
-                                hueCount(hueInt) = 1
-                            End If
+            For y As Integer = 0 To bmp.Height - 1
+                For x As Integer = 0 To bmp.Width - 1
+                    ' 计算像素在缓冲区中的位置
+                    Dim pos As Integer = y * stride + x * bytesPerPixel
+                    ' 提取 BGR 通道（注意：Bitmap 存储顺序是 BGR 而非 RGB）
+                    Dim b As Byte = pixelBuffer(pos)
+                    Dim g As Byte = pixelBuffer(pos + 1)
+                    Dim r As Byte = pixelBuffer(pos + 2)
+
+                    Luminance += CalcLuminance(r, g, b)
+
+                    ' 转换为 HSL
+                    Dim h, s, l As Double
+                    RgbToHsl(r, g, b, h, s, l)
+
+                    ' 过滤高饱和度、适中明度的像素
+                    If s >= MinSaturation AndAlso l >= MinLightness AndAlso l <= MaxLightness Then
+                        ' 将色相取整（0-359），减少聚类维度
+                        Dim hueInt As Integer = CInt(Math.Round(h)) Mod 360
+                        If hueCount.ContainsKey(hueInt) Then
+                            hueCount(hueInt) += 1
+                        Else
+                            hueCount(hueInt) = 1
                         End If
-                    Next
-                Next
-
-                ' 找出出现次数最多的色相
-                If hueCount.Count = 0 Then
-                    Return Color.Transparent ' 无符合条件的高饱和度像素
-                End If
-
-                Dim maxCount As Integer = 0
-                Dim dominantHue As Integer = 0
-                For Each kvp In hueCount
-                    If kvp.Value > maxCount Then
-                        maxCount = kvp.Value
-                        dominantHue = kvp.Key
                     End If
                 Next
+            Next
 
-                ' 将最频色相转回 RGB（饱和度取0.8，明度取0.5，保证鲜艳度）
-                Return HslToRgb(dominantHue, 0.8, 0.5)
-            End Using
-        Catch ex As Exception
-            Console.WriteLine("计算失败：" & ex.Message)
-            Return Color.Transparent
-        End Try
+            Luminance /= bmp.Width * bmp.Height
+
+            ' 找出出现次数最多的色相
+            If hueCount.Count = 0 Then Throw New Exception("找不到符合条件的颜色")
+
+            Dim maxCount As Integer = 0
+            Dim dominantHue As Integer = 0
+            For Each kvp In hueCount
+                If kvp.Value > maxCount Then
+                    maxCount = kvp.Value
+                    dominantHue = kvp.Key
+                End If
+            Next
+
+            ' 将最频色相转回 RGB（饱和度取0.8，明度取0.5，保证鲜艳度）
+            Dim Fore = HslToRgb(dominantHue, 0.8, 0.5)
+            If highlight Then Fore = HighlightColor(Fore)
+
+            Return New ColorSchema(Fore, CalcBackAlpha(Luminance, Fore))
+        End Using
     End Function
 
     ''' <summary>

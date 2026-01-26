@@ -175,12 +175,10 @@ Namespace DLNA.MusicProvider
             Try
                 Using ms As New IO.MemoryStream(Buffer)
                     Using img As Image = Image.FromStream(ms, True, True)
-                        Dim c As Color = ColorUtils.GetHighSaturationDominantColor(img)
-                        If c = Color.Transparent Then Throw New ArgumentException("无法解析图像颜色")
+                        Dim cs = ColorUtils.CalcColorSchemaFromImage(img, Highlight)
 
-                        If Highlight Then c = ColorUtils.HighlightColor(c)
-                        With c
-                            Return $"{ .R}, { .G}, { .B}"
+                        With cs
+                            Return $"{ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .BackAlpha.ToString("0.000")}"
                         End With
                     End Using
                 End Using

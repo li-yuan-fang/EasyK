@@ -343,11 +343,23 @@ Public Class FrmMain
                      Dim Current = K.GetCurrent()
                      Dim DefaultTitle As String = If(Current Is Nothing, vbNullString, Current.Title)
 
-                     Dim MusicScript As String = DLNAMusicProviders.GenerateUpdateMusicScript(Attribute, DefaultTitle)
+                     Dim DefaultDuration As Long = 0
+                     If Attribute.Duration <= 0 Then
+                         While DLNA_Loading
+                             Threading.Thread.Sleep(5)
+                             If Not DLNA_Music Then Return
+                         End While
+
+                         DefaultDuration = _Duration
+                     End If
+
+                     Dim MusicScript As String =
+                        DLNAMusicProviders.GenerateUpdateMusicScript(Attribute, DefaultTitle, DefaultDuration)
 
                      '等待
                      While Not Browser_Loaded
-                         Threading.Thread.Sleep(10)
+                         Threading.Thread.Sleep(5)
+                         If Not DLNA_Music Then Return
                      End While
 
                      '执行脚本
@@ -371,7 +383,8 @@ Public Class FrmMain
 
                      '等待
                      While Not Browser_Loaded
-                         Threading.Thread.Sleep(10)
+                         Threading.Thread.Sleep(5)
+                         If Not DLNA_Music Then Return
                      End While
 
                      '执行脚本
@@ -401,7 +414,8 @@ Public Class FrmMain
 
                      '等待
                      While Not Browser_Loaded
-                         Threading.Thread.Sleep(10)
+                         Threading.Thread.Sleep(5)
+                         If Not DLNA_Music Then Return
                      End While
 
                      '执行脚本
@@ -422,7 +436,8 @@ Public Class FrmMain
 
         Task.Run(Sub()
                      While Not Browser_Loaded
-                         Threading.Thread.Sleep(10)
+                         Threading.Thread.Sleep(5)
+                         If Not DLNA_Music Then Return
                      End While
 
                      If IsDisposed Then Return

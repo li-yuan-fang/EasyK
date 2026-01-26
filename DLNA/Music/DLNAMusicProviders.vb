@@ -15,7 +15,10 @@ Namespace DLNA.MusicProvider
         'DC命名空间
         Friend Shared ReadOnly DCNamespace As XNamespace = XNamespace.Get("http://purl.org/dc/elements/1.1/")
 
-        Private Const AudioPrefix As String = "http-get:*:audio/"
+        '音频流识别前缀
+        Private Const ResAudioPrefix As String = "http-get:*:audio/"
+
+        Private Const ClassAudioPrefix As String = "object.item.audioItem"
 
         Private Shared ReadOnly Providers As New List(Of DLNALyricProvider)
 
@@ -133,7 +136,15 @@ Namespace DLNA.MusicProvider
 
             For Each Resource In Elements
                 Dim pi = Resource.Attribute("protocolInfo")
-                If pi IsNot Nothing AndAlso pi.Value.StartsWith(AudioPrefix) Then Return True
+                If pi IsNot Nothing AndAlso pi.Value.StartsWith(ResAudioPrefix) Then Return True
+            Next
+
+            Elements = From el In Doc.Descendants(UpnpNamespace + "class")
+                       Where el.Parent.Name = MetaNamespace + "item"
+                       Select el
+
+            For Each c In Elements
+                If Not String.IsNullOrEmpty(c.Value) AndAlso c.Value.StartsWith(ClassAudioPrefix) Then Return True
             Next
 
             Return False
@@ -194,8 +205,11 @@ Namespace DLNA.MusicProvider
         ''' </summary>
         ''' <param name="Attribute">属性</param>
         ''' <param name="DefaultTitle">默认标题</param>
+        ''' <param name="DefaultDuration">默认时长</param>
         ''' <returns></returns>
-        Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute, DefaultTitle As String) As String
+        Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute,
+                                                         DefaultTitle As String,
+                                                         DefaultDuration As Long) As String
             Dim Builder As New StringBuilder()
             With Builder
                 Dim Title As String = If(String.IsNullOrEmpty(Attribute.Title), DefaultTitle, Attribute.Title)
@@ -206,7 +220,7 @@ Namespace DLNA.MusicProvider
                     .Append($"window.setAlbum(""{Attribute.Album.Replace("""", "\""")}"");")
                 End If
 
-                .Append($"window.setTotal({Attribute.Duration});")
+                .Append($"window.setTotal({If(Attribute.Duration > 0, Attribute.Duration, DefaultDuration)});")
             End With
             Return Builder.ToString()
         End Function
@@ -261,6 +275,7 @@ Namespace DLNA.MusicProvider
                     If Not .IsMatch(Meta) Then Continue For
 
                     Dim LyricColor = .GetLyricColor(Attritube, Highlight)
+                    Console.WriteLine("颜色 {0}", LyricColor)
                     If String.IsNullOrEmpty(LyricColor) Then Continue For
 
                     Return $"window.setLyricColor({LyricColor});"
