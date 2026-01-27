@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.0.1🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.0.1)
+## 🌟当前版本🌟 ➡️ [✌v1.0.2🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.0.2)
 
 ## 为什么要做这个
 
@@ -31,8 +31,6 @@
 ## TODO
 
 - [ ] 优化使用体验
-
-- [ ] 尝试解决CEFSharp登录问题
 
 - [ ] 增加歌词时间偏移功能
 
@@ -65,6 +63,8 @@
 3. 编译EasyK主程序
 
 4. 复制[**CefSharp.H264**](https://www.nuget.org/packages/CefSharp.H264.x64/109.1.110)到输出目录并替换（可参考[这篇](https://www.cnblogs.com/wintertone/p/18416085)）
+
+> 主分支CefSharp版本已升级到126.2，Win7特供版仍然使用109.1.110
 
 5. 编译[前端页面](https://github.com/li-yuan-fang/easyk-frontend/)为静态页面
 
