@@ -9,7 +9,7 @@ Imports System.Runtime.InteropServices
 '查看程序集特性的值
 
 <Assembly: AssemblyTitle("EasyK")>
-<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyDescription("Win7 特供版")>
 <Assembly: AssemblyCompany("li_yuan_fang")>
 <Assembly: AssemblyProduct("EasyK")>
 <Assembly: AssemblyCopyright("Copyright © li_yuan_fang 2025-2026")>

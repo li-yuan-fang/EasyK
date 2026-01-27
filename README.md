@@ -8,6 +8,10 @@
 
 **如果不是Win7系统请使用➡️**[**⭐主版本⭐**](https://github.com/li-yuan-fang/EasyK)
 
+## 不支持的功能
+
+- **❎登录状态保持**
+
 ## 如何编译
 
 1. 编译[内置音乐播放器](https://github.com/li-yuan-fang/easyk-musicbox/)为静态页面
