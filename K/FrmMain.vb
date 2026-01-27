@@ -463,14 +463,14 @@ Public Class FrmMain
                 'B站模式
                 With e.Browser
                     '全屏&进度检查
-                    .EvaluateScriptAsync("let interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].firstChild.data === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].firstChild.data) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 1000);")
+                    .EvaluateScriptAsync("const interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].firstChild.data === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].firstChild.data) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 100);")
                     '播完暂停
-                    .EvaluateScriptAsync("let interval2 = setInterval(() => document.getElementsByName('bui-radio1')?.forEach((item) => { if (item.value === '2') { item.click(); clearInterval(interval2); } }), 500);")
+                    .EvaluateScriptAsync("const interval2 = setInterval(() => document.getElementsByName('bui-radio1')?.forEach((item) => { if (item.value === '2') { item.click(); clearInterval(interval2); } }), 50);")
 
                     '关闭弹幕
-                    .EvaluateScriptAsync("let interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 500);")
+                    .EvaluateScriptAsync("const interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 50);")
                     '开启声音
-                    .EvaluateScriptAsync("let interval4 = setInterval(() => { let group = document.getElementsByClassName('bpx-player-ctrl-volume-icon'); if (group.length > 0) { if (group[0].style['display'] == 'none') { group[0].click(); setTimeout(() => easy_k.tryClick(), 500)} clearInterval(interval4); }  }, 500);")
+                    .EvaluateScriptAsync("const interval4 = setInterval(() => { let group = document.getElementsByClassName('bpx-player-ctrl-volume-icon'); if (group.length > 0) { if (group[0].style['display'] == 'none') { group[0].click(); setTimeout(() => easy_k.tryClick(), 500)} clearInterval(interval4); }  }, 50);")
                 End With
             End If
         End If
@@ -690,8 +690,8 @@ Public Class FrmMain
             Browser_Playing = False
             Invoke(Sub()
                        With Browser
+                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); window.location.href = 'http://easyk/';")
                            .Visible = False
-                           .LoadUrl("")
                        End With
                    End Sub)
         End If
