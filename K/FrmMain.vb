@@ -202,17 +202,7 @@ Public Class FrmMain
         BigFont = New Font(Font.FontFamily, 50, FontStyle.Bold)
 
         '初始化浏览器
-        Dim CachePath As String = IO.Path.Combine(Windows.Forms.Application.StartupPath, "cache")
-        If Not IO.Directory.Exists(CachePath) Then IO.Directory.CreateDirectory(CachePath)
-
-        Dim BrowserSettings As New RequestContextSettings()
-        With BrowserSettings
-            .CachePath = CachePath
-            .PersistSessionCookies = True
-            .CookieableSchemesList = "https"
-        End With
-
-        Browser = New ChromiumWebBrowser("", New RequestContext(BrowserSettings))
+        Browser = New ChromiumWebBrowser()
 
         With Browser
             .Visible = False

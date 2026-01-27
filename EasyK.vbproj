@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\CefSharp.Common.109.1.110\build\CefSharp.Common.props" Condition="Exists('packages\CefSharp.Common.109.1.110\build\CefSharp.Common.props')" />
-  <Import Project="packages\cef.redist.x86.109.1.11\build\cef.redist.x86.props" Condition="Exists('packages\cef.redist.x86.109.1.11\build\cef.redist.x86.props')" />
-  <Import Project="packages\cef.redist.x64.109.1.11\build\cef.redist.x64.props" Condition="Exists('packages\cef.redist.x64.109.1.11\build\cef.redist.x64.props')" />
+  <Import Project="packages\CefSharp.Common.126.2.70\build\CefSharp.Common.props" Condition="Exists('packages\CefSharp.Common.126.2.70\build\CefSharp.Common.props')" />
+  <Import Project="packages\chromiumembeddedframework.runtime.win-x86.126.2.7\build\chromiumembeddedframework.runtime.win-x86.props" Condition="Exists('packages\chromiumembeddedframework.runtime.win-x86.126.2.7\build\chromiumembeddedframework.runtime.win-x86.props')" />
+  <Import Project="packages\chromiumembeddedframework.runtime.win-x64.126.2.7\build\chromiumembeddedframework.runtime.win-x64.props" Condition="Exists('packages\chromiumembeddedframework.runtime.win-x64.126.2.7\build\chromiumembeddedframework.runtime.win-x64.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -92,14 +92,14 @@
     <Reference Include="Azure.Core, Version=1.44.1.0, Culture=neutral, PublicKeyToken=92742159e12e44c8, processorArchitecture=MSIL">
       <HintPath>packages\Azure.Core.1.44.1\lib\net472\Azure.Core.dll</HintPath>
     </Reference>
-    <Reference Include="CefSharp, Version=109.1.110.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
-      <HintPath>packages\CefSharp.Common.109.1.110\lib\net452\CefSharp.dll</HintPath>
+    <Reference Include="CefSharp, Version=126.2.70.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
+      <HintPath>packages\CefSharp.Common.126.2.70\lib\net462\CefSharp.dll</HintPath>
     </Reference>
-    <Reference Include="CefSharp.Core, Version=109.1.110.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
-      <HintPath>packages\CefSharp.Common.109.1.110\lib\net452\CefSharp.Core.dll</HintPath>
+    <Reference Include="CefSharp.Core, Version=126.2.70.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
+      <HintPath>packages\CefSharp.Common.126.2.70\lib\net462\CefSharp.Core.dll</HintPath>
     </Reference>
-    <Reference Include="CefSharp.WinForms, Version=109.1.110.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
-      <HintPath>packages\CefSharp.WinForms.109.1.110\lib\net462\CefSharp.WinForms.dll</HintPath>
+    <Reference Include="CefSharp.WinForms, Version=126.2.70.0, Culture=neutral, PublicKeyToken=40c4b6fc221f4138, processorArchitecture=MSIL">
+      <HintPath>packages\CefSharp.WinForms.126.2.70\lib\net462\CefSharp.WinForms.dll</HintPath>
     </Reference>
     <Reference Include="LibVLCSharp, Version=3.9.5.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\LibVLCSharp.3.9.5\lib\net471\LibVLCSharp.dll</HintPath>
@@ -463,6 +463,7 @@
     <Compile Include="DLNA\Music\DLNAMusicAttribute.vb" />
     <Compile Include="DLNA\Music\DLNALyricProvider.vb" />
     <Compile Include="DLNA\Music\DLNAMusicProviders.vb" />
+    <Compile Include="K\CefSetting.vb" />
     <Compile Include="K\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </Compile>
@@ -597,13 +598,13 @@
       <ErrorText>这台计算机上缺少此项目引用的 NuGet 程序包。使用“NuGet 程序包还原”可下载这些程序包。有关更多信息，请参见 http://go.microsoft.com/fwlink/?LinkID=322105。缺少的文件是 {0}。</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets'))" />
-    <Error Condition="!Exists('packages\cef.redist.x64.109.1.11\build\cef.redist.x64.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\cef.redist.x64.109.1.11\build\cef.redist.x64.props'))" />
-    <Error Condition="!Exists('packages\cef.redist.x86.109.1.11\build\cef.redist.x86.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\cef.redist.x86.109.1.11\build\cef.redist.x86.props'))" />
-    <Error Condition="!Exists('packages\CefSharp.Common.109.1.110\build\CefSharp.Common.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\CefSharp.Common.109.1.110\build\CefSharp.Common.props'))" />
-    <Error Condition="!Exists('packages\CefSharp.Common.109.1.110\build\CefSharp.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\CefSharp.Common.109.1.110\build\CefSharp.Common.targets'))" />
     <Error Condition="!Exists('packages\VideoLAN.LibVLC.Windows.3.0.21\build\VideoLAN.LibVLC.Windows.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\VideoLAN.LibVLC.Windows.3.0.21\build\VideoLAN.LibVLC.Windows.targets'))" />
+    <Error Condition="!Exists('packages\chromiumembeddedframework.runtime.win-x64.126.2.7\build\chromiumembeddedframework.runtime.win-x64.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\chromiumembeddedframework.runtime.win-x64.126.2.7\build\chromiumembeddedframework.runtime.win-x64.props'))" />
+    <Error Condition="!Exists('packages\chromiumembeddedframework.runtime.win-x86.126.2.7\build\chromiumembeddedframework.runtime.win-x86.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\chromiumembeddedframework.runtime.win-x86.126.2.7\build\chromiumembeddedframework.runtime.win-x86.props'))" />
+    <Error Condition="!Exists('packages\CefSharp.Common.126.2.70\build\CefSharp.Common.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\CefSharp.Common.126.2.70\build\CefSharp.Common.props'))" />
+    <Error Condition="!Exists('packages\CefSharp.Common.126.2.70\build\CefSharp.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\CefSharp.Common.126.2.70\build\CefSharp.Common.targets'))" />
   </Target>
   <Import Project="packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets" Condition="Exists('packages\System.ValueTuple.4.6.1\build\net471\System.ValueTuple.targets')" />
-  <Import Project="packages\CefSharp.Common.109.1.110\build\CefSharp.Common.targets" Condition="Exists('packages\CefSharp.Common.109.1.110\build\CefSharp.Common.targets')" />
   <Import Project="packages\VideoLAN.LibVLC.Windows.3.0.21\build\VideoLAN.LibVLC.Windows.targets" Condition="Exists('packages\VideoLAN.LibVLC.Windows.3.0.21\build\VideoLAN.LibVLC.Windows.targets')" />
+  <Import Project="packages\CefSharp.Common.126.2.70\build\CefSharp.Common.targets" Condition="Exists('packages\CefSharp.Common.126.2.70\build\CefSharp.Common.targets')" />
 </Project>

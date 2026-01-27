@@ -13,18 +13,7 @@ Public Class FrmLogin
         InitializeComponent()
 
         ' 在 InitializeComponent() 调用之后添加任何初始化。
-
-        Dim CachePath As String = IO.Path.Combine(Windows.Forms.Application.StartupPath, "cache")
-        If Not IO.Directory.Exists(CachePath) Then IO.Directory.CreateDirectory(CachePath)
-
-        Dim BrowserSettings As New RequestContextSettings()
-        With BrowserSettings
-            .CachePath = CachePath
-            .PersistSessionCookies = True
-            .CookieableSchemesList = "https"
-        End With
-
-        Browser = New ChromiumWebBrowser(Url, New RequestContext(BrowserSettings))
+        Browser = New ChromiumWebBrowser(Url)
 
         With Browser
             .Dock = DockStyle.Fill

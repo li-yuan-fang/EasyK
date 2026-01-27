@@ -10,6 +10,9 @@ Public Class KSettings
     <JsonProperty("temp_folder")>
     Public Property TempFolder As String = "temp"
 
+    <JsonProperty("keep_login")>
+    Public Property KeepLogin As Boolean = True
+
     <JsonProperty("allow_volume")>
     Public Property AllowVolumeUpdate As Boolean = True
 

@@ -14,8 +14,6 @@
             Using Login As New FrmLogin("https://www.bilibili.com/")
                 Login.ShowDialog()
             End Using
-
-            K.Reset(False)
         End Sub
 
     End Class

@@ -145,6 +145,8 @@ Public Class EasyK
     ''' </summary>
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
+        If Not Cef.IsInitialized Then Cef.Initialize(New CefSetting(Settings))
+
         PlayerForm = New FrmMain(Me, Settings)
         AddHandler PlayerForm.OnDLNAReset, AddressOf TriggerMirrorReset
     End Sub
@@ -538,9 +540,10 @@ Public Class EasyK
             RemoveHandler .OnDLNAReset, AddressOf TriggerMirrorReset
 
             .Invoke(Sub()
-                        .Close()
                         NewForm = New FrmMain(Me, Settings)
                         NewForm.Show()
+
+                        .Close()
                     End Sub)
 
             .Dispose()
@@ -561,7 +564,7 @@ Public Class EasyK
         With PlayerForm
             Try
                 .Invoke(Sub()
-                            Cef.Shutdown()
+                            Cef.ShutdownWithoutChecks()
                             .Close()
                         End Sub)
             Catch ex As Exception
