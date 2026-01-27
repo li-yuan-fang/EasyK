@@ -678,7 +678,6 @@ Public Class FrmMain
 
         If Browser_Playing Then
             Browser_Playing = False
-            Console.WriteLine("停止播放")
             Invoke(Sub()
                        With Browser
                            .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); window.location.href = 'http://easyk/';")
