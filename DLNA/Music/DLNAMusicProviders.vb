@@ -275,7 +275,6 @@ Namespace DLNA.MusicProvider
                     If Not .IsMatch(Meta) Then Continue For
 
                     Dim LyricColor = .GetLyricColor(Attritube, Highlight)
-                    Console.WriteLine("颜色 {0}", LyricColor)
                     If String.IsNullOrEmpty(LyricColor) Then Continue For
 
                     Return $"window.setLyricColor({LyricColor});"
