@@ -265,8 +265,6 @@ Public Class KWebCore
 
     <WebApi("/volume", HttpMethod.Post)>
     Private Function Volume(ctx As HttpContext) As Task
-        If Not Settings.Settings.AllowVolumeUpdate Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
-
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
         Dim v As RequestVolume = JsonConvert.DeserializeObject(Of RequestVolume)(Request)
@@ -274,13 +272,36 @@ Public Class KWebCore
             Return WebStartup.RespondJson(ctx, "{""success"":false}")
         End If
 
-        K.UpdateVolume(DirectCast(v.VolumeAction, FormUtils.VolumeAction), v.VolumeValue)
+        If Settings.Settings.Audio.IsDummyAudio Then
+            '托管
+            Dim Action = DirectCast(v.VolumeAction, FormUtils.VolumeAction)
+
+            Dim Vol As Single
+
+            Select Case Action
+                Case FormUtils.VolumeAction.Up
+                    Vol = K.DummyVolume + 0.05 * v.VolumeValue
+                Case FormUtils.VolumeAction.Down
+                    Vol = K.DummyVolume - 0.05 * v.VolumeValue
+                Case FormUtils.VolumeAction.Mute
+                    K.DummyMute = Not K.DummyMute
+                    Return WebStartup.RespondJson(ctx, "{""success"":true}")
+            End Select
+
+            Vol = Math.Max(Math.Min(Vol, 1), 0)
+            K.DummyVolume = Vol
+        Else
+            '系统音量
+            If Not Settings.Settings.Audio.AllowUpdateSystemVolume Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
+
+            K.UpdateSystemVolume(DirectCast(v.VolumeAction, FormUtils.VolumeAction), v.VolumeValue)
+        End If
 
         Return WebStartup.RespondJson(ctx, "{""success"":true}")
     End Function
 
-    <WebApi("/plugin")>
-    Private Function Plugin(ctx As HttpContext) As Task
+    <WebApi("/panel")>
+    Private Function Panel(ctx As HttpContext) As Task
         Select Case ctx.Request.Method.ToUpper()
             Case "GET"
                 Return WebStartup.RespondJson(ctx, JsonConvert.SerializeObject(Settings.Settings.PluginCommon))

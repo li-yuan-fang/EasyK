@@ -16,7 +16,13 @@ Public Class CefSetting
         PersistSessionCookies = Settings.Settings.KeepLogin
         PersistUserPreferences = Settings.Settings.KeepLogin
 
-        If Settings.Settings.DebugMode Then Console.WriteLine("CEFSharp 初始化完成")
+        If Settings.Settings.Audio.IsDummyAudio Then CefCommandLineArgs.Add("disable-audio-output", "1")
+
+        If Settings.Settings.DebugMode Then
+            Console.WriteLine("CEFSharp 初始化完成")
+        Else
+            CefCommandLineArgs.Add("log-severity", "fatal")
+        End If
     End Sub
 
 End Class

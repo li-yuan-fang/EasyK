@@ -129,6 +129,32 @@ Public Class EasyK
     End Property
 
     ''' <summary>
+    ''' 获取或设置托管音量
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property DummyVolume As Single
+        Get
+            Return If(PlayerForm Is Nothing, 0, PlayerForm.Dummy.Volume)
+        End Get
+        Set(value As Single)
+            If PlayerForm IsNot Nothing Then PlayerForm.Dummy.Volume = value
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取或设置托管静音
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property DummyMute As Boolean
+        Get
+            Return If(PlayerForm Is Nothing, 0, PlayerForm.Dummy.Mute)
+        End Get
+        Set(value As Boolean)
+            If PlayerForm IsNot Nothing Then PlayerForm.Dummy.Mute = value
+        End Set
+    End Property
+
+    ''' <summary>
     ''' 获取运行状态
     ''' </summary>
     ''' <returns></returns>
@@ -414,7 +440,7 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Action">音量操作</param>
     ''' <param name="Count">操作次数</param>
-    Public Sub UpdateVolume(Action As FormUtils.VolumeAction, Count As Integer)
+    Public Sub UpdateSystemVolume(Action As FormUtils.VolumeAction, Count As Integer)
         If PlayerForm Is Nothing Then Return
 
         If Action = FormUtils.VolumeAction.Mute Then

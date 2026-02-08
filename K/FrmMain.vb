@@ -1,5 +1,7 @@
 ﻿Imports System.ComponentModel
 Imports System.Drawing
+Imports System.Net
+Imports System.Web.UI.WebControls
 Imports System.Windows.Forms
 Imports CefSharp
 Imports CefSharp.WinForms
@@ -13,6 +15,8 @@ Public Class FrmMain
 
     Friend WithEvents VLCPlayer As New LibVLCSharp.WinForms.VideoView()
 
+    Friend ReadOnly Dummy As New DummyPlayer
+
     Private Const Title_None As String = "暂无播放源"
 
     Private Const Title_Waiting_DLNA As String = "等待投屏中"
@@ -22,6 +26,8 @@ Public Class FrmMain
     Private ReadOnly BigFont As Font
 
     Private ReadOnly Settings As SettingContainer
+
+    Private ReadOnly VlcAudioHandler As VlcAudioHandler
 
     Private Shared VLCLib As LibVLC
 
@@ -208,6 +214,8 @@ Public Class FrmMain
             .Visible = False
             .Dock = DockStyle.Fill
 
+            .AudioHandler = New CefAudioHandler(K, Settings, Dummy)
+
             .MenuHandler = New BrowserMenuHandler()
             .JavascriptObjectRepository.Settings.LegacyBindingEnabled = True
             .JavascriptObjectRepository.Register("easy_k", New BrowserCallback(Me), False, BindingOptions.DefaultBinder)
@@ -219,6 +227,7 @@ Public Class FrmMain
         With Args
             .Add("--no-spu")
             If Not Settings.Settings.DebugMode Then .Add("--quiet")
+            'If Settings.Settings.Audio.IsDummyAudio Then .Add("--audio-output=dummy")
 
             VLCLib = New LibVLC(.ToArray())
         End With
@@ -227,9 +236,13 @@ Public Class FrmMain
             .Visible = False
             .Dock = DockStyle.Fill
             .MediaPlayer = New MediaPlayer(VLCLib)
-            .MediaPlayer.Media = Nothing
 
-            AddHandler .MediaPlayer.Stopped, AddressOf VLC_Stopped
+            If Settings.Settings.Audio.IsDummyAudio Then VlcAudioHandler = New VlcAudioHandler(K, .MediaPlayer, Dummy)
+
+            With .MediaPlayer
+                .Media = Nothing
+                AddHandler .Stopped, AddressOf VLC_Stopped
+            End With
         End With
         Controls.Add(VLCPlayer)
 
@@ -296,6 +309,8 @@ Public Class FrmMain
     End Sub
 
     Public Overloads Sub Close()
+        Dummy.Stop()
+
         With VLCPlayer
             With .MediaPlayer
                 RemoveHandler .Stopped, AddressOf VLC_Stopped

@@ -13,8 +13,8 @@ Public Class KSettings
     <JsonProperty("keep_login")>
     Public Property KeepLogin As Boolean = True
 
-    <JsonProperty("allow_volume")>
-    Public Property AllowVolumeUpdate As Boolean = True
+    <JsonProperty("audio")>
+    Public Property Audio As KAudioSetting = New KAudioSetting()
 
     <JsonProperty("web")>
     Public Property Web As KWebSettings = New KWebSettings()

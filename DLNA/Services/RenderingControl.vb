@@ -54,14 +54,38 @@
             Return $"<?xml version=""1.0"" encoding=""UTF-8""?>{vbCrLf}{root.ToString(SaveOptions.DisableFormatting)}"
         End Function
 
+        Protected Function GetVolume(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
+            With Protocol
+                '仅在托管模式下接管GetVolume
+
+                If Not .Settings.Settings.Audio.IsDummyAudio Then Return Nothing
+
+                Handled = True
+                Return New Dictionary(Of String, String) From {
+                    {"CurrentVolume", Math.Round(.DLNA.K.DummyVolume * 100)}
+                }
+            End With
+        End Function
+
         Protected Function SetVolume(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
-                If .Settings.Settings.AllowVolumeUpdate Then
+                If .Settings.Settings.Audio.IsDummyAudio Then
+                    '托管音量
+
+                    Handled = True
+
+                    If Not Args.ContainsKey("DesiredVolume") Then Return Nothing
+
+                    Dim Volume As Single = Math.Max(Math.Min(Val(Args("DesiredVolume")) / 100.0F, 1), 0)
+                    .DLNA.K.DummyVolume = Volume
+                ElseIf .Settings.Settings.Audio.AllowUpdateSystemVolume Then
+                    '系统音量
+
                     If FirstVolume Then
                         Dim Volume As Integer = Val(Args("DesiredVolume")) / 2
                         With .DLNA.K
-                            .UpdateVolume(FormUtils.VolumeAction.Down, 50)
-                            .UpdateVolume(FormUtils.VolumeAction.Up, Volume)
+                            .UpdateSystemVolume(FormUtils.VolumeAction.Down, 50)
+                            .UpdateSystemVolume(FormUtils.VolumeAction.Up, Volume)
                         End With
 
                         FirstVolume = False
@@ -71,7 +95,7 @@
                         Dim Offset As Integer = (NewVolume - Volume) / 2
 
                         If Offset <> 0 Then
-                            .DLNA.K.UpdateVolume(If(Offset < 0, FormUtils.VolumeAction.Down, FormUtils.VolumeAction.Up), Math.Abs(Offset))
+                            .DLNA.K.UpdateSystemVolume(If(Offset < 0, FormUtils.VolumeAction.Down, FormUtils.VolumeAction.Up), Math.Abs(Offset))
                         End If
                     End If
                 End If
@@ -82,8 +106,22 @@
 
         Protected Function SetMute(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
-                If .Settings.Settings.AllowVolumeUpdate Then
-                    .DLNA.K.UpdateVolume(FormUtils.VolumeAction.Mute, 0)
+                If .Settings.Settings.Audio.IsDummyAudio Then
+                    '托管模式
+
+                    If Args.ContainsKey(Args("DesiredMute")) Then
+                        Try
+                            .DLNA.K.DummyMute = Boolean.Parse(Args("DesiredMute"))
+                        Catch ex As Exception
+                            If .Settings.Settings.DebugMode Then
+                                Console.WriteLine("无法解析的静音请求 - {0}", ex.Message)
+                            End If
+                        End Try
+                    End If
+                ElseIf .Settings.Settings.Audio.AllowUpdateSystemVolume Then
+                    '系统静音
+
+                    .DLNA.K.UpdateSystemVolume(FormUtils.VolumeAction.Mute, 0)
                 End If
             End With
 
