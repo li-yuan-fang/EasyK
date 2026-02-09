@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.0.2🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.0.2)
+## 🌟当前版本🌟 ➡️ [✌v1.0.3🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.0.3)
 
 ![播放窗口1](./docs/assets/r1.png)
 
@@ -70,7 +70,7 @@
 
 3. 编译EasyK主程序
 
-4. 复制[**CefSharp.H264**](https://www.nuget.org/packages/CefSharp.H264.x64/109.1.110)到输出目录并替换（可参考[这篇](https://www.cnblogs.com/wintertone/p/18416085)）
+4. 复制支持H264的CefSharp库到输出目录并替换（可参考[cefsharp.H264.x64.109（88、84、79）可播放视频包免费编译版](https://www.cnblogs.com/wintertone/p/18416085)和[编译带H.264的cef(windows)](https://zhuanlan.zhihu.com/p/694014974)）
 
 > 主分支CefSharp版本已升级到126.2，Win7特供版仍然使用109.1.110
 
@@ -87,3 +87,5 @@
 [Universal Plug and Play Device Architecture](https://upnp.org/specs/arch/UPnP-arch-DeviceArchitecture-v1.1.pdf)
 
 **还有很多零星的参考资料，太多了没办法一一列举见谅**
+
+
