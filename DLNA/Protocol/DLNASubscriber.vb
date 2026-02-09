@@ -92,16 +92,21 @@ Namespace DLNA.Protocol
                                  .ContentLength = Updated.Length
 
                                  Try
-                                     Using Stream As IO.Stream = Request.GetRequestStream()
+                                     Using Stream As IO.Stream = .GetRequestStream()
                                          Stream.Write(Updated, 0, Updated.Length)
                                      End Using
 
                                      Dim Response As HttpWebResponse = .GetResponse()
-                                     If Response.StatusCode = HttpStatusCode.OK Then
-                                         '推送成功
-                                         Failed = 0
-                                         Return
-                                     End If
+                                     With Response
+                                         Dim Code = .StatusCode
+                                         .Close()
+
+                                         If Code = HttpStatusCode.OK Then
+                                             '推送成功
+                                             Failed = 0
+                                             Return
+                                         End If
+                                     End With
                                  Catch ex As Exception
                                      If Protocol.Settings.Settings.DebugMode Then
                                          Console.WriteLine("订阅投递失败: {0} - {1}", Url, ex.Message)

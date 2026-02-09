@@ -7,7 +7,6 @@ Imports CefSharp
 Imports CefSharp.WinForms
 Imports EasyK.DLNA.MusicProvider
 Imports LibVLCSharp.Shared
-Imports Newtonsoft.Json
 
 Public Class FrmMain
 
@@ -355,7 +354,7 @@ Public Class FrmMain
                              If Not DLNA_Music Then Return
                          End While
 
-                         DefaultDuration = _Duration
+                         DefaultDuration = Duration
                      End If
 
                      Dim MusicScript As String =
@@ -515,6 +514,7 @@ Public Class FrmMain
 
                 _Duration = .Media.Duration / 1000
                 If _Duration <= 0 Then
+                    _Duration = 0
                     Throw New DataException("无法解析的资源")
                 End If
 

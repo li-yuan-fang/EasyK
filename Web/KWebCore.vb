@@ -273,7 +273,7 @@ Public Class KWebCore
         End If
 
         If Settings.Settings.Audio.IsDummyAudio Then
-            '托管
+            '托管音量
             Dim Action = DirectCast(v.VolumeAction, FormUtils.VolumeAction)
 
             Dim Vol As Single

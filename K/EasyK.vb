@@ -80,14 +80,21 @@ Public Class EasyK
     ''' <returns></returns>
     Friend Property PlayingPosition As Single
         Get
-            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Position)
+            Try
+                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Position)
+            Catch
+                Return 0
+            End Try
         End Get
         Set(value As Single)
             If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
 
-            With PlayerForm
-                .Invoke(Sub() .Position = value)
-            End With
+            Try
+                With PlayerForm
+                    .Invoke(Sub() .Position = value)
+                End With
+            Catch
+            End Try
         End Set
     End Property
 
@@ -97,14 +104,21 @@ Public Class EasyK
     ''' <returns></returns>
     Friend Property PlayingRate As Single
         Get
-            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Rate)
+            Try
+                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Rate)
+            Catch
+                Return 1
+            End Try
         End Get
         Set(value As Single)
             If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
 
-            With PlayerForm
-                .Invoke(Sub() .Rate = value)
-            End With
+            Try
+                With PlayerForm
+                    .Invoke(Sub() .Rate = value)
+                End With
+            Catch
+            End Try
         End Set
     End Property
 
@@ -114,7 +128,11 @@ Public Class EasyK
     ''' <returns></returns>
     Friend ReadOnly Property PlayingDuration As Double
         Get
-            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Duration)
+            Try
+                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Duration)
+            Catch
+                Return 0
+            End Try
         End Get
     End Property
 

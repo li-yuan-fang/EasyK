@@ -57,6 +57,9 @@ Namespace DLNA.Protocol
         '本服务的更新列表
         Friend ReadOnly Updated As New HashSet(Of String)
 
+        '本服务的特殊更新值
+        Protected ReadOnly SpecialUpdated As New Dictionary(Of String, String)
+
         '本服务的操作
         Protected ReadOnly Actions As New ConcurrentDictionary(Of String, DLNAAction)
 
@@ -142,8 +145,14 @@ Namespace DLNA.Protocol
                 Me.Updated.Clear()
             End SyncLock
 
+            Dim Special As Dictionary(Of String, String)
+            SyncLock SpecialUpdated
+                Special = New Dictionary(Of String, String)(SpecialUpdated)
+                SpecialUpdated.Clear()
+            End SyncLock
+
             '发送事件广播
-            If Updated.Count > 0 Then Broadcast(Updated)
+            If Updated.Count > 0 OrElse Special.Count > 0 Then Broadcast(Updated, Special)
         End Sub
 
 
@@ -155,7 +164,7 @@ Namespace DLNA.Protocol
         Protected MustOverride Function GenerateNotify(Updated As Dictionary(Of String, String)) As String
 
         '状态更新广播
-        Protected Sub Broadcast(Updated As List(Of String))
+        Protected Sub Broadcast(Updated As List(Of String), Special As Dictionary(Of String, String))
             '清理无效订阅
             Dim Invalid As New List(Of String)
             For Each s In Subscribers
@@ -166,10 +175,16 @@ Namespace DLNA.Protocol
             Next
 
             '获取有效更新列表
-            Dim Valid As New Dictionary(Of String, String)
+            Dim Valid As Dictionary(Of String, String)
+
+            If Special Is Nothing Then
+                Valid = New Dictionary(Of String, String)
+            Else
+                Valid = New Dictionary(Of String, String)(Special)
+            End If
 
             For Each u As String In Updated
-                If Not Related.Contains(u) OrElse Not States.ContainsKey(u) Then Continue For
+                If Not Related.Contains(u) OrElse Not States.ContainsKey(u) OrElse Valid.ContainsKey(u) Then Continue For
 
                 Dim State = States(u)
                 If State Is Nothing Then Continue For
@@ -354,8 +369,9 @@ Namespace DLNA.Protocol
         ''' 解析远程操作
         ''' </summary>
         ''' <param name="ctx">Http上下文</param>
+        ''' <param name="Access">访问许可</param>
         ''' <returns></returns>
-        Public Function Act(ctx As HttpContext) As Task
+        Public Function Act(ctx As HttpContext, Access As Boolean) As Task
             With ctx.Request
                 '参数头检查
                 If Not .Headers.ContainsKey("SOAPAction") Then Return WebStartup.RespondStatusOnly(ctx, 402)
@@ -371,7 +387,7 @@ Namespace DLNA.Protocol
             End With
 
             Dim Request As String = WebStartup.GetRequestBody(ctx)
-            Dim Response As String = RemoteCall(Request)
+            Dim Response As String = RemoteCall(Request, Access)
 
             If String.IsNullOrEmpty(Response) Then Return WebStartup.RespondStatusOnly(ctx, 500)
 
@@ -418,8 +434,9 @@ Namespace DLNA.Protocol
         ''' 执行远程调用
         ''' </summary>
         ''' <param name="Request">远程调用请求Xml</param>
+        ''' <param name="Access">访问许可</param>
         ''' <returns>返回值</returns>
-        Public Function RemoteCall(Request As String) As String
+        Public Function RemoteCall(Request As String, Access As Boolean) As String
             Dim Doc As XDocument = XmlUtils.SafeParseXml(Request)
             If Doc Is Nothing Then Return vbNullString
 
@@ -429,7 +446,7 @@ Namespace DLNA.Protocol
                 With Body.Elements()
                     If .Count() = 0 Then Continue For
 
-                    Return RemoteCall(.First())
+                    Return RemoteCall(.First(), Access)
                 End With
             Next
 
@@ -440,8 +457,9 @@ Namespace DLNA.Protocol
         ''' 执行远程调用
         ''' </summary>
         ''' <param name="Content">远程调用请求</param>
+        ''' <param name="Access">访问许可</param>
         ''' <returns>返回值</returns>
-        Public Function RemoteCall(Content As XElement) As String
+        Public Function RemoteCall(Content As XElement, Access As Boolean) As String
             Dim xn As XName = Content.Name
             If xn.NamespaceName <> ServiceName Then Return vbNullString
 
@@ -449,32 +467,35 @@ Namespace DLNA.Protocol
             Dim Action = Actions(xn.LocalName)
 
             Dim Args As Dictionary(Of String, String) = Action.GetValidArgs(Content)
-
-            Dim Caller As MethodInfo = Me.GetType().GetMethod(xn.LocalName, BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
             Dim Returns As Dictionary(Of String, String) = Nothing
-            Dim Handled As Boolean = False
-            If Caller IsNot Nothing Then
-                '关于远程调用函数的说明
-                'Func(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
 
-                Try
-                    Returns = Caller.Invoke(Me, {Handled, Args})
-                Catch ex As TargetInvocationException
-                    If Protocol.Settings.Settings.DebugMode Then
-                        Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
-                    End If
+            '检查访问许可
+            If Access Then
+                Dim Caller As MethodInfo = Me.GetType().GetMethod(xn.LocalName, BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
+                Dim Handled As Boolean = False
+                If Caller IsNot Nothing Then
+                    '关于远程调用函数的说明
+                    'Func(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
 
-                    Return vbNullString
-                Catch ex As Exception
-                    If Protocol.Settings.Settings.DebugMode Then
-                        Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
-                    End If
+                    Try
+                        Returns = Caller.Invoke(Me, {Handled, Args})
+                    Catch ex As TargetInvocationException
+                        If Protocol.Settings.Settings.DebugMode Then
+                            Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
+                        End If
 
-                    Return vbNullString
-                End Try
+                        Return vbNullString
+                    Catch ex As Exception
+                        If Protocol.Settings.Settings.DebugMode Then
+                            Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
+                        End If
+
+                        Return vbNullString
+                    End Try
+                End If
+
+                If Not Handled Then Action.Update(Me, Args)
             End If
-
-            If Not Handled Then Action.Update(Me, Args)
 
             If Returns Is Nothing Then
                 Returns = Action.GetReturns(Me)
@@ -491,7 +512,6 @@ Namespace DLNA.Protocol
                 Console.WriteLine("返回值:")
                 Console.WriteLine(String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {If(Not String.IsNullOrEmpty(kvp.Value) AndAlso kvp.Value.Length > 100, $"{kvp.Value.Substring(0, 100)}...", kvp.Value)}")))
             End If
-
 
             Return Action.GetXmlReturns(Returns)
         End Function

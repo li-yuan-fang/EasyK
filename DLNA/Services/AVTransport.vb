@@ -3,8 +3,15 @@
     Public Class AVTransport
         Inherits DLNAService
 
+        ''' <summary>
+        ''' 播放事件
+        ''' </summary>
         Public Event OnPlay()
 
+        '广播事件
+        Private UpdateBroadcast As Task = Nothing
+
+        '暂停播放
         Private Sub OnPause(Type As EasyKType)
             If Type <> EasyKType.DLNA Then Return
 
@@ -13,6 +20,37 @@
 
                          SetState("TransportState", If(Protocol.DLNA.K.IsPlaying(), "PLAYING", "PAUSED_PLAYBACK"))
                      End Sub)
+        End Sub
+
+        '停止播放
+        Private Sub OnTerminated()
+            SetState("TransportState", "NO_MEDIA_PRESENT")
+        End Sub
+
+        '进度广播事件
+        Private Sub BroadcastPositionLoop()
+            While GetState("TransportState") <> "NO_MEDIA_PRESENT"
+                If GetState("TransportState") = "PLAYING" Then
+                    '广播进度
+                    Dim Progress As String
+                    With Protocol.DLNA.K
+
+                        Dim p As Double = Math.Round(.PlayingDuration * .PlayingPosition)
+                        Progress = TimeUtils.SecondToString(p)
+                    End With
+
+                    SyncLock SpecialUpdated
+                        With SpecialUpdated
+                            .Add("RelativeTimePosition", Progress)
+                            .Add("AbsoluteTimePosition", Progress)
+                        End With
+                    End SyncLock
+                End If
+
+                Threading.Thread.Sleep(1000)
+            End While
+
+            UpdateBroadcast = Nothing
         End Sub
 
         ''' <summary>
@@ -43,6 +81,7 @@
 
             '绑定事件
             AddHandler Protocol.DLNA.K.OnPlayerPause, AddressOf OnPause
+            AddHandler Protocol.DLNA.K.OnPlayerTerminated, AddressOf OnTerminated
         End Sub
 
         ''' <summary>
@@ -105,12 +144,12 @@
         Protected Function Play(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
                 With .DLNA.K
-                    If .CanMirror() Then
-                        .TriggerMirrorPlay(Nothing)
-                        .PlayingRate = Val(Args("Speed"))
-                    End If
+                    .TriggerMirrorPlay(Nothing)
+                    .PlayingRate = Val(Args("Speed"))
                 End With
             End With
+
+            If UpdateBroadcast Is Nothing Then UpdateBroadcast = Task.Run(AddressOf BroadcastPositionLoop)
 
             SetState("TransportState", "PLAYING")
 
@@ -119,18 +158,18 @@
 
         Protected Function Seek(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA.K
-                If .CanMirror() Then
-                    If Not Args.ContainsKey("Unit") OrElse Args("Unit") <> "REL_TIME" Then _
-                        Throw New ArgumentException("不支持的快进方式")
+                If Not Args.ContainsKey("Unit") OrElse Args("Unit") <> "REL_TIME" Then _
+                    Throw New ArgumentException("不支持的快进方式")
 
-                    If Not Args.ContainsKey("Target") Then Throw New ArgumentException("无效的转跳目标")
-                    Dim Target As Long = TimeUtils.ParseString(Args("Target"))
+                If Not Args.ContainsKey("Target") Then Throw New ArgumentException("无效的转跳目标")
+                Dim Target As Long = TimeUtils.ParseString(Args("Target"))
 
-                    Dim Position As Single = Target / .PlayingDuration
-                    Position = Math.Max(Math.Min(Position, 1), 0)
-                    .PlayingPosition = Position
-                End If
+                Dim Position As Single = Target / .PlayingDuration
+                Position = Math.Max(Math.Min(Position, 1), 0)
+                .PlayingPosition = Position
             End With
+
+            SetState("TransportState", GetState("TransportState"))
 
             Return Nothing
         End Function
@@ -154,7 +193,7 @@
         Protected Function [Stop](ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
                 With .DLNA.K
-                    If .CanMirror() AndAlso .IsPlaying Then .Push()
+                    If .IsPlaying Then .Push()
                 End With
             End With
 

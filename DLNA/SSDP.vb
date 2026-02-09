@@ -326,7 +326,6 @@ Namespace DLNA
             SyncLock Services
                 Services.Add(Service)
             End SyncLock
-
         End Sub
 
         ''' <summary>

@@ -123,16 +123,15 @@ Namespace DLNA
             End With
         End Sub
 
-        Private Function CheckAccess(ctx As HttpContext) As Task
-            If Not K.CanMirror() Then Return WebStartup.RespondStatusOnly(ctx)
+        Private Function CheckAccess(ctx As HttpContext) As Boolean
+            If Not K.CanMirror() Then Return False
 
             Dim Current = K.GetCurrent()
-            If Current Is Nothing Then Return WebStartup.RespondStatusOnly(ctx)
+            If Current Is Nothing Then Return False
             If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
-                Current.Content <> ctx.Connection.RemoteIpAddress.ToString() Then _
-                Return WebStartup.RespondStatusOnly(ctx)
+                Current.Content <> ctx.Connection.RemoteIpAddress.ToString() Then Return False
 
-            Return Nothing
+            Return True
         End Function
 
         '添加允许头
@@ -170,11 +169,8 @@ Namespace DLNA
 
         <WebApi(AVTransport & ActionPrefix, HttpMethod.Post)>
         Private Function AVTransportAction(ctx As HttpContext) As Task
-            Dim Checked = CheckAccess(ctx)
-            If Checked IsNot Nothing Then Return Checked
-
             AddHeaders(ctx)
-            Return Protocol.AVTransportService.Act(ctx)
+            Return Protocol.AVTransportService.Act(ctx, CheckAccess(ctx))
         End Function
 
         <WebApi(AVTransport & EventPrefix)>
@@ -185,11 +181,8 @@ Namespace DLNA
 
         <WebApi(RenderingControl & ActionPrefix, HttpMethod.Post)>
         Private Function RenderingControlAction(ctx As HttpContext) As Task
-            Dim Checked = CheckAccess(ctx)
-            If Checked IsNot Nothing Then Return Checked
-
             AddHeaders(ctx)
-            Return Protocol.RenderingControlService.Act(ctx)
+            Return Protocol.RenderingControlService.Act(ctx, CheckAccess(ctx))
         End Function
 
         <WebApi(RenderingControl & EventPrefix)>
@@ -200,11 +193,8 @@ Namespace DLNA
 
         <WebApi(ConnectionManager & ActionPrefix, HttpMethod.Post)>
         Private Function ConnectionManagerAction(ctx As HttpContext) As Task
-            Dim Checked = CheckAccess(ctx)
-            If Checked IsNot Nothing Then Return Checked
-
             AddHeaders(ctx)
-            Return Protocol.ConnectionManagerService.Act(ctx)
+            Return Protocol.ConnectionManagerService.Act(ctx, CheckAccess(ctx))
         End Function
 
         <WebApi(ConnectionManager & EventPrefix)>
