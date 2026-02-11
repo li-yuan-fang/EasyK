@@ -454,6 +454,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="K\Audio\Accompaniment\STFTAccompanimentProvider.vb" />
+    <Compile Include="K\Audio\Accompaniment\STFTAccompanimentProviderFloat.vb" />
     <Compile Include="Commands\Command.vb" />
     <Compile Include="Commands\Implements\CommandBili.vb" />
     <Compile Include="Commands\Implements\CommandBook.vb" />
@@ -481,9 +483,12 @@
     <Compile Include="DLNA\Music\DLNAMusicAttribute.vb" />
     <Compile Include="DLNA\Music\DLNALyricProvider.vb" />
     <Compile Include="DLNA\Music\DLNAMusicProviders.vb" />
+    <Compile Include="K\Audio\AccompanimentProvider.vb" />
+    <Compile Include="K\Audio\Accompaniment\CenterAccompaniment.vb" />
     <Compile Include="K\Audio\CefAudioHandler.vb" />
     <Compile Include="K\Audio\DummyPlayer.vb" />
     <Compile Include="K\Audio\VlcAudioHandler.vb" />
+    <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
     <Compile Include="K\CefSetting.vb" />
     <Compile Include="K\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
@@ -553,7 +558,7 @@
     <Compile Include="Web\KWebCore.vb" />
     <Compile Include="Web\Serializable\RequestBook.vb" />
     <Compile Include="Web\Serializable\RequestId.vb" />
-    <Compile Include="Web\Serializable\RequestPlugin.vb" />
+    <Compile Include="Web\Serializable\RequestPanel.vb" />
     <Compile Include="Web\Serializable\RequestSize.vb" />
     <Compile Include="Web\Serializable\RequestVolume.vb" />
     <Compile Include="Web\UploadManager.vb" />

@@ -1,10 +1,11 @@
-﻿Imports NAudio
-Imports NAudio.Wave
+﻿Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
 Public Class DummyPlayer
 
     Private WaveProvider As BufferedWaveProvider = Nothing
+
+    Private MusicProvider As ISampleProvider = Nothing
 
     Private VolumeProvider As VolumeSampleProvider = Nothing
 
@@ -14,6 +15,28 @@ Public Class DummyPlayer
     Private StoredVolume As Single = 0.5
 
     Private _Mute As Boolean = False
+
+    Private ReadOnly Settings As SettingContainer
+
+    ''' <summary>
+    ''' 初始化托管音频播放器
+    ''' </summary>
+    ''' <param name="K"></param>
+    ''' <param name="Settings">配置容器</param>
+    Public Sub New(K As EasyK, Settings As SettingContainer)
+        Me.Settings = Settings
+        AddHandler K.OnPlayerTerminated, AddressOf OnPlayerTerminated
+    End Sub
+
+    Private Sub OnPlayerTerminated()
+        If Settings.Settings.Audio.AutoResetAccompaniment Then Accompaniment = False
+    End Sub
+
+    ''' <summary>
+    ''' 获取或设置伴唱模式
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property Accompaniment As Boolean = False
 
     ''' <summary>
     ''' 获取或设置托管静音模式
@@ -54,18 +77,35 @@ Public Class DummyPlayer
         End Set
     End Property
 
-    Public Sub Setup(WaveFormat As WaveFormat)
+    Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean)
         [Stop]()
 
+        '缓冲区
         WaveProvider = New BufferedWaveProvider(WaveFormat) With {
             .BufferDuration = TimeSpan.FromSeconds(2),
             .DiscardOnBufferOverflow = True
         }
 
-        VolumeProvider = New VolumeSampleProvider(WaveProvider.ToSampleProvider()) With {
+        '音频处理
+        If Settings.Settings.Audio.AllowAccompaniment Then
+            If Float Then
+                MusicProvider = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
+
+                'MusicProvider = New StftProcessor(WaveProvider.ToSampleProvider)
+            Else
+                Dim ap = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
+                MusicProvider = ap.ToSampleProvider()
+            End If
+        Else
+            MusicProvider = WaveProvider.ToSampleProvider()
+        End If
+
+        '音量调整
+        VolumeProvider = New VolumeSampleProvider(MusicProvider) With {
             .Volume = StoredVolume
         }
 
+        '播放
         Direct = New DirectSoundOut()
         SyncLock Direct
             Direct.Init(VolumeProvider)
@@ -119,6 +159,7 @@ Public Class DummyPlayer
         End If
 
         If WaveProvider IsNot Nothing Then WaveProvider = Nothing
+        If MusicProvider IsNot Nothing Then MusicProvider = Nothing
 
         _Mute = False
     End Sub

@@ -28,7 +28,7 @@ Public Class VlcAudioHandler
         Dim Current = K.GetCurrent()
         If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then Return -2
 
-        Dummy.Setup(New WaveFormat(rate, channels))
+        Dummy.Setup(New WaveFormat(rate, channels), False)
         Me.Channels = channels
         Playing = False
 

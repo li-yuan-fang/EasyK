@@ -1,7 +1,7 @@
 ﻿Imports Newtonsoft.Json
 
 <Serializable>
-Public Class RequestPlugin
+Public Class RequestPanel
 
     <JsonProperty("id")>
     Public Property Id As String

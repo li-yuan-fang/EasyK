@@ -300,24 +300,46 @@ Public Class KWebCore
         Return WebStartup.RespondJson(ctx, "{""success"":true}")
     End Function
 
+    '生成面板信息
+    Private Function GeneratePanelResult() As String
+        Dim PanelResult As New Dictionary(Of String, Object)(Settings.Settings.PluginCommon)
+
+        If Settings.Settings.Audio.AllowAccompaniment Then
+            PanelResult.Add("accompaniment", K.Accompaniment)
+        End If
+
+        Return JsonConvert.SerializeObject(PanelResult)
+    End Function
+
     <WebApi("/panel")>
     Private Function Panel(ctx As HttpContext) As Task
         Select Case ctx.Request.Method.ToUpper()
             Case "GET"
-                Return WebStartup.RespondJson(ctx, JsonConvert.SerializeObject(Settings.Settings.PluginCommon))
+                Return WebStartup.RespondJson(ctx, GeneratePanelResult())
             Case "POST"
                 Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-                Dim p As RequestPlugin = JsonConvert.DeserializeObject(Of RequestPlugin)(Request)
-                If p Is Nothing OrElse Not Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
+                Dim p As RequestPanel = JsonConvert.DeserializeObject(Of RequestPanel)(Request)
+                If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx)
+
+                If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
+                    '更新插件配置
+                    Settings.Settings.PluginCommon(p.Id) = p.Value
+                    DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
+
+                    K.TriggerMirrorPlay("Refresh")
+                ElseIf p.Id.ToLower() = "accompaniment" Then
+                    '更改伴唱状态
+                    Try
+                        K.Accompaniment = Boolean.Parse(p.Value)
+                    Catch
+                        Console.WriteLine("收到错误的伴唱状态 - {0}", p.Value)
+                    End Try
+                Else
                     Return WebStartup.RespondStatusOnly(ctx)
                 End If
 
-                Settings.Settings.PluginCommon(p.Id) = p.Value
-                DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
-                K.TriggerMirrorPlay("Refresh")
-
-                Return WebStartup.RespondJson(ctx, JsonConvert.SerializeObject(Settings.Settings.PluginCommon))
+                Return WebStartup.RespondJson(ctx, GeneratePanelResult())
         End Select
 
         Return WebStartup.RespondStatusOnly(ctx)

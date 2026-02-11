@@ -26,7 +26,7 @@ Public Class CefAudioHandler
     Public Sub OnAudioStreamStarted(chromiumWebBrowser As IWebBrowser, browser As IBrowser, parameters As AudioParameters, channels As Integer) Implements IAudioHandler.OnAudioStreamStarted
         Me.Channels = channels
         Played = False
-        Dummy.Setup(WaveFormat.CreateIeeeFloatWaveFormat(parameters.SampleRate, channels))
+        Dummy.Setup(WaveFormat.CreateIeeeFloatWaveFormat(parameters.SampleRate, channels), True)
 
         If Settings.Settings.DebugMode Then
             Console.WriteLine("CefSharp 托管音频播放")

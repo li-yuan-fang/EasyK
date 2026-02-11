@@ -51,6 +51,8 @@ Public Class EasyK
 
     Friend ReadOnly Settings As SettingContainer
 
+    Friend ReadOnly Dummy As DummyPlayer
+
     ''' <summary>
     ''' 播放器暂停事件
     ''' <param name="Type">类型</param>
@@ -152,10 +154,10 @@ Public Class EasyK
     ''' <returns></returns>
     Public Property DummyVolume As Single
         Get
-            Return If(PlayerForm Is Nothing, 0, PlayerForm.Dummy.Volume)
+            Return Dummy.Volume
         End Get
         Set(value As Single)
-            If PlayerForm IsNot Nothing Then PlayerForm.Dummy.Volume = value
+            Dummy.Volume = value
         End Set
     End Property
 
@@ -165,10 +167,25 @@ Public Class EasyK
     ''' <returns></returns>
     Public Property DummyMute As Boolean
         Get
-            Return If(PlayerForm Is Nothing, 0, PlayerForm.Dummy.Mute)
+            Return Dummy.Mute
         End Get
         Set(value As Boolean)
-            If PlayerForm IsNot Nothing Then PlayerForm.Dummy.Mute = value
+            Dummy.Mute = value
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取或设置伴唱状态
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property Accompaniment As Boolean
+        Get
+            If Not Settings.Settings.Audio.AllowAccompaniment Then Return False
+            Return Dummy.Accompaniment
+        End Get
+        Set(value As Boolean)
+            If Not Settings.Settings.Audio.AllowAccompaniment Then Return
+            Dummy.Accompaniment = value
         End Set
     End Property
 
@@ -189,6 +206,7 @@ Public Class EasyK
     ''' </summary>
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
+        Dummy = New DummyPlayer(Me, Settings)
         If Not Cef.IsInitialized Then Cef.Initialize(New CefSetting(Settings))
 
         PlayerForm = New FrmMain(Me, Settings)
