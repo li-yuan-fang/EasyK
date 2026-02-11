@@ -1,4 +1,5 @@
-﻿Imports NAudio.Wave
+﻿Imports System.Reflection
+Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
 Public Class DummyPlayer
@@ -90,8 +91,6 @@ Public Class DummyPlayer
         If Settings.Settings.Audio.AllowAccompaniment Then
             If Float Then
                 MusicProvider = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
-
-                'MusicProvider = New StftProcessor(WaveProvider.ToSampleProvider)
             Else
                 Dim ap = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
                 MusicProvider = ap.ToSampleProvider()
