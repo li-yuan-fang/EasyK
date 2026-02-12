@@ -39,7 +39,7 @@ Public Class KAudioSetting
     ''' </summary>
     ''' <returns></returns>
     <JsonProperty("accompaniment_reduction_factor")>
-    Public Property AccompanimentReductionFactor As Single = 0.85
+    Public Property AccompanimentReductionFactor As Single = 0.9F
 
     ''' <summary>
     ''' 自动关闭伴唱

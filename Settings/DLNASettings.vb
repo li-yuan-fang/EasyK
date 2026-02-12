@@ -81,9 +81,10 @@ Public Class DLNASettings
     Public Property LyricHighlight As Boolean = True
 
     ''' <summary>
-    ''' 每首歌结束时自动复位偏移
+    ''' DLNA音乐模式下每首歌结束时自动复位偏移
     ''' </summary>
     ''' <returns></returns>
+    <JsonProperty("auto_reset_offset")>
     Public Property AutoResetOffset As Boolean = True
 
 End Class

@@ -15,8 +15,6 @@ Public Class DummyPlayer
     '储存的音量
     Private StoredVolume As Single = 0.5
 
-    Private _Mute As Boolean = False
-
     Private ReadOnly Settings As SettingContainer
 
     ''' <summary>
@@ -29,6 +27,7 @@ Public Class DummyPlayer
         AddHandler K.OnPlayerTerminated, AddressOf OnPlayerTerminated
     End Sub
 
+    '自动关闭伴唱
     Private Sub OnPlayerTerminated()
         If Settings.Settings.Audio.AutoResetAccompaniment Then Accompaniment = False
     End Sub

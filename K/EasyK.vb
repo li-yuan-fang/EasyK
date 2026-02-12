@@ -237,7 +237,7 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
-    ''' 播放
+    ''' 部署并播放
     ''' </summary>
     Public Sub Play()
         _Running = True

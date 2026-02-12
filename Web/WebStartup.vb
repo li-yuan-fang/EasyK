@@ -115,7 +115,7 @@ Public Class WebStartup
         Dim PhysicsPath As String = CombinePath(WebRoot, RemotePath)
 
         If Not IO.File.Exists(PhysicsPath) Then
-            Console.WriteLine("{0} - {1} {2} 404", RemotePath, Request.Method, PhysicsPath)
+            If Settings.Settings.DebugMode Then Console.WriteLine("{0} - {1} {2} 404", RemotePath, Request.Method, PhysicsPath)
             Return RespondStatusOnly(ctx, 404)
         End If
 

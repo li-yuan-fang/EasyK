@@ -293,21 +293,21 @@ Public Class KWebCore
                         Try
                             K.Volume = Double.Parse(p.Value)
                         Catch
-                            Console.WriteLine("收到错误的音量 - {0}", p.Value)
+                            Console.WriteLine("错误的音量 - {0}", p.Value)
                         End Try
                     Case "accompaniment"
                         '更改伴唱状态
                         Try
                             K.Accompaniment = Boolean.Parse(p.Value)
                         Catch
-                            Console.WriteLine("收到错误的伴唱状态 - {0}", p.Value)
+                            Console.WriteLine("错误的伴唱状态 - {0}", p.Value)
                         End Try
                     Case "offset"
                         '更改歌词偏移
                         Try
                             K.LyricOffset = Double.Parse(p.Value)
                         Catch
-                            Console.WriteLine("收到错误的歌词偏移 - {0}", p.Value)
+                            Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
                         End Try
                     Case Else
                         If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
