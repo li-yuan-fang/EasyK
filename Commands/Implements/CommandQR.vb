@@ -17,31 +17,6 @@ Namespace Commands
             Me.Settings = Settings
         End Sub
 
-        '获取本机有效IP
-        Private Function GetLocalIP(Adapater As NetworkInterface) As String
-            Dim IPv4 As New List(Of String)
-            Dim IPv6 As New List(Of String)
-
-            With Adapater.GetIPProperties()
-                For Each u In .UnicastAddresses
-                    Select Case u.Address.AddressFamily
-                        Case AddressFamily.InterNetwork
-                            IPv4.Add(u.Address.ToString())
-                        Case AddressFamily.InterNetworkV6
-                            IPv6.Add(u.Address.ToString())
-                    End Select
-                Next
-            End With
-
-            If IPv4.Count > 0 Then
-                Return IPv4(0)
-            ElseIf IPv6.Count > 0 Then
-                Return $"[{IPv6(0)}]"
-            Else
-                Return vbNullString
-            End If
-        End Function
-
         '打印有效网卡
         Private Sub PrintValidAdapters()
             Dim Valid = NetUtils.GetValidAdapters()
@@ -81,23 +56,6 @@ Namespace Commands
             Next
         End Sub
 
-        '打开二维码窗口
-        Private Sub OpenQRCode(Adapter As NetworkInterface, Outside As Boolean)
-            Dim LocalIP As String = GetLocalIP(Adapter)
-            If String.IsNullOrEmpty(LocalIP) Then
-                Console.WriteLine("获取本机IP失败")
-                Return
-            End If
-
-            Dim Key As String = Settings.Settings.Web.PassKey
-            Dim Port As Integer = Settings.Settings.Web.Port
-            If String.IsNullOrEmpty(Key) Then
-                K.ShowQRCode($"http://{LocalIP}:{Port}/", Outside)
-            Else
-                K.ShowQRCode($"http://{LocalIP}:{Port}/?pass={HttpUtility.UrlEncode(Key)}", Outside)
-            End If
-        End Sub
-
         Protected Overrides Sub Process(Args() As String)
             Dim Content As String = If(Args.Length < 2, "auto", Args(1).ToLower())
             Dim Outside As Boolean = Args.Length >= 3 AndAlso Args(2).ToLower() = "outside"
@@ -117,7 +75,7 @@ Namespace Commands
                         Return
                     End If
 
-                    OpenQRCode(Adapter, Outside)
+                    K.ShowQRCode(Adapter, Outside)
                 Case "list"
                     '列出可用网卡
                     PrintValidAdapters()
@@ -135,7 +93,7 @@ Namespace Commands
                         Return
                     End If
 
-                    OpenQRCode(Adapter, Outside)
+                    K.ShowQRCode(Adapter, Outside)
             End Select
         End Sub
 

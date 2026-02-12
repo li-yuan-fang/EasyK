@@ -1,6 +1,7 @@
 ﻿Imports System.Management
 Imports System.Net
 Imports System.Net.NetworkInformation
+Imports System.Net.Sockets
 Imports System.Text.RegularExpressions
 
 Public Class NetUtils
@@ -91,7 +92,7 @@ Public Class NetUtils
     ''' <summary>
     ''' 获取网卡
     ''' </summary>
-    ''' <param name="GUID"></param>
+    ''' <param name="GUID">网卡GUID</param>
     ''' <returns></returns>
     Public Shared Function GetAdapter(GUID As String) As NetworkInterface
         Try
@@ -120,6 +121,35 @@ Public Class NetUtils
         End Try
 
         Return Nothing
+    End Function
+
+    ''' <summary>
+    ''' 获取本机有效IP
+    ''' </summary>
+    ''' <param name="Adapater">网卡</param>
+    ''' <returns></returns>
+    Public Shared Function GetLocalIP(Adapater As NetworkInterface) As String
+        Dim IPv4 As New List(Of String)
+        Dim IPv6 As New List(Of String)
+
+        With Adapater.GetIPProperties()
+            For Each u In .UnicastAddresses
+                Select Case u.Address.AddressFamily
+                    Case AddressFamily.InterNetwork
+                        IPv4.Add(u.Address.ToString())
+                    Case AddressFamily.InterNetworkV6
+                        IPv6.Add(u.Address.ToString())
+                End Select
+            Next
+        End With
+
+        If IPv4.Count > 0 Then
+            Return IPv4(0)
+        ElseIf IPv6.Count > 0 Then
+            Return $"[{IPv6(0)}]"
+        Else
+            Return vbNullString
+        End If
     End Function
 
     ''' <summary>

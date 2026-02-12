@@ -26,6 +26,7 @@ Public Class AccompanimentProvider
         Me.Dummy = Dummy
         With Settings.Settings.Audio
             CenterAcc.ReductionFactor = .AccompanimentReductionFactor
+            STFTAcc.ReductionFactor = .AccompanimentReductionFactor
             UseFourierTransform = .UseFourierTransform
         End With
     End Sub

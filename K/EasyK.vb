@@ -1,4 +1,6 @@
-﻿Imports CefSharp
+﻿Imports System.Net.NetworkInformation
+Imports System.Web
+Imports CefSharp
 Imports Newtonsoft.Json
 
 Public Enum EasyKType
@@ -226,6 +228,17 @@ Public Class EasyK
     Public Sub Play()
         _Running = True
         PlayerForm.Setup()
+
+        '检测是否需要显示二维码
+        If Settings.Settings.AutoShowQR Then
+            Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
+            If Adapter IsNot Nothing Then
+                '获取网卡成功
+                ShowQRCode(Adapter, False)
+            Else
+                Console.WriteLine("自动显示二维码失败 - 无法获取默认网卡")
+            End If
+        End If
 
         Push()
     End Sub
@@ -545,6 +558,27 @@ Public Class EasyK
 
             .Invoke(Sub() QRForm.SetBounds(X, Y, Width, Height))
         End With
+    End Sub
+
+    ''' <summary>
+    ''' 显示二维码
+    ''' </summary>
+    ''' <param name="Adapter">网卡</param>
+    ''' <param name="Outside">以独立窗口显示</param>
+    Public Sub ShowQRCode(Adapter As NetworkInterface, Outside As Boolean)
+        Dim LocalIP As String = NetUtils.GetLocalIP(Adapter)
+        If String.IsNullOrEmpty(LocalIP) Then
+            Console.WriteLine("显示二维码失败 - 获取本机IP失败")
+            Return
+        End If
+
+        Dim Key As String = Settings.Settings.Web.PassKey
+        Dim Port As Integer = Settings.Settings.Web.Port
+        If String.IsNullOrEmpty(Key) Then
+            ShowQRCode($"http://{LocalIP}:{Port}/", Outside)
+        Else
+            ShowQRCode($"http://{LocalIP}:{Port}/?pass={HttpUtility.UrlEncode(Key)}", Outside)
+        End If
     End Sub
 
     ''' <summary>

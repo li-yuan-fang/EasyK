@@ -4,34 +4,77 @@ Imports Newtonsoft.Json
 <Serializable>
 Public Class KSettings
 
+    ''' <summary>
+    ''' Debug模式
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("debug")>
     Public Property DebugMode As Boolean = False
 
+    ''' <summary>
+    ''' 视频缓存目录
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("temp_folder")>
     Public Property TempFolder As String = "temp"
 
+    ''' <summary>
+    ''' 保持登录(主要是bilibili)
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("keep_login")>
     Public Property KeepLogin As Boolean = True
 
+    ''' <summary>
+    ''' 部署后自动显示二维码
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("auto_show_qr")>
+    Public Property AutoShowQR As Boolean = True
+
+    ''' <summary>
+    ''' 音频设置
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("audio")>
     Public Property Audio As KAudioSetting = New KAudioSetting()
 
+    ''' <summary>
+    ''' Web服务器设置
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("web")>
     Public Property Web As KWebSettings = New KWebSettings()
 
+    ''' <summary>
+    ''' DLNA设置
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("dlna")>
     Public Property DLNA As DLNASettings = New DLNASettings()
 
+    ''' <summary>
+    ''' 插件设置
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("plugins")>
     Public Property Plugins As Dictionary(Of String, String) = New Dictionary(Of String, String)
 
+    ''' <summary>
+    ''' 插件通用设置
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("plugin_common")>
     Public Property PluginCommon As Dictionary(Of String, Object) = New Dictionary(Of String, Object) From {
-        {"kana", True},
-        {"translated", True},
-        {"roma", False}
+        {"kana", True},             '显示假名
+        {"translated", True},       '显示翻译
+        {"roma", False}             '显示罗马音
     }
 
+    ''' <summary>
+    ''' 退出时自动清理缓存
+    ''' </summary>
+    ''' <returns></returns>
     <JsonProperty("clean_exit")>
     Public Property CleanOnExit As Boolean = True
 

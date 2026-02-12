@@ -44,6 +44,22 @@ Namespace Accompaniment
         '可配对的侧面声道
         Protected ReadOnly SideChannelPairs As List(Of Tuple(Of Integer, Integer))
 
+        '衰减系数
+        Protected _ReductionFactor As Single
+
+        ''' <summary>
+        ''' 获取或设置衰减系数
+        ''' </summary>
+        ''' <returns></returns>
+        Public Property ReductionFactor As Single
+            Get
+                Return _ReductionFactor
+            End Get
+            Set(value As Single)
+                _ReductionFactor = Math.Max(0.0F, Math.Min(1.0F, value))
+            End Set
+        End Property
+
         ''' <summary>
         ''' 构造函数
         ''' </summary>
@@ -249,7 +265,7 @@ Namespace Accompaniment
                     Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
 
                     '衰减中置（人声），保留侧向（伴奏）
-                    Dim att As Double = (1 - attenuation * coherence)
+                    Dim att As Double = (1 - attenuation * coherence * _ReductionFactor)
                     centerX *= att
                     centerY *= att
 
