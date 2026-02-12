@@ -4,17 +4,6 @@
 
         Private Const BytesPerPCMSample As Integer = 2
 
-        Private Enum ChannelRole
-            FrontLeft      ' 0
-            FrontRight     ' 1
-            FrontCenter    ' 2 - 人声主要位置！
-            LowFrequency   ' 3 - 低音炮
-            BackLeft       ' 4
-            BackRight      ' 5
-            SideLeft       ' 6 (7.1)
-            SideRight      ' 7 (7.1)
-        End Enum
-
         '声道数
         Private ReadOnly Channels As Integer
 
@@ -39,9 +28,9 @@
             Me.Channels = Channels
             PCMFrameSize = Me.Channels * BytesPerPCMSample
 
-            ChannelRoles = MapChannels(Channels)
-            CenterChannelIndices = GetCenterChannelIndices()
-            SideChannelPairs = GetSideChannelPairs()
+            ChannelRoles = ChannelUtils.MapChannels(Channels)
+            CenterChannelIndices = ChannelUtils.GetCenterChannelIndices(ChannelRoles)
+            SideChannelPairs = ChannelUtils.GetSideChannelPairs(ChannelRoles)
         End Sub
 
         ''' <summary>
@@ -96,101 +85,6 @@
                 Next
             Next
         End Sub
-
-        '声道配对
-        Private Function MapChannels(channels As Integer) As List(Of ChannelRole)
-            Dim roles As New List(Of ChannelRole)
-
-            Select Case channels
-                Case 1 ' 单声道 - 无法消除，直接返回
-                    roles.Add(ChannelRole.FrontCenter)
-
-                Case 2 ' 立体声
-                    roles.Add(ChannelRole.FrontLeft)
-                    roles.Add(ChannelRole.FrontRight)
-
-                Case 4 ' 四声道 (FL, FR, BL, BR)
-                    roles.Add(ChannelRole.FrontLeft)
-                    roles.Add(ChannelRole.FrontRight)
-                    roles.Add(ChannelRole.BackLeft)
-                    roles.Add(ChannelRole.BackRight)
-
-                Case 6 ' 5.1声道
-                    roles.Add(ChannelRole.FrontLeft)
-                    roles.Add(ChannelRole.FrontRight)
-                    roles.Add(ChannelRole.FrontCenter)
-                    roles.Add(ChannelRole.LowFrequency)
-                    roles.Add(ChannelRole.BackLeft)
-                    roles.Add(ChannelRole.BackRight)
-
-                Case 8 ' 7.1声道
-                    roles.Add(ChannelRole.FrontLeft)
-                    roles.Add(ChannelRole.FrontRight)
-                    roles.Add(ChannelRole.FrontCenter)
-                    roles.Add(ChannelRole.LowFrequency)
-                    roles.Add(ChannelRole.BackLeft)
-                    roles.Add(ChannelRole.BackRight)
-                    roles.Add(ChannelRole.SideLeft)
-                    roles.Add(ChannelRole.SideRight)
-
-                Case Else ' 自定义多声道，循环映射
-                    For i As Integer = 0 To channels - 1
-                        If i >= 8 Then
-                            roles.Add(ChannelRole.FrontLeft) ' 默认映射
-                        Else
-                            roles.Add(DirectCast(i, ChannelRole))
-                        End If
-                    Next
-            End Select
-
-            Return roles
-        End Function
-
-        '获取中置声道索引（人声主要所在）
-        Private Function GetCenterChannelIndices() As List(Of Integer)
-            Dim indices As New List(Of Integer)
-
-            For i As Integer = 0 To ChannelRoles.Count - 1
-                If ChannelRoles(i) = ChannelRole.FrontCenter Then
-                    indices.Add(i)
-                End If
-            Next
-
-            ' 如果没有明确的中置声道（如立体声），所有声道都视为可能包含人声
-            If indices.Count = 0 AndAlso Channels = 2 Then
-                ' 立体声特殊处理：虚拟中置由左右混合产生
-            End If
-
-            Return indices
-        End Function
-
-        '获取可配对的侧面声道（用于提取差分信号）
-        Private Function GetSideChannelPairs() As List(Of Tuple(Of Integer, Integer))
-            Dim pairs As New List(Of Tuple(Of Integer, Integer))
-
-            ' 前侧左右配对
-            Dim flIndex = ChannelRoles.IndexOf(ChannelRole.FrontLeft)
-            Dim frIndex = ChannelRoles.IndexOf(ChannelRole.FrontRight)
-            If flIndex >= 0 AndAlso frIndex >= 0 Then
-                pairs.Add(Tuple.Create(flIndex, frIndex))
-            End If
-
-            ' 后侧左右配对
-            Dim blIndex = ChannelRoles.IndexOf(ChannelRole.BackLeft)
-            Dim brIndex = ChannelRoles.IndexOf(ChannelRole.BackRight)
-            If blIndex >= 0 AndAlso brIndex >= 0 Then
-                pairs.Add(Tuple.Create(blIndex, brIndex))
-            End If
-
-            ' 侧环绕配对 (7.1)
-            Dim slIndex = ChannelRoles.IndexOf(ChannelRole.SideLeft)
-            Dim srIndex = ChannelRoles.IndexOf(ChannelRole.SideRight)
-            If slIndex >= 0 AndAlso srIndex >= 0 Then
-                pairs.Add(Tuple.Create(slIndex, srIndex))
-            End If
-
-            Return pairs
-        End Function
 
         ''' <summary>
         ''' 获取或设置衰减系数
