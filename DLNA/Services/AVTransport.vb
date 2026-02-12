@@ -3,11 +3,6 @@
     Public Class AVTransport
         Inherits DLNAService
 
-        ''' <summary>
-        ''' 播放事件
-        ''' </summary>
-        Public Event OnPlay()
-
         '广播事件
         Private UpdateBroadcast As Task = Nothing
 
@@ -25,6 +20,16 @@
         '停止播放
         Private Sub OnTerminated()
             SetState("TransportState", "NO_MEDIA_PRESENT")
+        End Sub
+
+        '开始播放
+        Private Sub OnPlay()
+            '主要解决缓存文件加载时间过长导致轴对不上的问题
+            SetState("TransportState", "PAUSED_PLAYBACK")
+            Broadcast()
+            Threading.Thread.Sleep(100)
+            SetState("TransportState", "PLAYING")
+            Broadcast()
         End Sub
 
         '进度广播事件
@@ -82,6 +87,7 @@
             '绑定事件
             AddHandler Protocol.DLNA.K.OnPlayerPause, AddressOf OnPause
             AddHandler Protocol.DLNA.K.OnPlayerTerminated, AddressOf OnTerminated
+            AddHandler Protocol.DLNA.K.OnMirrorPlay, AddressOf OnPlay
         End Sub
 
         ''' <summary>

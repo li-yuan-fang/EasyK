@@ -263,50 +263,16 @@ Public Class KWebCore
         Return Uploader.Progress(ctx)
     End Function
 
-    <WebApi("/volume", HttpMethod.Post)>
-    Private Function Volume(ctx As HttpContext) As Task
-        Dim Request As String = WebStartup.GetRequestBody(ctx)
-
-        Dim v As RequestVolume = JsonConvert.DeserializeObject(Of RequestVolume)(Request)
-        If v Is Nothing OrElse Not [Enum].IsDefined(GetType(FormUtils.VolumeAction), v.VolumeAction) Then
-            Return WebStartup.RespondJson(ctx, "{""success"":false}")
-        End If
-
-        If Settings.Settings.Audio.IsDummyAudio Then
-            '托管音量
-            Dim Action = DirectCast(v.VolumeAction, FormUtils.VolumeAction)
-
-            Dim Vol As Single
-
-            Select Case Action
-                Case FormUtils.VolumeAction.Up
-                    Vol = K.DummyVolume + 0.05 * v.VolumeValue
-                Case FormUtils.VolumeAction.Down
-                    Vol = K.DummyVolume - 0.05 * v.VolumeValue
-                Case FormUtils.VolumeAction.Mute
-                    K.DummyMute = Not K.DummyMute
-                    Return WebStartup.RespondJson(ctx, "{""success"":true}")
-            End Select
-
-            Vol = Math.Max(Math.Min(Vol, 1), 0)
-            K.DummyVolume = Vol
-        Else
-            '系统音量
-            If Not Settings.Settings.Audio.AllowUpdateSystemVolume Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
-
-            K.UpdateSystemVolume(DirectCast(v.VolumeAction, FormUtils.VolumeAction), v.VolumeValue)
-        End If
-
-        Return WebStartup.RespondJson(ctx, "{""success"":true}")
-    End Function
-
     '生成面板信息
     Private Function GeneratePanelResult() As String
         Dim PanelResult As New Dictionary(Of String, Object)(Settings.Settings.PluginCommon)
 
-        If Settings.Settings.Audio.AllowAccompaniment Then
-            PanelResult.Add("accompaniment", K.Accompaniment)
-        End If
+        With PanelResult
+            .Add("volume", K.Volume)
+            If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
+
+            .Add("offset", K.LyricOffset)
+        End With
 
         Return JsonConvert.SerializeObject(PanelResult)
     End Function
@@ -322,22 +288,38 @@ Public Class KWebCore
                 Dim p As RequestPanel = JsonConvert.DeserializeObject(Of RequestPanel)(Request)
                 If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx)
 
-                If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
-                    '更新插件配置
-                    Settings.Settings.PluginCommon(p.Id) = p.Value
-                    DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
+                Select Case p.Id.ToLower()
+                    Case "volume"
+                        Try
+                            K.Volume = Double.Parse(p.Value)
+                        Catch
+                            Console.WriteLine("收到错误的音量 - {0}", p.Value)
+                        End Try
+                    Case "accompaniment"
+                        '更改伴唱状态
+                        Try
+                            K.Accompaniment = Boolean.Parse(p.Value)
+                        Catch
+                            Console.WriteLine("收到错误的伴唱状态 - {0}", p.Value)
+                        End Try
+                    Case "offset"
+                        '更改歌词偏移
+                        Try
+                            K.LyricOffset = Double.Parse(p.Value)
+                        Catch
+                            Console.WriteLine("收到错误的歌词偏移 - {0}", p.Value)
+                        End Try
+                    Case Else
+                        If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
+                            '更新插件配置
+                            Settings.Settings.PluginCommon(p.Id) = p.Value
+                            DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
 
-                    K.TriggerMirrorPlay("Refresh")
-                ElseIf p.Id.ToLower() = "accompaniment" Then
-                    '更改伴唱状态
-                    Try
-                        K.Accompaniment = Boolean.Parse(p.Value)
-                    Catch
-                        Console.WriteLine("收到错误的伴唱状态 - {0}", p.Value)
-                    End Try
-                Else
-                    Return WebStartup.RespondStatusOnly(ctx)
-                End If
+                            K.TriggerMirrorPlay("Refresh")
+                        Else
+                            Return WebStartup.RespondStatusOnly(ctx)
+                        End If
+                End Select
 
                 Return WebStartup.RespondJson(ctx, GeneratePanelResult())
         End Select

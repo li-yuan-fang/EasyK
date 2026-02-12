@@ -494,16 +494,16 @@
     <Compile Include="K\Audio\VlcAudioHandler.vb" />
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
     <Compile Include="K\CefSetting.vb" />
-    <Compile Include="K\QRCodeBox.Designer.vb">
+    <Compile Include="K\View\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </Compile>
-    <Compile Include="K\QRCodeBox.vb">
+    <Compile Include="K\View\QRCodeBox.vb">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="K\FrmQRCode.Designer.vb">
+    <Compile Include="K\View\FrmQRCode.Designer.vb">
       <DependentUpon>FrmQRCode.vb</DependentUpon>
     </Compile>
-    <Compile Include="K\FrmQRCode.vb">
+    <Compile Include="K\View\FrmQRCode.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="DLNA\DLNA.vb" />
@@ -523,10 +523,10 @@
     <Compile Include="Commands\Implements\FrmLogin.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="K\FrmMain.Designer.vb">
+    <Compile Include="K\View\FrmMain.Designer.vb">
       <DependentUpon>FrmMain.vb</DependentUpon>
     </Compile>
-    <Compile Include="K\FrmMain.vb">
+    <Compile Include="K\View\FrmMain.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ModMain.vb" />
@@ -551,6 +551,7 @@
     <Compile Include="Settings\KWebSettings.vb" />
     <Compile Include="Settings\SettingContainer.vb" />
     <Compile Include="Settings\UploadSettings.vb" />
+    <Compile Include="Utils\AudioUtils.vb" />
     <Compile Include="Utils\ColorUtils.vb" />
     <Compile Include="Utils\FormUtils.vb" />
     <Compile Include="Utils\HashUtils.vb" />
@@ -570,13 +571,13 @@
     <Compile Include="Web\WebStartup.vb" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="K\FrmQRCode.resx">
+    <EmbeddedResource Include="K\View\FrmQRCode.resx">
       <DependentUpon>FrmQRCode.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Commands\Implements\FrmLogin.resx">
       <DependentUpon>FrmLogin.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="K\FrmMain.resx">
+    <EmbeddedResource Include="K\View\FrmMain.resx">
       <DependentUpon>FrmMain.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
@@ -585,7 +586,7 @@
       <SubType>Designer</SubType>
       <LastGenOutput>Resources.Designer.vb</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="K\QRCodeBox.resx">
+    <EmbeddedResource Include="K\View\QRCodeBox.resx">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>

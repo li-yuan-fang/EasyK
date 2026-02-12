@@ -453,6 +453,28 @@ Public Class FrmMain
                  End Sub)
     End Sub
 
+    '更新歌词偏移
+    Private Sub UpdateDLNAMusicOffset()
+        If Not DLNA_Music Then Return
+
+        Task.Run(Sub()
+                     While Not Browser_Loaded
+                         Threading.Thread.Sleep(5)
+                         If Not DLNA_Music Then Return
+                     End While
+
+                     If IsDisposed Then Return
+
+                     Try
+                         Invoke(Sub() Browser.EvaluateScriptAsync(DLNAMusicProviders.GenerateUpdateOffsetScript(K.LyricOffset)))
+                     Catch ex As Exception
+                         If K.Settings.Settings.DebugMode Then
+                             Console.WriteLine("DLNA音乐模式更新歌词偏移出错 - {0}", ex.Message)
+                         End If
+                     End Try
+                 End Sub)
+    End Sub
+
     '运行B站自动脚本
     Private Sub RunBiliScript(Browser As IBrowser)
         With Browser
@@ -538,6 +560,7 @@ Public Class FrmMain
                 End If
 
                 .Play()
+                K.TriggerMirrorPlay()
 
                 DLNA_Loading = False
                 If DLNA_Music Then UpdateDLNAMusicState()
@@ -557,6 +580,10 @@ Public Class FrmMain
     End Sub
 
     Private Sub VLC_Stopped(sender As Object, e As EventArgs)
+        '偏移量复位
+        If DLNA_Music AndAlso Settings.Settings.DLNA.AutoResetOffset Then K._LyricOffset = 0
+
+        '播放器复位
         Invoke(Sub()
                    With VLCPlayer
                        .Visible = False
@@ -566,6 +593,7 @@ Public Class FrmMain
                    End With
                End Sub)
 
+        '推进进度
         K.Push()
     End Sub
 
@@ -650,6 +678,11 @@ Public Class FrmMain
                     If Not DLNA_Music Then Return
 
                     UpdateDLNAMusic()
+                ElseIf Content = "RefreshOffset" Then
+                    '刷新DLNA音乐播放器歌词偏移
+                    If Not DLNA_Music Then Return
+
+                    UpdateDLNAMusicOffset()
                 ElseIf Content.StartsWith("@") Then
                     '设置资源
                     DLNA_Waiting = False

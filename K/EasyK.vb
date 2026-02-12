@@ -55,6 +55,8 @@ Public Class EasyK
 
     Friend ReadOnly Dummy As DummyPlayer
 
+    Friend _LyricOffset As Double = 0.0D
+
     ''' <summary>
     ''' 播放器暂停事件
     ''' <param name="Type">类型</param>
@@ -77,6 +79,11 @@ Public Class EasyK
     ''' 投屏功能重置事件
     ''' </summary>
     Public Event OnMirrorReset()
+
+    ''' <summary>
+    ''' 投屏播放事件
+    ''' </summary>
+    Public Event OnMirrorPlay()
 
     ''' <summary>
     ''' 获取或设置播放进度(仅VLC)
@@ -151,28 +158,19 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取或设置托管音量
+    ''' 获取或设置音量
     ''' </summary>
     ''' <returns></returns>
-    Public Property DummyVolume As Single
+    Public Property Volume As Single
         Get
-            Return Dummy.Volume
+            Return If(Settings.Settings.Audio.IsDummyAudio, Dummy.Volume, AudioUtils.GetSystemVolume())
         End Get
         Set(value As Single)
-            Dummy.Volume = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取或设置托管静音
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property DummyMute As Boolean
-        Get
-            Return Dummy.Mute
-        End Get
-        Set(value As Boolean)
-            Dummy.Mute = value
+            If Settings.Settings.Audio.IsDummyAudio Then
+                Dummy.Volume = Math.Max(0, Math.Min(value, 1))
+            Else
+                AudioUtils.SetSystemVolume(value)
+            End If
         End Set
     End Property
 
@@ -188,6 +186,22 @@ Public Class EasyK
         Set(value As Boolean)
             If Not Settings.Settings.Audio.AllowAccompaniment Then Return
             Dummy.Accompaniment = value
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取或设置歌词偏移
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property LyricOffset As Double
+        Get
+            Return _LyricOffset
+        End Get
+        Set(value As Double)
+            If _LyricOffset <> value Then
+                _LyricOffset = value
+                TriggerMirrorPlay("RefreshOffset")
+            End If
         End Set
     End Property
 
@@ -649,8 +663,14 @@ Public Class EasyK
         AddHandler PlayerForm.OnDLNAReset, AddressOf TriggerMirrorReset
     End Sub
 
+    '触发投屏复位
     Private Sub TriggerMirrorReset()
         RaiseEvent OnMirrorReset()
+    End Sub
+
+    '触发投屏播放
+    Friend Sub TriggerMirrorPlay()
+        RaiseEvent OnMirrorPlay()
     End Sub
 
     ''' <summary>

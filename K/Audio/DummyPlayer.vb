@@ -40,28 +40,6 @@ Public Class DummyPlayer
     Public Property Accompaniment As Boolean = False
 
     ''' <summary>
-    ''' 获取或设置托管静音模式
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property Mute As Boolean
-        Get
-            Return _Mute
-        End Get
-        Set(value As Boolean)
-            If VolumeProvider IsNot Nothing Then
-                If value Then
-                    StoredVolume = VolumeProvider.Volume
-                    VolumeProvider.Volume = 0
-                Else
-                    VolumeProvider.Volume = StoredVolume
-                End If
-            End If
-
-            _Mute = value
-        End Set
-    End Property
-
-    ''' <summary>
     ''' 获取或设置音量
     ''' </summary>
     ''' <returns></returns>
@@ -70,7 +48,7 @@ Public Class DummyPlayer
             Return If(VolumeProvider IsNot Nothing, VolumeProvider.Volume, StoredVolume)
         End Get
         Set(value As Single)
-            If VolumeProvider IsNot Nothing AndAlso Not Mute Then
+            If VolumeProvider IsNot Nothing Then
                 VolumeProvider.Volume = value
             Else
                 StoredVolume = value

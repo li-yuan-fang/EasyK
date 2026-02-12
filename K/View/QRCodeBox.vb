@@ -106,37 +106,7 @@ Public Class QRCodeBox
         With e.Graphics
             .SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
 
-            '.Clear(Color.Transparent)
             .DrawImageUnscaled(GeneratePanel(), 0, 0)
-
-            'Dim TitleSizeF As SizeF
-            'Using Font As New Font(Me.Font.FontFamily, Width * 0.06F)
-            '    TitleSizeF = .MeasureString(Title, Font)
-
-            '    Dim GapHeight As Single = Height * 0.01F
-
-            '    Dim QRWidth As Integer = Math.Min(Width, Height)
-            '    QRWidth = Math.Max(Math.Min(QRWidth * 0.9, Height - GapHeight - TitleSizeF.Height - 20) \ 29, 1)
-
-            '    Using QRBitmap As Bitmap = QRCode.GetGraphic(QRWidth, ForeColor, BackColor, False)
-            '        QRBitmap.SetResolution(.DpiX, .DpiY)
-
-            '        Dim X, Y As Single
-            '        With QRBitmap
-            '            X = (Width - .Width) / 2 - 1
-            '        End With
-
-            '        Dim StrX, StrY As Single
-            '        With TitleSizeF
-            '            StrX = (Width - .Width) / 2 - 1
-            '            Y = (Height - (QRBitmap.Height + GapHeight + .Height)) / 2 - 1
-            '            StrY = Y + QRBitmap.Height + GapHeight
-            '        End With
-
-            '        .DrawImageUnscaled(QRBitmap, X, Y)
-            '        .DrawString(Title, Font, Brushes.Black, StrX, StrY)
-            '    End Using
-            'End Using
         End With
     End Sub
 

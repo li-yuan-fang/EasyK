@@ -243,6 +243,15 @@ Namespace DLNA.MusicProvider
         End Function
 
         ''' <summary>
+        ''' 生成更新歌词偏移脚本
+        ''' </summary>
+        ''' <param name="Offset">歌词偏移</param>
+        ''' <returns></returns>
+        Public Shared Function GenerateUpdateOffsetScript(Offset As Double) As String
+            Return $"window.setOffset({Offset});"
+        End Function
+
+        ''' <summary>
         ''' 生成更新歌词脚本
         ''' </summary>
         ''' <param name="Meta">元数据</param>
