@@ -4,6 +4,14 @@
 Public Class UploadSettings
 
     ''' <summary>
+    ''' 上传文件最大尺寸(单位:byte)
+    ''' </summary>
+    ''' <remarks>设置为负数则不限制</remarks>
+    ''' <returns></returns>
+    <JsonProperty("max_upload_size")>
+    Public Property MaxUploadSize As Integer = -1
+
+    ''' <summary>
     ''' 上传分块大小(单位:byte)
     ''' </summary>
     ''' <returns></returns>

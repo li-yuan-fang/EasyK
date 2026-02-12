@@ -15,9 +15,11 @@ Public Class UploadManager
     'Tip.此处长度为64 所以单个字符重复次数是63
     Private Shared HashRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d].{63}$")
 
+    '上传会话
     Private Class UploadSession
         Implements IDisposable
 
+        '会话ID
         Public ReadOnly Property Id As String
 
         Private ExpireTime As Long
@@ -36,6 +38,11 @@ Public Class UploadManager
 
         Private Hash As String = vbNullString
 
+        ''' <summary>
+        ''' 初始化上传会话
+        ''' </summary>
+        ''' <param name="Size">文件大小(单位:byte)</param>
+        ''' <param name="Settings">配置容器</param>
         Public Sub New(Size As Integer, Settings As SettingContainer)
             Me.Settings = Settings
 
@@ -50,6 +57,10 @@ Public Class UploadManager
             RefreshCount = 0
         End Sub
 
+        ''' <summary>
+        ''' 计算Hash
+        ''' </summary>
+        ''' <returns></returns>
         Public Function ComputeSHA256() As String
             If Not String.IsNullOrEmpty(Hash) Then Return Hash
 
@@ -69,7 +80,7 @@ Public Class UploadManager
                 End SyncLock
 
                 Dim hashBytes As Byte() = sha256.GetHashAndReset()
-                If Not hashBytes Is Nothing Then
+                If hashBytes IsNot Nothing Then
                     For Each b As Byte In hashBytes
                         Result &= b.ToString("x2")
                     Next
@@ -81,6 +92,12 @@ Public Class UploadManager
             Return Result
         End Function
 
+        ''' <summary>
+        ''' 上传分块
+        ''' </summary>
+        ''' <param name="Buffer">分块数据</param>
+        ''' <param name="Index">分块序号</param>
+        ''' <returns></returns>
         Public Function Upload(Buffer() As Byte, Index As Integer) As Boolean
             Dim Complete As Boolean
 
@@ -89,8 +106,6 @@ Public Class UploadManager
                 ExpireTime = Now.Ticks + Settings.Settings.Web.Upload.ExpireDuration
 
                 Complete = Uploaded.Count >= Total
-
-                'Console.WriteLine("#{0} {1}/{2} Complete: {3}", Index, Uploaded.Count, Total, Complete.ToString().ToLower())
             End SyncLock
 
             SyncLock StreamMuteX
@@ -109,16 +124,28 @@ Public Class UploadManager
             Return Complete
         End Function
 
+        ''' <summary>
+        ''' 检测上传是否超时
+        ''' </summary>
+        ''' <returns></returns>
         Public Function IsExpired() As Boolean
             Return Now.Ticks > ExpireTime
         End Function
 
+        ''' <summary>
+        ''' 检测上传是否完成
+        ''' </summary>
+        ''' <returns></returns>
         Public Function IsCompleted() As Boolean
             SyncLock Uploaded
                 Return Uploaded.Count >= Total
             End SyncLock
         End Function
 
+        ''' <summary>
+        ''' 获取未完成的分块
+        ''' </summary>
+        ''' <returns></returns>
         Public Function GetRequirements() As List(Of Integer)
             Dim Requirements As New List(Of Integer)
             SyncLock Uploaded
@@ -130,6 +157,9 @@ Public Class UploadManager
             Return Requirements
         End Function
 
+        ''' <summary>
+        ''' 销毁资源
+        ''' </summary>
         Public Sub Dispose() Implements IDisposable.Dispose
             With Stream
                 .Flush()
@@ -140,16 +170,23 @@ Public Class UploadManager
 
     End Class
 
+    '上传会话
     Private ReadOnly Sessions As New ConcurrentDictionary(Of String, UploadSession)()
 
+    '清理任务
     Private ReadOnly Cleaner As Task
 
+    '已占用的文件列表
     Private ReadOnly Occupied As New List(Of String)
 
     Private ReadOnly Settings As SettingContainer
 
     Private ExitFlag As Boolean = False
 
+    ''' <summary>
+    ''' 初始化上传管理器
+    ''' </summary>
+    ''' <param name="Settings">配置容器</param>
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
 
@@ -159,6 +196,7 @@ Public Class UploadManager
         Cleaner = Task.Run(AddressOf Clean)
     End Sub
 
+    '清理
     Private Sub Clean()
         Dim cnt As Long
         While Not ExitFlag
@@ -200,6 +238,8 @@ Public Class UploadManager
     ''' <param name="ctx">HTTP上下文</param>
     ''' <returns></returns>
     Public Function Progress(ctx As HttpContext) As Task
+        '上传流程: 请求上传会话(POST) -> 上传分块(PUT) -> 获取会话状态(GET)
+
         Dim Name As String = ctx.Request.Cookies.Item("name")
         If String.IsNullOrEmpty(Name) Then Return WebStartup.RespondStatusOnly(ctx)
 
@@ -248,23 +288,31 @@ Public Class UploadManager
 
     '请求新会话
     Private Function HandlePost(ctx As HttpContext, Name As String) As Task
+        '解析请求
         Dim Request As RequestSize = JsonConvert.DeserializeObject(Of RequestSize)(WebStartup.GetRequestBody(ctx))
         If Request Is Nothing OrElse Request.Size <= 0 Then Return WebStartup.RespondStatusOnly(ctx, 400)
 
+        '移除旧会话
         Dim Session As UploadSession = Nothing
         Sessions.TryRemove(Name, Session)
         If Session IsNot Nothing Then Session.Dispose()
 
+        '检查文件尺寸
+        Dim Max As Integer = Settings.Settings.Web.Upload.MaxUploadSize
+        If Max >= 0 AndAlso Request.Size > Max Then Return WebStartup.RespondStatusOnly(ctx, 413)
+
+        '创建新会话
         Session = New UploadSession(Request.Size, Settings)
         If Settings.Settings.DebugMode Then Console.WriteLine("{0}> 新会话 {1}", Name, Session.Id)
 
         If Sessions.TryAdd(Name, Session) Then
-            Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}""}}")
+            Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize}}}")
         Else
             Return WebStartup.RespondStatusOnly(ctx, 500)
         End If
     End Function
 
+    '上传分块
     Private Function HandlePut(ctx As HttpContext, Name As String) As Task
         Dim Session As UploadSession = Nothing
         If Not Sessions.TryGetValue(Name, Session) OrElse Session Is Nothing OrElse Session.IsExpired() Then _
@@ -299,12 +347,19 @@ Public Class UploadManager
         Return WebStartup.RespondJson(ctx, $"{{""complete"":{Session.Upload(Buffer, Index).ToString().ToLower()}}}")
     End Function
 
+    ''' <summary>
+    ''' 获取已占用的文件列表
+    ''' </summary>
+    ''' <returns></returns>
     Public Function GetOccupiedFiles() As List(Of String)
         SyncLock Occupied
             Return New List(Of String)(Occupied)
         End SyncLock
     End Function
 
+    ''' <summary>
+    ''' 销毁资源
+    ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
         ExitFlag = True
         With Cleaner
