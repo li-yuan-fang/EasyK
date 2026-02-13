@@ -116,17 +116,17 @@ Public Class WebStartup
 
         If Not IO.File.Exists(PhysicsPath) Then
             If Settings.Settings.DebugMode Then Console.WriteLine("{0} - {1} {2} 404", RemotePath, Request.Method, PhysicsPath)
-            Return RespondStatusOnly(ctx, 404)
+            Return RespondStatusOnly(ctx, StatusCodes.Status404NotFound)
         End If
 
         If ctx.Request.Method.ToUpper() = "HEAD" Then
-            Return RespondStatusOnly(ctx, 200)
+            Return RespondStatusOnly(ctx, StatusCodes.Status200OK)
         ElseIf ctx.Request.Method.ToUpper() <> "GET" Then
-            Return RespondStatusOnly(ctx, 403)
+            Return RespondStatusOnly(ctx)
         End If
 
         Dim Range As String = Request.Headers().Item("Range")
-        Dim Status As Integer = 200
+        Dim Status As Integer = StatusCodes.Status200OK
         Dim Offset As Integer = 0
 
         Dim ContentRange As String = Nothing
@@ -135,20 +135,21 @@ Public Class WebStartup
 
         If Not String.IsNullOrEmpty(Range) Then
             If RangeRegex.IsMatch(Range) Then
-                Status = 206
+                Status = StatusCodes.Status206PartialContent
 
                 Range = Range.Replace("bytes=", "")
 
                 Dim Ranges As String() = Strings.Split(Range, "-")
                 Dim Invalid1 = String.IsNullOrEmpty(Ranges(0))
                 Dim Invalid2 = String.IsNullOrEmpty(Ranges(1))
-                If Ranges.Length < 2 OrElse (Invalid1 AndAlso Invalid2) Then Return RespondStatusOnly(ctx, 416)
+                If Ranges.Length < 2 OrElse (Invalid1 AndAlso Invalid2) Then _
+                    Return RespondStatusOnly(ctx, StatusCodes.Status416RangeNotSatisfiable)
 
                 If Not Invalid1 Then
                     Offset = Val(Range(0))
 
                     '超出范围
-                    If Offset >= Length Then Return RespondStatusOnly(ctx, 416)
+                    If Offset >= Length Then Return RespondStatusOnly(ctx, StatusCodes.Status416RangeNotSatisfiable)
 
                     If Not Invalid2 Then
                         Length = Val(Range(1)) - Offset + 1
@@ -157,19 +158,19 @@ Public Class WebStartup
                     End If
 
                     '超出范围
-                    If Length <= 0 Then Return RespondStatusOnly(ctx, 416)
+                    If Length <= 0 Then Return RespondStatusOnly(ctx, StatusCodes.Status416RangeNotSatisfiable)
                 Else
                     Offset = Length - Val(Range(1))
 
                     '超出范围
-                    If Offset < 0 Then Return RespondStatusOnly(ctx, 416)
+                    If Offset < 0 Then Return RespondStatusOnly(ctx, StatusCodes.Status416RangeNotSatisfiable)
 
                     Length = Val(Range(1))
                 End If
 
                 ContentRange = $"bytes {Range(0)}-{Range(1)}/{Info.Length}"
             Else
-                Return RespondStatusOnly(ctx, 416)
+                Return RespondStatusOnly(ctx, StatusCodes.Status416RangeNotSatisfiable)
             End If
         End If
 
@@ -193,7 +194,7 @@ Public Class WebStartup
                     stream.Read(Buffer, Offset, Length)
                 End Using
             Catch
-                Return RespondStatusOnly(ctx, 500)
+                Return RespondStatusOnly(ctx, StatusCodes.Status500InternalServerError)
             End Try
 
             Return Response.Body.WriteAsync(Buffer, 0, Length)
@@ -306,11 +307,11 @@ Public Class WebStartup
     ''' <param name="ctx">上下文</param>
     ''' <param name="Code">响应码</param>
     ''' <returns></returns>
-    Public Shared Function RespondStatusOnly(ctx As HttpContext, Optional Code As Integer = 403) As Task
+    Public Shared Function RespondStatusOnly(ctx As HttpContext, Optional Code As Integer = StatusCodes.Status403Forbidden) As Task
         With ctx.Response
             .StatusCode = Code
             .ContentLength = 0
-            Return .WriteAsync("")
+            Return If(Code <> StatusCodes.Status204NoContent, .WriteAsync(""), Task.CompletedTask)
         End With
     End Function
 
@@ -325,7 +326,7 @@ Public Class WebStartup
         Dim Buffer() As Byte = UTF8.GetBytes(str)
 
         With ctx.Response
-            .StatusCode = 200
+            .StatusCode = StatusCodes.Status200OK
             .ContentType = type
             .ContentLength = Buffer.Length
             Return .Body.WriteAsync(Buffer, 0, .ContentLength)

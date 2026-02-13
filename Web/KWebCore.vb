@@ -177,26 +177,31 @@ Public Class KWebCore
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
         Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
-        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
+        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Dim User As String = ctx.Request.Cookies.Item("name")
         If String.IsNullOrEmpty(User) Then User = "未知用户"
 
-        Console.WriteLine("{0}> 对 {1} 执行顶歌", User, Id.Id)
-
-        Return WebStartup.RespondJson(ctx, $"{{""success"":{K.SendToTop(Id.Id).ToString().ToLower()}}}")
+        Dim Result As EasyKBookRecord = K.SendToTop(Id.Id)
+        If Result IsNot Nothing Then
+            Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+        Else
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
+        End If
     End Function
 
     <WebApi("/push", HttpMethod.Get)>
     Private Function Push(ctx As HttpContext) As Task
         K.Push()
-        Return WebStartup.RespondJson(ctx, "{""success"":true}")
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 
     <WebApi("/pause", HttpMethod.Get)>
     Private Function Puause(ctx As HttpContext) As Task
         K.Pause()
-        Return WebStartup.RespondJson(ctx, "{""success"":true}")
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 
     <WebApi("/remove", HttpMethod.Post)>
@@ -204,9 +209,12 @@ Public Class KWebCore
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
         Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
-        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
+        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
-        Return WebStartup.RespondJson(ctx, $"{{""success"":{K.Remove(Id.Id).ToString().ToLower()}}}")
+        Return WebStartup.RespondStatusOnly(ctx, If(K.Remove(Id.Id),
+                                                    StatusCodes.Status204NoContent,
+                                                    StatusCodes.Status422UnprocessableEntity))
     End Function
 
     <WebApi("/outdated", HttpMethod.Get)>
@@ -219,16 +227,17 @@ Public Class KWebCore
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
         Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
-        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then Return WebStartup.RespondJson(ctx, "{""success"":false}")
+        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Dim Order As String = ctx.Request.Cookies.Item("name")
         If String.IsNullOrEmpty(Order) Then Order = "未知用户"
 
         Dim NewId As String = K.Reorder(Id.Id, Order)
         If Not String.IsNullOrEmpty(NewId) Then
-            Return WebStartup.RespondJson(ctx, $"{{""success"":true,""id"":""{NewId}""}}")
+            Return WebStartup.RespondJson(ctx, $"{{""id"":""{NewId}""}}")
         Else
-            Return WebStartup.RespondJson(ctx, "{""success"":false}")
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
         End If
     End Function
 
@@ -239,7 +248,7 @@ Public Class KWebCore
         Dim Booking As RequestBook = JsonConvert.DeserializeObject(Of RequestBook)(Request)
         If Booking Is Nothing OrElse Not [Enum].IsDefined(GetType(EasyKType), Booking.Type) OrElse
             (Not ContentRegex.IsMatch(Booking.Content) AndAlso Booking.Type <> EasyKType.DLNA) Then
-            Return WebStartup.RespondJson(ctx, "{""success"":false}")
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
         End If
 
         Dim Order As String = ctx.Request.Cookies.Item("name")
@@ -247,15 +256,10 @@ Public Class KWebCore
 
         If String.IsNullOrEmpty(Order) Then Order = "未知用户"
 
-        Dim NewId As String
         With Booking
-            NewId = K.Book(.Title, Order, DirectCast(.Type, EasyKType), If(.Type = EasyKType.DLNA, ctx.Connection.RemoteIpAddress.ToString(), .Content))
+            Dim NewId As String = K.Book(.Title, Order, DirectCast(.Type, EasyKType), If(.Type = EasyKType.DLNA, ctx.Connection.RemoteIpAddress.ToString(), .Content))
+            Return WebStartup.RespondJson(ctx, $"{{""id"":""{NewId}""}}")
         End With
-        If Not String.IsNullOrEmpty(NewId) Then
-            Return WebStartup.RespondJson(ctx, $"{{""success"":true,""id"":""{NewId}""}}")
-        Else
-            Return WebStartup.RespondJson(ctx, "{""success"":false}")
-        End If
     End Function
 
     <WebApi("/upload")>
@@ -286,10 +290,11 @@ Public Class KWebCore
                 Dim Request As String = WebStartup.GetRequestBody(ctx)
 
                 Dim p As RequestPanel = JsonConvert.DeserializeObject(Of RequestPanel)(Request)
-                If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx)
+                If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
                 Select Case p.Id.ToLower()
                     Case "volume"
+                        '更改音量
                         Try
                             K.Volume = Double.Parse(p.Value)
                         Catch
@@ -317,7 +322,7 @@ Public Class KWebCore
 
                             K.TriggerMirrorPlay("Refresh")
                         Else
-                            Return WebStartup.RespondStatusOnly(ctx)
+                            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
                         End If
                 End Select
 

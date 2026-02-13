@@ -240,13 +240,13 @@ Namespace DLNA.Protocol
                 Dim NTValue As StringValues = .Headers("NT")
                 Dim CallbackValue As StringValues = .Headers("CALLBACK")
                 If NTValue.Count = 0 OrElse NTValue(0) <> "upnp:event" OrElse CallbackValue.Count = 0 Then _
-                                Return WebStartup.RespondStatusOnly(ctx, 412)
+                                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 Dim Urls As New List(Of String)
                 For Each m As Match In DeliverRegex.Matches(CallbackValue(0))
                     If m.Length > 0 Then Urls.Add(m.Value)
                 Next
-                If Urls.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, 412)
+                If Urls.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 '获取超时时间
                 Dim TimeoutValue As StringValues = .Headers("TIMEOUT")
@@ -295,21 +295,21 @@ Namespace DLNA.Protocol
         Private Function SubscribeRenew(ctx As HttpContext) As Task
             With ctx.Request
                 If .Headers().ContainsKey("NT") OrElse .Headers().ContainsKey("CALLBACK") Then _
-                                Return WebStartup.RespondStatusOnly(ctx, 400)
+                                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
                 '检查SID
                 Dim SIDValue As StringValues = .Headers("SID")
-                If SIDValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, 412)
+                If SIDValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 Dim m = UUIDRegex.Match(SIDValue(0))
                 Dim SID As String = m.Value
                 If String.IsNullOrEmpty(SID) OrElse Not Subscribers.ContainsKey(SID) Then _
-                    Return WebStartup.RespondStatusOnly(ctx, 412)
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 Dim Subscriber = Subscribers(SID)
                 If Subscriber.IsExpired() Then
                     Subscribers.TryRemove(SID, Nothing)
-                    Return WebStartup.RespondStatusOnly(ctx, 412)
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
                 End If
 
                 '获取超时时间
@@ -331,27 +331,27 @@ Namespace DLNA.Protocol
         Private Function Unsubscribe(ctx As HttpContext) As Task
             With ctx.Request
                 If .Headers().ContainsKey("NT") OrElse .Headers().ContainsKey("CALLBACK") Then _
-                                Return WebStartup.RespondStatusOnly(ctx, 400)
+                                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
                 '检查SID
                 Dim SIDValue As StringValues = .Headers("SID")
-                If SIDValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, 412)
+                If SIDValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 Dim m = UUIDRegex.Match(SIDValue(0))
                 Dim SID As String = m.Value
                 If String.IsNullOrEmpty(SID) OrElse Not Subscribers.ContainsKey(SID) Then _
-                    Return WebStartup.RespondStatusOnly(ctx, 412)
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
 
                 Dim Subscriber = Subscribers(SID)
                 If Subscriber.IsExpired() Then
                     Subscribers.TryRemove(SID, Nothing)
-                    Return WebStartup.RespondStatusOnly(ctx, 412)
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status412PreconditionFailed)
                 End If
 
                 '移除
                 Subscribers.TryRemove(SID, Nothing)
 
-                Return WebStartup.RespondStatusOnly(ctx, 200)
+                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
             End With
         End Function
 
@@ -362,7 +362,7 @@ Namespace DLNA.Protocol
                 WebStartup.AddHeaderSafe(.Headers, "TIMEOUT", $"Second-{Timeout}")
             End With
 
-            Return WebStartup.RespondStatusOnly(ctx, 200)
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
         End Function
 
         ''' <summary>
@@ -374,22 +374,25 @@ Namespace DLNA.Protocol
         Public Function Act(ctx As HttpContext, Access As Boolean) As Task
             With ctx.Request
                 '参数头检查
-                If Not .Headers.ContainsKey("SOAPAction") Then Return WebStartup.RespondStatusOnly(ctx, 402)
+                If Not .Headers.ContainsKey("SOAPAction") Then _
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status402PaymentRequired)
 
                 Dim ActionValue = .Headers("SOAPAction")
-                If ActionValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, 402)
+                If ActionValue.Count = 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status402PaymentRequired)
 
                 '检查服务名称和方法名称
-                If Not ActionValue(0).StartsWith($"""{ServiceName}") Then Return WebStartup.RespondStatusOnly(ctx, 401)
+                If Not ActionValue(0).StartsWith($"""{ServiceName}") Then _
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status401Unauthorized)
 
                 Dim m = MethodRegex.Match(ActionValue(0))
-                If m.Length = 0 OrElse Not Actions.ContainsKey(m.Value) Then Return WebStartup.RespondStatusOnly(ctx, 401)
+                If m.Length = 0 OrElse Not Actions.ContainsKey(m.Value) Then _
+                    Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status401Unauthorized)
             End With
 
             Dim Request As String = WebStartup.GetRequestBody(ctx)
             Dim Response As String = RemoteCall(Request, Access)
 
-            If String.IsNullOrEmpty(Response) Then Return WebStartup.RespondStatusOnly(ctx, 500)
+            If String.IsNullOrEmpty(Response) Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status500InternalServerError)
 
             Return WebStartup.RespondText(ctx, Response, "text/xml;charset=utf-8")
         End Function

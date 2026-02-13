@@ -333,7 +333,7 @@ Public Class EasyK
     ''' 顶歌
     ''' </summary>
     ''' <param name="Id">ID</param>
-    Public Function SendToTop(Id As String) As Boolean
+    Public Function SendToTop(Id As String) As EasyKBookRecord
         SyncLock Queue
             Dim node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
             While node IsNot Nothing
@@ -341,14 +341,14 @@ Public Class EasyK
                     Queue.Remove(node)
                     Queue.AddFirst(node)
 
-                    Return True
+                    Return node.Value
                 End If
 
                 node = node.Next
             End While
         End SyncLock
 
-        Return False
+        Return Nothing
     End Function
 
     ''' <summary>

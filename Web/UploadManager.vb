@@ -290,7 +290,7 @@ Public Class UploadManager
     Private Function HandlePost(ctx As HttpContext, Name As String) As Task
         '解析请求
         Dim Request As RequestSize = JsonConvert.DeserializeObject(Of RequestSize)(WebStartup.GetRequestBody(ctx))
-        If Request Is Nothing OrElse Request.Size <= 0 Then Return WebStartup.RespondStatusOnly(ctx, 400)
+        If Request Is Nothing OrElse Request.Size <= 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         '移除旧会话
         Dim Session As UploadSession = Nothing
@@ -299,7 +299,7 @@ Public Class UploadManager
 
         '检查文件尺寸
         Dim Max As Integer = Settings.Settings.Web.Upload.MaxUploadSize
-        If Max >= 0 AndAlso Request.Size > Max Then Return WebStartup.RespondStatusOnly(ctx, 413)
+        If Max >= 0 AndAlso Request.Size > Max Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status413PayloadTooLarge)
 
         '创建新会话
         Session = New UploadSession(Request.Size, Settings)
@@ -308,7 +308,7 @@ Public Class UploadManager
         If Sessions.TryAdd(Name, Session) Then
             Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize}}}")
         Else
-            Return WebStartup.RespondStatusOnly(ctx, 500)
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status500InternalServerError)
         End If
     End Function
 
@@ -316,7 +316,7 @@ Public Class UploadManager
     Private Function HandlePut(ctx As HttpContext, Name As String) As Task
         Dim Session As UploadSession = Nothing
         If Not Sessions.TryGetValue(Name, Session) OrElse Session Is Nothing OrElse Session.IsExpired() Then _
-            Return WebStartup.RespondStatusOnly(ctx, 403)
+            Return WebStartup.RespondStatusOnly(ctx)
 
         Dim Buffer As Byte()
         Dim IndexValue As StringValues
@@ -327,10 +327,12 @@ Public Class UploadManager
 
         With ctx.Request
             If Not .Headers.TryGetValue("Upload-Index", IndexValue) OrElse Not .Headers.TryGetValue("Upload-Hash", HashValue) Then _
-                Return WebStartup.RespondStatusOnly(ctx, 400)
+                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
             If IndexValue.Count = 0 OrElse HashValue.Count = 0 OrElse Not NumericRegex.IsMatch(IndexValue(0).ToString()) OrElse
-                Not HashRegex.IsMatch(HashValue(0).ToString()) Then Return WebStartup.RespondStatusOnly(ctx, 400)
+                Not HashRegex.IsMatch(HashValue(0).ToString()) Then _
+                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
+
             Index = Val(IndexValue(0))
             Hash = HashValue(0)
         End With
@@ -340,8 +342,10 @@ Public Class UploadManager
 
         Dim LocalHash As String = HashUtils.ComputeSHA256(Buffer)
         If LocalHash <> Hash.ToLower() Then
-            If Settings.Settings.DebugMode Then Console.WriteLine("{0}> #{1} {2} {3} - {4}", Name, Index, Buffer.Length, Hash, LocalHash)
-            Return WebStartup.RespondStatusOnly(ctx, 400)
+            If Settings.Settings.DebugMode Then _
+                Console.WriteLine("{0}> #{1} {2} {3} - {4}", Name, Index, Buffer.Length, Hash, LocalHash)
+
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
         End If
 
         Return WebStartup.RespondJson(ctx, $"{{""complete"":{Session.Upload(Buffer, Index).ToString().ToLower()}}}")

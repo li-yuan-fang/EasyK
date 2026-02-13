@@ -16,8 +16,9 @@
                 Return
             End If
 
-            If (K.SendToTop(Args(1))) Then
-                Console.WriteLine("顶歌成功 - {0}", Args(1))
+            Dim Result = K.SendToTop(Args(1))
+            If Result IsNot Nothing Then
+                Console.WriteLine("顶歌成功 - {0}", $"{Result.Title}(来自:{Result.Order})")
             Else
                 Console.WriteLine("顶歌失败 ID不存在 - {0}", Args(1))
             End If
