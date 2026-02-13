@@ -9,6 +9,9 @@ docs/user-guide.md
 #MusicBox
 wwwroot/dlna/music_box.html
 
+#win7
+win7.vb
+
 #Plugins
 plugins/*.dll
 

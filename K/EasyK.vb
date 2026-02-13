@@ -459,7 +459,7 @@ Public Class EasyK
         If Not IsPlaying() Then Return
 
         PlayerForm.Invoke(Sub()
-                              Dim Offset As Single = CSng(5000D / PlayingDuration)
+                              Dim Offset As Single = CSng(5D / PlayingDuration)
                               If Prev Then
                                   PlayingPosition = Math.Max(Math.Min(PlayingPosition - Offset, 1), 0)
                               Else
