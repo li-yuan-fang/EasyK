@@ -121,7 +121,6 @@ Namespace DLNA.Protocol
 
                          '推送失败
                          Failed = Failed + 1
-                         Console.WriteLine("失败次数: {0}/{1}", Failed, Settings.Settings.DLNA.EventNotifyFails)
                      End Sub)
         End Sub
 
