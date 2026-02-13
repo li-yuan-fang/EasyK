@@ -24,10 +24,7 @@ Public Class CefSetting
         If Settings.Settings.Audio.IsDummyAudio Then CefCommandLineArgs.Add("disable-audio-output", "1")
 
         '允许自动播放
-        With CefCommandLineArgs
-            .Add("autoplay-policy", "no-user-gesture-required")
-            .Add("disable-features", "AutoplayIgnoreWebAudio")
-        End With
+        CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required")
 
         '日志
         If Settings.Settings.DebugMode Then
