@@ -1,7 +1,5 @@
-﻿Imports System.Net
-Imports System.Net.NetworkInformation
-Imports System.Windows.Forms
-Imports Newtonsoft.Json
+﻿Imports System.Windows.Forms
+Imports EasyK.ConsoleUtils
 
 Module ModMain
 
@@ -44,7 +42,7 @@ Module ModMain
         End With
 
         '注册控制台回调
-        ConsoleUtils.RegisterExit(AddressOf ExitApplication)
+        SetConsoleCtrlHandler(AddressOf UnexpectedExit, True)
 
         '显示播放器窗口
         KCore.Show()
@@ -60,17 +58,18 @@ Module ModMain
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
-        '关闭指令系统
-        Commands.Close()
+        '保存配置
+        Settings.Dispose()
 
         '解除事件关联
-        RemoveHandler Commands.OnExit, AddressOf ExitApplication
-        RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
+        Try
+            RemoveHandler Commands.OnExit, AddressOf ExitApplication
+            RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
+        Catch
+        End Try
 
-        DLNAServer.Dispose()
-        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
-        WebServer.Dispose()
-        KCore.Dispose()
+        '关闭指令系统
+        Commands.Close()
 
         '清理
         If Settings.Settings.CleanOnExit Then
@@ -84,10 +83,27 @@ Module ModMain
             Next
         End If
 
-        '保存配置
-        Settings.Dispose()
+        '关闭服务
+        DLNAServer.Dispose()
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
+        WebServer.Dispose()
+        KCore.Dispose()
 
         End
     End Sub
+
+    '可能被非托管代码调用
+    '必须尽量简单快速
+    Private Function UnexpectedExit(ctrlType As CtrlType) As Boolean
+        Select Case ctrlType
+            Case CtrlType.CTRL_CLOSE_EVENT, CtrlType.CTRL_LOGOFF_EVENT, CtrlType.CTRL_SHUTDOWN_EVENT
+                ExitApplication()
+            Case CtrlType.CTRL_BREAK_EVENT, CtrlType.CTRL_C_EVENT
+                ExitApplication()
+                Return True
+        End Select
+
+        Return False
+    End Function
 
 End Module
