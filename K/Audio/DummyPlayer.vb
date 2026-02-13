@@ -6,7 +6,7 @@ Public Class DummyPlayer
 
     Private WaveProvider As BufferedWaveProvider = Nothing
 
-    Private MusicProvider As ISampleProvider = Nothing
+    Private MusicProvider As Accompaniment.IResetable = Nothing
 
     Private VolumeProvider As VolumeSampleProvider = Nothing
 
@@ -65,19 +65,23 @@ Public Class DummyPlayer
         }
 
         '音频处理
+        Dim Commit As ISampleProvider
         If Settings.Settings.Audio.AllowAccompaniment Then
             If Float Then
-                MusicProvider = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
+                Dim p = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
+                MusicProvider = p
+                Commit = p
             Else
-                Dim ap = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
-                MusicProvider = ap.ToSampleProvider()
+                Dim p = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
+                MusicProvider = p
+                Commit = p.ToSampleProvider()
             End If
         Else
-            MusicProvider = WaveProvider.ToSampleProvider()
+            Commit = WaveProvider.ToSampleProvider()
         End If
 
         '音量调整
-        VolumeProvider = New VolumeSampleProvider(MusicProvider) With {
+        VolumeProvider = New VolumeSampleProvider(Commit) With {
             .Volume = StoredVolume
         }
 
@@ -117,6 +121,7 @@ Public Class DummyPlayer
 
         SyncLock Direct
             WaveProvider.ClearBuffer()
+            If MusicProvider IsNot Nothing Then MusicProvider.Reset()
         End SyncLock
     End Sub
 

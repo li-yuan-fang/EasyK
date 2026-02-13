@@ -2,7 +2,7 @@
 Imports NAudio.Wave
 
 Public Class AccompanimentProviderFloat
-    Implements ISampleProvider
+    Implements ISampleProvider, IResetable
 
     Private ReadOnly source As ISampleProvider
 
@@ -46,5 +46,8 @@ Public Class AccompanimentProviderFloat
             Return samplesRead
         End If
     End Function
+    Public Sub Reset() Implements IResetable.Reset
+        STFTAcc.Reset()
+    End Sub
 
 End Class

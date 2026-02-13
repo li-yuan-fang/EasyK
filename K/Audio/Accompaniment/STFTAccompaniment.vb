@@ -200,7 +200,11 @@ Namespace Accompaniment
 
             Array.Clear(_inputBuffer, 0, _inputBuffer.Length)
             Array.Clear(_outputBuffer, 0, _outputBuffer.Length)
-            Array.Clear(_overlapBuffer, 0, _overlapBuffer.Length)
+
+            For ch = 0 To Channels - 1
+                _overlapBuffer(ch) = New Single(FFT_Size - 1) {}
+                Array.Clear(_overlapBuffer(ch), 0, FFT_Size)
+            Next
         End Sub
 
 

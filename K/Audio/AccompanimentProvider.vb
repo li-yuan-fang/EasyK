@@ -2,7 +2,7 @@
 Imports NAudio.Wave
 
 Public Class AccompanimentProvider
-    Implements IWaveProvider
+    Implements IWaveProvider, IResetable
 
     Private ReadOnly source As IWaveProvider
 
@@ -46,5 +46,9 @@ Public Class AccompanimentProvider
             Return bytesRead
         End If
     End Function
+
+    Public Sub Reset() Implements IResetable.Reset
+        STFTAcc.Reset()
+    End Sub
 
 End Class

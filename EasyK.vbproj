@@ -470,6 +470,7 @@
   <ItemGroup>
     <Compile Include="K\Audio\Accompaniment\ChannelRole.vb" />
     <Compile Include="K\Audio\Accompaniment\ChannelUtils.vb" />
+    <Compile Include="K\Audio\Accompaniment\IResetable.vb" />
     <Compile Include="K\Audio\Accompaniment\STFTAccompaniment.vb" />
     <Compile Include="K\Audio\Accompaniment\STFTAccompanimentProvider.vb" />
     <Compile Include="K\Audio\Accompaniment\STFTAccompanimentProviderFloat.vb" />
@@ -570,7 +571,6 @@
     <Compile Include="Utils\FormUtils.vb" />
     <Compile Include="Utils\HashUtils.vb" />
     <Compile Include="Utils\KeyboardUtils.vb" />
-    <Compile Include="Utils\MouseUtils.vb" />
     <Compile Include="Utils\NetUtils.vb" />
     <Compile Include="Utils\TimeUtils.vb" />
     <Compile Include="Utils\XmlUtils.vb" />

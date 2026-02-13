@@ -155,7 +155,6 @@ Public Class FrmMain
         End Sub
 
         'B站相关调用
-
         Public Sub onComplete()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
 
@@ -165,24 +164,7 @@ Public Class FrmMain
             End With
         End Sub
 
-        Public Sub tryClick()
-            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
-
-            Dim x As Integer = _Base.Left + _Base.Width / 2 - 1
-            Dim y As Integer = _Base.Top + _Base.Height / 2 - 1
-
-            With _Base
-                .Invoke(Sub()
-                            .BringToFront()
-                            .TopMost = True
-                            MouseUtils.MouseClick(x, y)
-                            .TopMost = False
-                        End Sub)
-            End With
-        End Sub
-
         'DLNA音频流相关调用
-
         Public Sub queryState()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
 
@@ -485,8 +467,6 @@ Public Class FrmMain
 
             '关闭弹幕
             .EvaluateScriptAsync("var interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 50);")
-            '开启声音(需要配合鼠标点击)
-            .EvaluateScriptAsync("var interval4 = setInterval(() => { let group = document.getElementsByClassName('bpx-player-ctrl-volume-icon'); if (group.length > 0) { if (group[0].style['display'] == 'none') { group[0].click(); setTimeout(() => easy_k.tryClick(), 500)} clearInterval(interval4); }  }, 50);")
         End With
     End Sub
 

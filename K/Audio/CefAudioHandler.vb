@@ -12,7 +12,7 @@ Public Class CefAudioHandler
 
     Private ReadOnly Settings As SettingContainer
 
-    Private Played As Boolean = False
+    Private Played As Boolean = True
 
     '声道数
     Private Channels As Integer = 2
@@ -23,7 +23,17 @@ Public Class CefAudioHandler
         Me.Dummy = Dummy
     End Sub
 
+    '检查可用性
+    Private Function CheckCurrent() As Boolean
+        Dim Current = K.GetCurrent()
+        If Current Is Nothing OrElse Current.Type <> EasyKType.Bilibili Then Return False
+
+        Return True
+    End Function
+
     Public Sub OnAudioStreamStarted(chromiumWebBrowser As IWebBrowser, browser As IBrowser, parameters As AudioParameters, channels As Integer) Implements IAudioHandler.OnAudioStreamStarted
+        If Not CheckCurrent() Then Return
+
         Me.Channels = channels
         Played = False
         Dummy.Setup(WaveFormat.CreateIeeeFloatWaveFormat(parameters.SampleRate, channels), True)
@@ -37,6 +47,8 @@ Public Class CefAudioHandler
     End Sub
 
     Public Sub OnAudioStreamPacket(chromiumWebBrowser As IWebBrowser, browser As IBrowser, data As IntPtr, noOfFrames As Integer, pts As Long) Implements IAudioHandler.OnAudioStreamPacket
+        If Not CheckCurrent() Then Return
+
         Try
             Dim BufferSize As Integer = Channels * noOfFrames * 4
             Dim AudioBuffer As Byte() = New Byte(BufferSize - 1) {}
@@ -71,11 +83,14 @@ Public Class CefAudioHandler
     End Sub
 
     Public Sub OnAudioStreamStopped(chromiumWebBrowser As IWebBrowser, browser As IBrowser) Implements IAudioHandler.OnAudioStreamStopped
+        If Not CheckCurrent() Then Return
+
         Dummy.Stop()
-        Played = False
     End Sub
 
     Public Sub OnAudioStreamError(chromiumWebBrowser As IWebBrowser, browser As IBrowser, errorMessage As String) Implements IAudioHandler.OnAudioStreamError
+        If Not CheckCurrent() Then Return
+
         Dummy.Stop()
     End Sub
 
@@ -84,9 +99,7 @@ Public Class CefAudioHandler
     End Sub
 
     Public Function GetAudioParameters(chromiumWebBrowser As IWebBrowser, browser As IBrowser, ByRef parameters As AudioParameters) As Boolean Implements IAudioHandler.GetAudioParameters
-        Dim Current = K.GetCurrent()
-        If Current Is Nothing OrElse Current.Type <> EasyKType.Bilibili Then Return False
-        Return Settings.Settings.Audio.IsDummyAudio
+        Return Settings.Settings.Audio.IsDummyAudio AndAlso CheckCurrent()
     End Function
 
 End Class

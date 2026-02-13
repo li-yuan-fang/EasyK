@@ -1,5 +1,4 @@
 ﻿Imports System.Runtime.InteropServices
-Imports CefSharp
 Imports LibVLCSharp.Shared
 Imports NAudio.Wave
 
@@ -11,7 +10,7 @@ Public Class VlcAudioHandler
 
     Private Channels As Integer = 2
 
-    Private Playing As Boolean = False
+    Private Played As Boolean = True
 
     Public Sub New(K As EasyK, VlcMediaPlayer As MediaPlayer, Dummy As DummyPlayer)
         Me.K = K
@@ -23,14 +22,20 @@ Public Class VlcAudioHandler
         End With
     End Sub
 
+    '检查可用性
+    Private Function CheckCurrent() As Boolean
+        Dim Current = K.GetCurrent()
+        If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then Return False
+        Return True
+    End Function
+
     Private Function OnSetup(ByRef opaque As IntPtr, ByRef format As IntPtr, ByRef rate As UInteger, ByRef channels As UInteger) As Integer
         If Not K.Settings.Settings.Audio.IsDummyAudio Then Return -1
-        Dim Current = K.GetCurrent()
-        If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then Return -2
+        If Not CheckCurrent() Then Return -2
 
         Dummy.Setup(New WaveFormat(rate, channels), False)
         Me.Channels = channels
-        Playing = False
+        Played = False
 
         If Settings.Settings.DebugMode Then
             Console.WriteLine("LibVlcSharp 托管音频播放")
@@ -42,10 +47,14 @@ Public Class VlcAudioHandler
     End Function
 
     Private Sub OnCleanup(opaque As IntPtr)
+        If Not CheckCurrent() Then Return
+
         Dummy.Stop()
     End Sub
 
     Private Sub OnPlay(data As IntPtr, samples As IntPtr, count As UInteger, pts As Long)
+        If Not CheckCurrent() Then Return
+
         Dim BufferSize As Integer = 2 * count * Channels
         Dim AudioBuffer As Byte() = New Byte(BufferSize - 1) {}
 
@@ -53,19 +62,22 @@ Public Class VlcAudioHandler
 
         With Dummy
             .Append(AudioBuffer, pts)
-
-            If Not Playing Then
+            If Not Played Then
                 .Play()
-                Playing = True
+                Played = True
             End If
         End With
     End Sub
 
     Private Sub OnPause(data As IntPtr, pts As Long)
+        If Not CheckCurrent() Then Return
+
         Dummy.Pause()
     End Sub
 
     Private Sub OnResume(data As IntPtr, pts As Long)
+        If Not CheckCurrent() Then Return
+
         Dummy.Play()
     End Sub
 
