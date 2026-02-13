@@ -568,6 +568,7 @@
     <Compile Include="Settings\UploadSettings.vb" />
     <Compile Include="Utils\AudioUtils.vb" />
     <Compile Include="Utils\ColorUtils.vb" />
+    <Compile Include="Utils\ConsoleUtils.vb" />
     <Compile Include="Utils\FormUtils.vb" />
     <Compile Include="Utils\HashUtils.vb" />
     <Compile Include="Utils\KeyboardUtils.vb" />

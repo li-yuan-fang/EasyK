@@ -43,6 +43,9 @@ Module ModMain
             Task.Run(Sub() .Run())
         End With
 
+        '注册控制台回调
+        ConsoleUtils.RegisterExit(AddressOf ExitApplication)
+
         '显示播放器窗口
         KCore.Show()
 
@@ -57,6 +60,9 @@ Module ModMain
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
+        '关闭指令系统
+        Commands.Close()
+
         '解除事件关联
         RemoveHandler Commands.OnExit, AddressOf ExitApplication
         RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication

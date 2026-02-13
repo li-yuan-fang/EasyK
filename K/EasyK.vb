@@ -466,6 +466,9 @@ Public Class EasyK
                                   PlayingPosition = Math.Max(Math.Min(PlayingPosition + Offset, 1), 0)
                               End If
                           End Sub)
+
+        'DLNA响应
+        TriggerMirrorReset()
     End Sub
 
     ''' <summary>

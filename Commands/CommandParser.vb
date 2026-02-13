@@ -12,6 +12,8 @@
 
         Private ReadOnly ExitAction As New Action(Sub() RaiseEvent OnExit())
 
+        Private ExitFlag As Boolean
+
         ''' <summary>
         ''' 退出事件
         ''' </summary>
@@ -26,6 +28,7 @@
             Me.K = K
             Me.Web = Web
             Me.Settings = Settings
+            ExitFlag = False
 
             LoadCommands()
         End Sub
@@ -62,8 +65,10 @@
         ''' 运行指令系统
         ''' </summary>
         Public Sub Run()
-            Do
+            While Not ExitFlag
                 Dim cmd As String = Console.ReadLine()
+                If String.IsNullOrWhiteSpace(cmd) Then Continue While
+
                 Dim Success As Boolean = False
                 For Each Parser As Command In Commands
                     If Parser.Match(cmd) Then
@@ -73,7 +78,18 @@
                 Next
 
                 If Not Success Then Console.WriteLine("未知指令 帮助指令为: help")
-            Loop
+            End While
+        End Sub
+
+        ''' <summary>
+        ''' 关闭指令系统
+        ''' </summary>
+        Public Sub Close()
+            ExitFlag = True
+            Try
+                Console.SetIn(New IO.StringReader(""))
+            Catch
+            End Try
         End Sub
 
     End Class
