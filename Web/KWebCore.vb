@@ -277,6 +277,7 @@ Public Class KWebCore
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
             .Add("offset", K.LyricOffset)
+            If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
         End With
 
         Return JsonConvert.SerializeObject(PanelResult)
@@ -315,6 +316,21 @@ Public Class KWebCore
                         Catch
                             Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
                         End Try
+                    Case "qrcode"
+                        '更改二维码显示状态
+                        If Settings.Settings.AllowRemoteQR Then
+                            Try
+                                With K
+                                    If Boolean.Parse(p.Value) Then
+                                        .ShowQRCode(Not .Running)
+                                    Else
+                                        .CloseQRCode()
+                                    End If
+                                End With
+                            Catch
+                                Console.WriteLine("错误的二维码状态 - {0}", p.Value)
+                            End Try
+                        End If
                     Case Else
                         If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
                             '更新插件配置

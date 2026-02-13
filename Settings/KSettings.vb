@@ -33,6 +33,13 @@ Public Class KSettings
     Public Property AutoShowQR As Boolean = True
 
     ''' <summary>
+    ''' 允许通过点歌界面显示/隐藏二维码
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("allow_remote_qr")>
+    Public Property AllowRemoteQR As Boolean = True
+
+    ''' <summary>
     ''' 音频设置
     ''' </summary>
     ''' <returns></returns>

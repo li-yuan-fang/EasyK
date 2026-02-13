@@ -94,6 +94,7 @@ Module ModMain
 
     '可能被非托管代码调用
     '必须尽量简单快速
+    '重要:不能引入面向对象等高级特性
     Private Function UnexpectedExit(ctrlType As CtrlType) As Boolean
         Select Case ctrlType
             Case CtrlType.CTRL_CLOSE_EVENT, CtrlType.CTRL_LOGOFF_EVENT, CtrlType.CTRL_SHUTDOWN_EVENT
