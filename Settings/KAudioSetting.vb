@@ -24,7 +24,7 @@ Public Class KAudioSetting
     ''' </summary>
     ''' <returns></returns>
     <JsonProperty("allow_accompaniment")>
-    Public Property AllowAccompaniment As Boolean = False
+    Public Property AllowAccompaniment As Boolean = True
 
     ''' <summary>
     ''' 使用傅里叶变换运算实时伴唱
