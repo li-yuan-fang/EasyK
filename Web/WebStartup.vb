@@ -182,7 +182,7 @@ Public Class WebStartup
             .ContentLength = Length
 
             .Headers().Item("Accept-Ranges") = "bytes"
-            If Status = 206 Then .Headers().Item("Content-Range") = ContentRange
+            If Status = StatusCodes.Status206PartialContent Then .Headers().Item("Content-Range") = ContentRange
 
             If .ContentType.ToLower().Contains("javascript") Then
                 .Headers().Item("Content-Range") = ContentRange

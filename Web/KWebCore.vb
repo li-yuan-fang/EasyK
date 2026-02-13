@@ -186,7 +186,7 @@ Public Class KWebCore
         Dim Result As EasyKBookRecord = K.SendToTop(Id.Id)
         If Result IsNot Nothing Then
             Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
-            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
         Else
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
         End If
@@ -195,13 +195,13 @@ Public Class KWebCore
     <WebApi("/push", HttpMethod.Get)>
     Private Function Push(ctx As HttpContext) As Task
         K.Push()
-        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
     End Function
 
     <WebApi("/pause", HttpMethod.Get)>
     Private Function Puause(ctx As HttpContext) As Task
         K.Pause()
-        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
     End Function
 
     <WebApi("/remove", HttpMethod.Post)>
@@ -213,7 +213,7 @@ Public Class KWebCore
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Return WebStartup.RespondStatusOnly(ctx, If(K.Remove(Id.Id),
-                                                    StatusCodes.Status204NoContent,
+                                                    StatusCodes.Status200OK,
                                                     StatusCodes.Status422UnprocessableEntity))
     End Function
 
