@@ -247,6 +247,7 @@ Public Class KWebCore
 
         Dim Booking As RequestBook = JsonConvert.DeserializeObject(Of RequestBook)(Request)
         If Booking Is Nothing OrElse Not [Enum].IsDefined(GetType(EasyKType), Booking.Type) OrElse
+            String.IsNullOrWhiteSpace(Booking.Title) OrElse
             (Not ContentRegex.IsMatch(Booking.Content) AndAlso Booking.Type <> EasyKType.DLNA) Then
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
         End If
