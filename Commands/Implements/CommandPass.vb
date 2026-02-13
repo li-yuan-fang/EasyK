@@ -3,10 +3,13 @@
     Public Class CommandPass
         Inherits Command
 
+        Private ReadOnly K As EasyK
+
         Private ReadOnly Settings As SettingContainer
 
-        Public Sub New(Settings As SettingContainer)
+        Public Sub New(K As EasyK, Settings As SettingContainer)
             MyBase.New("pass", "pass [授权码] - 设置/清除授权码", CommandType.System)
+            Me.K = K
             Me.Settings = Settings
         End Sub
 
@@ -18,6 +21,9 @@
                 Settings.Settings.Web.PassKey = Args(1)
                 Console.WriteLine("授权码已更新")
             End If
+
+            '刷新二维码
+            K.RefreshQRCode()
         End Sub
 
     End Class

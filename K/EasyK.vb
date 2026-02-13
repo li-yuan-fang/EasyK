@@ -621,6 +621,21 @@ Public Class EasyK
         QRForm = Nothing
     End Sub
 
+    ''' <summary>
+    ''' 刷新二维码
+    ''' </summary>
+    Public Sub RefreshQRCode()
+        If QRForm Is Nothing OrElse QRForm.IsDisposed Then Return
+
+        Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
+        If Adapter IsNot Nothing Then
+            '获取网卡成功
+            ShowQRCode(Adapter, False)
+        Else
+            Console.WriteLine("自动刷新二维码失败 - 无法获取默认网卡")
+        End If
+    End Sub
+
     '重启主窗体
     Private Sub RestartPlayerForm()
         Dim NewForm As FrmMain = Nothing

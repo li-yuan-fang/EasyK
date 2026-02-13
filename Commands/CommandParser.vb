@@ -35,7 +35,7 @@
                 .Add(New CommandHelp(Commands))
 
                 .Add(New CommandPort(Web, Settings))
-                .Add(New CommandPass(Settings))
+                .Add(New CommandPass(K, Settings))
                 .Add(New CommandBili(K))
                 .Add(New CommandClean(K, Web, Settings))
                 .Add(New CommandLock(K))
