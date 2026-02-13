@@ -68,14 +68,10 @@ Namespace Commands
                         Return
                     End If
 
-                    Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
-                    If Adapter Is Nothing Then
-                        Console.WriteLine("自动查找网卡失败")
+                    If Not K.ShowQRCode(Outside) Then
                         PrintValidAdapters()
                         Return
                     End If
-
-                    K.ShowQRCode(Adapter, Outside)
                 Case "list"
                     '列出可用网卡
                     PrintValidAdapters()

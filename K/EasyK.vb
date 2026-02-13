@@ -615,17 +615,19 @@ Public Class EasyK
     ''' 显示二维码
     ''' </summary>
     ''' <param name="Outside">以独立窗口显示</param>
-    Public Sub ShowQRCode(Outside As Boolean)
+    Public Function ShowQRCode(Outside As Boolean) As Boolean
         Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
         If Adapter Is Nothing AndAlso LastValidAdapter IsNot Nothing Then Adapter = LastValidAdapter
 
         If Adapter IsNot Nothing Then
             '获取网卡成功
             ShowQRCode(Adapter, Outside)
+            Return True
         Else
             Console.WriteLine("自动显示二维码失败 - 无法获取默认网卡")
+            Return False
         End If
-    End Sub
+    End Function
 
     ''' <summary>
     ''' 关闭二维码显示
