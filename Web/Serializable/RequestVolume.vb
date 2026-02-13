@@ -3,10 +3,7 @@
 <Serializable>
 Public Class RequestVolume
 
-    <JsonProperty("action")>
-    Public Property VolumeAction As Integer
-
     <JsonProperty("value")>
-    Public Property VolumeValue As Integer = 1
+    Public Property Volume As Double
 
 End Class

@@ -571,6 +571,7 @@
     <Compile Include="Utils\ConsoleUtils.vb" />
     <Compile Include="Utils\FormUtils.vb" />
     <Compile Include="Utils\HashUtils.vb" />
+    <Compile Include="Utils\JsonUtils.vb" />
     <Compile Include="Utils\KeyboardUtils.vb" />
     <Compile Include="Utils\NetUtils.vb" />
     <Compile Include="Utils\TimeUtils.vb" />

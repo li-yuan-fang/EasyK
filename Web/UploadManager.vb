@@ -289,7 +289,7 @@ Public Class UploadManager
     '请求新会话
     Private Function HandlePost(ctx As HttpContext, Name As String) As Task
         '解析请求
-        Dim Request As RequestSize = JsonConvert.DeserializeObject(Of RequestSize)(WebStartup.GetRequestBody(ctx))
+        Dim Request As RequestSize = JsonUtils.SafeDeserializeObject(Of RequestSize)(WebStartup.GetRequestBody(ctx))
         If Request Is Nothing OrElse Request.Size <= 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         '移除旧会话

@@ -176,7 +176,7 @@ Public Class KWebCore
     Private Function Top(ctx As HttpContext) As Task
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-        Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
+        Dim Id As RequestId = JsonUtils.SafeDeserializeObject(Of RequestId)(Request)
         If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
@@ -208,7 +208,7 @@ Public Class KWebCore
     Private Function Remove(ctx As HttpContext) As Task
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-        Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
+        Dim Id As RequestId = JsonUtils.SafeDeserializeObject(Of RequestId)(Request)
         If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
@@ -226,7 +226,7 @@ Public Class KWebCore
     Private Function Reorder(ctx As HttpContext) As Task
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-        Dim Id As RequestId = JsonConvert.DeserializeObject(Of RequestId)(Request)
+        Dim Id As RequestId = JsonUtils.SafeDeserializeObject(Of RequestId)(Request)
         If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
@@ -245,7 +245,7 @@ Public Class KWebCore
     Private Function Book(ctx As HttpContext) As Task
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-        Dim Booking As RequestBook = JsonConvert.DeserializeObject(Of RequestBook)(Request)
+        Dim Booking As RequestBook = JsonUtils.SafeDeserializeObject(Of RequestBook)(Request)
         If Booking Is Nothing OrElse Not [Enum].IsDefined(GetType(EasyKType), Booking.Type) OrElse
             String.IsNullOrWhiteSpace(Booking.Title) OrElse
             (Not ContentRegex.IsMatch(Booking.Content) AndAlso Booking.Type <> EasyKType.DLNA) Then
@@ -290,7 +290,7 @@ Public Class KWebCore
             Case "POST"
                 Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-                Dim p As RequestPanel = JsonConvert.DeserializeObject(Of RequestPanel)(Request)
+                Dim p As RequestPanel = JsonUtils.SafeDeserializeObject(Of RequestPanel)(Request)
                 If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
                 Select Case p.Id.ToLower()
@@ -331,6 +331,18 @@ Public Class KWebCore
         End Select
 
         Return WebStartup.RespondStatusOnly(ctx)
+    End Function
+
+    <WebApi("/volume", HttpMethod.Post)>
+    Private Function Volume(ctx As HttpContext) As Task
+        Dim Request As String = WebStartup.GetRequestBody(ctx)
+
+        Dim p As RequestVolume = JsonUtils.SafeDeserializeObject(Of RequestVolume)(Request)
+        If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
+
+        K.Volume = p.Volume
+
+        Return WebStartup.RespondJson(ctx, $"{{""value"":{K.Volume}}}")
     End Function
 
 End Class
