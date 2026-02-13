@@ -14,6 +14,8 @@ Public Class AccompanimentProviderFloat
 
     Private ReadOnly STFTAcc As STFTAccompanimentProviderFloat
 
+    Private FFT As Boolean = False
+
     Public Sub New(Dummy As DummyPlayer, Settings As SettingContainer, Provider As ISampleProvider, WaveFormat As WaveFormat)
         source = Provider
         Me.WaveFormat = WaveFormat
@@ -35,10 +37,16 @@ Public Class AccompanimentProviderFloat
 
     Public Function Read(buffer() As Single, offset As Integer, count As Integer) As Integer Implements ISampleProvider.Read
         If Not Dummy.Accompaniment Then
+            If FFT Then
+                FFT = False
+                Reset()
+            End If
+
             Return source.Read(buffer, offset, count)
         End If
 
         If UseFourierTransform Then
+            FFT = True
             Return STFTAcc.Read(buffer, offset, count)
         Else
             Dim samplesRead As Integer = source.Read(buffer, 0, count)
@@ -46,6 +54,7 @@ Public Class AccompanimentProviderFloat
             Return samplesRead
         End If
     End Function
+
     Public Sub Reset() Implements IResetable.Reset
         STFTAcc.Reset()
     End Sub

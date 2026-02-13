@@ -14,6 +14,8 @@ Public Class AccompanimentProvider
 
     Private ReadOnly STFTAcc As STFTAccompanimentProvider
 
+    Private FFT As Boolean = False
+
     Public Sub New(Dummy As DummyPlayer, Settings As SettingContainer, Provider As IWaveProvider, WaveFormat As WaveFormat)
         source = Provider
         Me.WaveFormat = WaveFormat
@@ -35,10 +37,16 @@ Public Class AccompanimentProvider
 
     Public Function Read(buffer() As Byte, offset As Integer, count As Integer) As Integer Implements IWaveProvider.Read
         If Not Dummy.Accompaniment Then
+            If FFT Then
+                FFT = False
+                Reset()
+            End If
+
             Return source.Read(buffer, offset, count)
         End If
 
         If UseFourierTransform Then
+            FFT = True
             Return STFTAcc.Read(buffer, offset, count)
         Else
             Dim bytesRead As Integer = source.Read(buffer, 0, count)

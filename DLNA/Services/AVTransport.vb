@@ -3,9 +3,6 @@
     Public Class AVTransport
         Inherits DLNAService
 
-        '广播事件
-        Private UpdateBroadcast As Task = Nothing
-
         '暂停播放
         Private Sub OnPause(Type As EasyKType)
             If Type <> EasyKType.DLNA Then Return
@@ -30,32 +27,6 @@
             Threading.Thread.Sleep(100)
             SetState("TransportState", "PLAYING")
             Broadcast()
-        End Sub
-
-        '进度广播事件
-        Private Sub BroadcastPositionLoop()
-            While GetState("TransportState") <> "NO_MEDIA_PRESENT"
-                If GetState("TransportState") = "PLAYING" Then
-                    '广播进度
-                    Dim Progress As String
-                    With Protocol.DLNA.K
-
-                        Dim p As Double = Math.Round(.PlayingDuration * .PlayingPosition)
-                        Progress = TimeUtils.SecondToString(p)
-                    End With
-
-                    SyncLock SpecialUpdated
-                        With SpecialUpdated
-                            .Add("RelativeTimePosition", Progress)
-                            .Add("AbsoluteTimePosition", Progress)
-                        End With
-                    End SyncLock
-                End If
-
-                Threading.Thread.Sleep(1000)
-            End While
-
-            UpdateBroadcast = Nothing
         End Sub
 
         ''' <summary>
@@ -154,8 +125,6 @@
                     .PlayingRate = Val(Args("Speed"))
                 End With
             End With
-
-            If UpdateBroadcast Is Nothing Then UpdateBroadcast = Task.Run(AddressOf BroadcastPositionLoop)
 
             SetState("TransportState", "PLAYING")
 

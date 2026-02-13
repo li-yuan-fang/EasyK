@@ -1,4 +1,5 @@
-﻿Imports System.Windows.Forms
+﻿Imports System.Net
+Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
 
 Module ModMain

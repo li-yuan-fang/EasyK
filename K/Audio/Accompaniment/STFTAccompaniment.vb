@@ -130,58 +130,77 @@ Namespace Accompaniment
             Dim fft As New List(Of Complex())
 
             '前处理
+            Dim Remain As Integer = Channels
             For ch = 0 To Channels - 1
                 Dim f = New Complex(FFT_Size - 1) {}
-                Dim j = 0
-                For i As Integer = ch To FFTStep - 1 Step Channels
-                    With f(j)
-                        .X = _inputBuffer(i) * Window(j)
-                        .Y = 0
-                    End With
-                    j += 1
-                Next
-
-                FastFourierTransform.FFT(True, FFT_Pow, f)
-
+                Dim id = ch
                 fft.Add(f)
+
+                Task.Run(Sub()
+                             Dim j = 0
+                             For i As Integer = id To FFTStep - 1 Step Channels
+                                 With f(j)
+                                     .X = _inputBuffer(i) * Window(j)
+                                     .Y = 0
+                                 End With
+                                 j += 1
+                             Next
+
+                             FastFourierTransform.FFT(True, FFT_Pow, f)
+
+                             Interlocked.Decrement(Remain)
+                         End Sub)
             Next
+
+            While Remain > 0
+            End While
 
             '清除人声
             Progress(fft)
 
             '后处理
+            Remain = Channels
             For ch = 0 To Channels - 1
-                Dim f = fft(ch)
+                Dim id = ch
 
-                FastFourierTransform.FFT(False, FFT_Pow, f)
+                Task.Run(Sub()
+                             Dim f = fft(id)
 
-                ' 重叠相加合成
-                For i As Integer = 0 To FFT_Size - 1
-                    Dim windowedSample As Single = f(i).X * Window(i)
+                             FastFourierTransform.FFT(False, FFT_Pow, f)
 
-                    If _isFirstFrame Then
-                        ' 第一帧直接写入
-                        _overlapBuffer(ch)(i) = windowedSample
-                    Else
-                        ' 后续帧进行重叠相加
-                        _overlapBuffer(ch)(i) += windowedSample
-                    End If
-                Next
+                             ' 重叠相加合成
+                             For i As Integer = 0 To FFT_Size - 1
+                                 Dim windowedSample As Single = f(i).X * Window(i)
 
-                '将前hopSize个样本复制到输出缓冲区
-                For i = 0 To Hop_Size - 1
-                    _outputBuffer(i * Channels + ch) = _overlapBuffer(ch)(i)
-                Next
+                                 If _isFirstFrame Then
+                                     ' 第一帧直接写入
+                                     _overlapBuffer(id)(i) = windowedSample
+                                 Else
+                                     ' 后续帧进行重叠相加
+                                     _overlapBuffer(id)(i) += windowedSample
+                                 End If
+                             Next
 
-                ' 8. 移动重叠缓冲区
-                ' 将剩余数据移到前面，为下一帧做准备
-                Array.Copy(_overlapBuffer(ch), Hop_Size, _overlapBuffer(ch), 0, Overlap_Size)
+                             '将前hopSize个样本复制到输出缓冲区
+                             For i = 0 To Hop_Size - 1
+                                 _outputBuffer(i * Channels + id) = _overlapBuffer(id)(i)
+                             Next
 
-                ' 清空新移动区域的后部（避免残留数据影响）
-                For i As Integer = Overlap_Size To FFT_Size - 1
-                    _overlapBuffer(ch)(i) = 0.0F
-                Next
+                             ' 移动重叠缓冲区
+                             ' 将剩余数据移到前面，为下一帧做准备
+                             Array.Copy(_overlapBuffer(id), Hop_Size, _overlapBuffer(id), 0, Overlap_Size)
+
+                             ' 清空新移动区域的后部（避免残留数据影响）
+                             For i As Integer = Overlap_Size To FFT_Size - 1
+                                 _overlapBuffer(id)(i) = 0.0F
+                             Next
+
+                             Interlocked.Decrement(Remain)
+                         End Sub)
             Next
+
+            While Remain > 0
+            End While
 
             _outputBufferFilled = Hop_Size * Channels
             _outputBufferPos = 0
