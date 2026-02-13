@@ -51,6 +51,8 @@ Public Class EasyK
 
     Private ReadOnly OutdatedQueue As New LinkedList(Of EasyKBookRecord)
 
+    Private LastValidAdapter As NetworkInterface = Nothing
+
     Friend ReadOnly Settings As SettingContainer
 
     Friend ReadOnly Dummy As DummyPlayer
@@ -244,15 +246,7 @@ Public Class EasyK
         PlayerForm.Setup()
 
         '检测是否需要显示二维码
-        If Settings.Settings.AutoShowQR Then
-            Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
-            If Adapter IsNot Nothing Then
-                '获取网卡成功
-                ShowQRCode(Adapter, False)
-            Else
-                Console.WriteLine("自动显示二维码失败 - 无法获取默认网卡")
-            End If
-        End If
+        If Settings.Settings.AutoShowQR Then ShowQRCode(False)
 
         Push()
     End Sub
@@ -570,6 +564,9 @@ Public Class EasyK
             Return
         End If
 
+        '保存有效网卡
+        LastValidAdapter = Adapter
+
         Dim Key As String = Settings.Settings.Web.PassKey
         Dim Port As Integer = Settings.Settings.Web.Port
         If String.IsNullOrEmpty(Key) Then
@@ -615,6 +612,22 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
+    ''' 显示二维码
+    ''' </summary>
+    ''' <param name="Outside">以独立窗口显示</param>
+    Public Sub ShowQRCode(Outside As Boolean)
+        Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
+        If Adapter Is Nothing AndAlso LastValidAdapter IsNot Nothing Then Adapter = LastValidAdapter
+
+        If Adapter IsNot Nothing Then
+            '获取网卡成功
+            ShowQRCode(Adapter, Outside)
+        Else
+            Console.WriteLine("自动显示二维码失败 - 无法获取默认网卡")
+        End If
+    End Sub
+
+    ''' <summary>
     ''' 关闭二维码显示
     ''' </summary>
     Public Sub CloseQRCode()
@@ -630,13 +643,7 @@ Public Class EasyK
     Public Sub RefreshQRCode()
         If QRForm Is Nothing OrElse QRForm.IsDisposed Then Return
 
-        Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
-        If Adapter IsNot Nothing Then
-            '获取网卡成功
-            ShowQRCode(Adapter, False)
-        Else
-            Console.WriteLine("自动刷新二维码失败 - 无法获取默认网卡")
-        End If
+        ShowQRCode(False)
     End Sub
 
     '重启主窗体
