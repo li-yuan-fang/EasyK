@@ -168,7 +168,7 @@ Public Class EasyK
         Set(value As Single)
             If Settings.Settings.Audio.IsDummyAudio Then
                 Dummy.Volume = Math.Max(0, Math.Min(value, 1))
-            Else
+            ElseIf Settings.Settings.Audio.AllowUpdateSystemVolume Then
                 AudioUtils.SetSystemVolume(value)
             End If
         End Set
@@ -310,7 +310,7 @@ Public Class EasyK
     Public Function IsPlaying() As Boolean
         If PlayerForm Is Nothing Then Return False
         With PlayerForm
-            Return .Invoke(Function() .Playing)
+            Return DirectCast(.Invoke(Function() .Playing), Boolean)
         End With
     End Function
 
@@ -459,7 +459,7 @@ Public Class EasyK
         If Not IsPlaying() Then Return
 
         PlayerForm.Invoke(Sub()
-                              Dim Offset As Single = 5000D / PlayingDuration
+                              Dim Offset As Single = CSng(5000D / PlayingDuration)
                               If Prev Then
                                   PlayingPosition = Math.Max(Math.Min(PlayingPosition - Offset, 1), 0)
                               Else
@@ -497,25 +497,6 @@ Public Class EasyK
 
         Return Occupied
     End Function
-
-    ''' <summary>
-    ''' 更改系统音量
-    ''' </summary>
-    ''' <param name="Action">音量操作</param>
-    ''' <param name="Count">操作次数</param>
-    Public Sub UpdateSystemVolume(Action As FormUtils.VolumeAction, Count As Integer)
-        If PlayerForm Is Nothing Then Return
-
-        If Action = FormUtils.VolumeAction.Mute Then
-            PlayerForm.Invoke(Sub() FormUtils.UpdateVolume(PlayerForm.Handle, Action))
-        Else
-            PlayerForm.Invoke(Sub()
-                                  For i = 1 To Math.Max(1, Math.Min(Count, 50))
-                                      FormUtils.UpdateVolume(PlayerForm.Handle, Action)
-                                  Next
-                              End Sub)
-        End If
-    End Sub
 
     ''' <summary>
     ''' 锁定主窗体到最顶层
@@ -564,11 +545,11 @@ Public Class EasyK
             Dim Width, Height As Integer
             Dim X, Y As Integer
 
-            Height = .Height * 0.25
-            Width = Height * 0.9
+            Height = CInt(.Height * 0.25)
+            Width = CInt(Height * 0.9)
 
-            X = .Width - Width - 1
-            Y = (.Height - Height) / 2 - 1
+            X = CInt(.Width - Width - 1)
+            Y = CInt((.Height - Height) / 2 - 1)
 
             .Invoke(Sub() QRForm.SetBounds(X, Y, Width, Height))
         End With

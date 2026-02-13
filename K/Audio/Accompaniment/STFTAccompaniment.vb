@@ -56,7 +56,7 @@ Namespace Accompaniment
                 Return _ReductionFactor
             End Get
             Set(value As Single)
-                _ReductionFactor = Math.Max(0.0F, Math.Min(1.0F, value))
+                _ReductionFactor = Math.Max(0.0F, value)
             End Set
         End Property
 
@@ -265,7 +265,7 @@ Namespace Accompaniment
                     Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
 
                     '衰减中置（人声），保留侧向（伴奏）
-                    Dim att As Double = (1 - attenuation * coherence * _ReductionFactor)
+                    Dim att As Double = Math.Max(1 - attenuation * coherence * _ReductionFactor, 0)
                     centerX *= att
                     centerY *= att
 
@@ -310,13 +310,24 @@ Namespace Accompaniment
                 Dim freq As Double = k * SampleRate / FFT_Size
                 ' 中置声道通常包含清晰人声，进行轻度宽频衰减
                 If freq >= 1000 AndAlso freq <= 6000 Then
-                    Dim attenuation As Single = GetVocalFrequencyWeight(freq)
-                    fft(k).X *= attenuation
-                    fft(k).Y *= attenuation
+                    Dim attenuation As Single = Math.Max(1 - GetVocalFrequencyWeight(freq) * _ReductionFactor, 0)
+                    Dim mag = Magnitude(fft(k)) * attenuation
+                    Dim p = Phase(fft(k))
+                    With fft(k)
+                        .X = mag * Math.Cos(p)
+                        .Y = mag * Math.Sin(p)
+                    End With
 
                     If k > 0 AndAlso k < FFT_Size \ 2 Then
-                        fft(FFT_Size - k).X *= attenuation
-                        fft(FFT_Size - k).Y *= attenuation
+                        Dim i = FFT_Size - k
+
+                        mag = Magnitude(fft(i)) * attenuation
+                        p = Phase(fft(i))
+
+                        With fft(i)
+                            .X = mag * Math.Cos(p)
+                            .Y = mag * Math.Sin(p)
+                        End With
                     End If
                 End If
             Next

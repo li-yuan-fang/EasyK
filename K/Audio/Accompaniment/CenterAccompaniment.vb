@@ -95,7 +95,7 @@
                 Return _ReductionFactor
             End Get
             Set(value As Single)
-                _ReductionFactor = Math.Max(0.0F, Math.Min(1.0F, value))
+                _ReductionFactor = Math.Max(0.0F, value)
             End Set
         End Property
 
@@ -142,7 +142,7 @@
 
                 ' 根据与中置估计的相似度调整消除强度
                 Dim similarity As Single = Math.Abs(center - centerEstimate)
-                Dim dynamicReduction As Single = _ReductionFactor * (1.0F - similarity * 0.5F)
+                Dim dynamicReduction As Single = Math.Min(_ReductionFactor * (1.0F - similarity * 0.5F), 1.0F)
 
                 ' 重建声道：保留侧面，衰减中置
                 Dim newCenter As Single = center * (1.0F - dynamicReduction)
@@ -153,7 +153,7 @@
             ' 3. 处理明确的中置声道（5.1/7.1的Center声道）
             For Each centerIdx In CenterChannelIndices
                 ' 中置声道直接大幅衰减
-                result(centerIdx) = samples(centerIdx) * (1.0F - _ReductionFactor * 0.95F)
+                result(centerIdx) = samples(centerIdx) * Math.Max(1.0F - _ReductionFactor * 0.95F, 0)
             Next
 
             ' 4. 低音炮声道通常不处理（人声很少在LFE）
@@ -180,7 +180,7 @@
             Dim side As Single = (left - right) * 0.5F
 
             ' 可选：添加轻微的时间差补偿（模拟立体声混响）
-            Dim newCenter As Single = center * (1.0F - _ReductionFactor)
+            Dim newCenter As Single = center * Math.Max(1.0F - _ReductionFactor, 0)
 
             result(0) = side + newCenter
             result(1) = -side + newCenter

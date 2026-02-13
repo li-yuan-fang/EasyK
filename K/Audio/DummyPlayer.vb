@@ -136,8 +136,6 @@ Public Class DummyPlayer
 
         If WaveProvider IsNot Nothing Then WaveProvider = Nothing
         If MusicProvider IsNot Nothing Then MusicProvider = Nothing
-
-        _Mute = False
     End Sub
 
 End Class

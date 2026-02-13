@@ -5,7 +5,7 @@
 
         Private ReadOnly ExitAction As Action
 
-        Public Sub New(ExitAction)
+        Public Sub New(ExitAction As Action)
             MyBase.New("exit", "exit - 退出", CommandType.System)
             Me.ExitAction = ExitAction
         End Sub

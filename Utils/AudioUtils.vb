@@ -29,4 +29,47 @@ Public Class AudioUtils
         End Using
     End Function
 
+    ''' <summary>
+    ''' 设置当前进程音量
+    ''' </summary>
+    ''' <param name="volume">音量</param>
+    Public Shared Sub SetCurrentVolume(volume As Single)
+        Using enumerator As New MMDeviceEnumerator()
+            Using device As MMDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
+                Dim sessionManager = device.AudioSessionManager
+                Dim sessions = sessionManager.Sessions
+
+                For i As Integer = 0 To sessions.Count - 1
+                    Dim session = sessions(i)
+                    If session.GetProcessID = Process.GetCurrentProcess().Id Then
+                        session.SimpleAudioVolume.Volume = volume
+                        Exit For
+                    End If
+                Next
+            End Using
+        End Using
+    End Sub
+
+    ''' <summary>
+    ''' 获取当前进程音量
+    ''' </summary>
+    ''' <returns></returns>
+    Public Shared Function GetCurrentVolume() As Single
+        Using enumerator As New MMDeviceEnumerator()
+            Using device As MMDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia)
+                Dim sessionManager = device.AudioSessionManager
+                Dim sessions = sessionManager.Sessions
+
+                For i As Integer = 0 To sessions.Count - 1
+                    Dim session = sessions(i)
+                    If session.GetProcessID = Process.GetCurrentProcess().Id Then
+                        Return session.SimpleAudioVolume.Volume
+                    End If
+                Next
+            End Using
+        End Using
+
+        Return 0
+    End Function
+
 End Class

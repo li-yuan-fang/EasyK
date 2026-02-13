@@ -249,7 +249,7 @@ Public Class KWebCore
 
         Dim NewId As String
         With Booking
-            NewId = K.Book(.Title, Order, .Type, If(.Type = EasyKType.DLNA, ctx.Connection.RemoteIpAddress.ToString(), .Content))
+            NewId = K.Book(.Title, Order, DirectCast(.Type, EasyKType), If(.Type = EasyKType.DLNA, ctx.Connection.RemoteIpAddress.ToString(), .Content))
         End With
         If Not String.IsNullOrEmpty(NewId) Then
             Return WebStartup.RespondJson(ctx, $"{{""success"":true,""id"":""{NewId}""}}")
