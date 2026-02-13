@@ -17,9 +17,9 @@
             End If
 
             Select Case Args(1).ToLower()
-                Case = "prev"
+                Case "prev", "p", "-"
                     K.Seek(True)
-                Case = "next"
+                Case "next", "n", "+"
                     K.Seek(False)
                 Case Else
                     InvalidUsage()
