@@ -37,7 +37,7 @@
             With Commands
                 .Add(New CommandHelp(Commands))
 
-                .Add(New CommandPort(Web, Settings))
+                .Add(New CommandPort(K, Web, Settings))
                 .Add(New CommandPass(K, Settings))
                 .Add(New CommandBili(K))
                 .Add(New CommandClean(K, Web, Settings))

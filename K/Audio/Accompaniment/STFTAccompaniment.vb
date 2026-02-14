@@ -278,9 +278,21 @@ Namespace Accompaniment
 
                 '频率
                 Dim freq As Double = k * SampleRate / FFT_Size
-                Dim attenuation As Double = GetVocalFrequencyWeight(freq)
 
-                If coherence > 0.6 Then
+                '计算局部对比度
+                Dim contrast = ComputeLocalContrast(k, fft1) ' 使用左声道或平均
+
+                '根据局部对比度调整（关键：合唱场景通常有多个峰值）
+                '对比度高 = 频谱稀疏 = 可能是独立声源，降低阈值（更容易保留）
+                '对比度低 = 频谱密集 = 可能是混叠，提高阈值（更严格消除）
+                Dim contrastFactor = 1.0 - (contrast * 0.3) ' 对比度0-1，调整范围±0.3
+
+                Dim dynamicThreshold = contrastFactor * GetFrequencyAdaptiveThreshold(freq)
+
+                If coherence > dynamicThreshold Then
+                    Dim attenuation As Double = GetVocalFrequencyWeight(freq)
+                    attenuation *= coherence
+
                     '中置/侧向分解
                     Dim centerX As Double = (fft1(k).X + fft2(k).X) * 0.5
                     Dim centerY As Double = (fft1(k).Y + fft2(k).Y) * 0.5
@@ -288,7 +300,7 @@ Namespace Accompaniment
                     Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
 
                     '衰减中置（人声），保留侧向（伴奏）
-                    Dim att As Double = Math.Max(1 - attenuation * coherence * _ReductionFactor, 0)
+                    Dim att As Double = Math.Max(1 - attenuation * _ReductionFactor, 0)
                     centerX *= att
                     centerY *= att
 
@@ -297,7 +309,7 @@ Namespace Accompaniment
                     fft2(k).X = CSng(centerX - sideX)
                     fft2(k).Y = CSng(centerY - sideY)
 
-                    ' 二次振幅衰减
+                    '二次振幅衰减
                     mag1 = Magnitude(fft1(k)) * att
                     mag2 = Magnitude(fft2(k)) * att
                     phase1 = Phase(fft1(k))
@@ -381,6 +393,63 @@ Namespace Accompaniment
                 Case Else
                     Return 0.3F   ' 极高频，基本不是人声
             End Select
+        End Function
+
+        ''' <summary>
+        ''' 计算频率自适应的基础阈值
+        ''' </summary>
+        Protected Shared Function GetFrequencyAdaptiveThreshold(freq As Double) As Double
+            ' 人耳对不同频率的相位敏感度不同
+            ' 中频(1-4kHz)最敏感，低频和高频容忍度更高
+
+            Select Case freq
+                Case < 80
+                    Return 0.8
+                Case 80 To 250
+                    ' 低频：波长较长，房间反射导致相位混乱，提高阈值（更严格）
+                    Return 0.75
+                Case 250 To 500
+                    Return 0.7
+                Case 500 To 1000
+                    ' 中低频：男声基频区，适度严格
+                    Return 0.65
+                Case 1000 To 4000
+                    ' 中频：人声清晰度区，人耳最敏感，降低阈值（更容易识别为相干）
+                    Return 0.5
+                Case 4000 To 8000
+                    ' 高频：泛音区，相位不稳定，提高阈值
+                    Return 0.7
+                Case Else
+                    ' 极高频
+                    Return 0.8
+            End Select
+        End Function
+
+        ''' <summary>
+        ''' 计算局部频谱对比度（Scharr或简单差分）
+        ''' </summary>
+        Protected Shared Function ComputeLocalContrast(bin As Integer, fft As Complex()) As Double
+            If bin <= 1 OrElse bin >= FFT_Size \ 2 - 1 Then Return 0.5
+
+            Dim magCenter = Magnitude(fft(bin))
+            Dim magLeft = Magnitude(fft(bin - 1))
+            Dim magRight = Magnitude(fft(bin + 1))
+            Dim magFarLeft = Magnitude(fft(bin - 2))
+            Dim magFarRight = Magnitude(fft(bin + 2))
+
+            ' 局部方差归一化
+            Dim localMean = (magFarLeft + magLeft + magCenter + magRight + magFarRight) / 5
+            If localMean < 0.0001 Then Return 0
+
+            Dim variance = ((magFarLeft - localMean) ^ 2 + (magLeft - localMean) ^ 2 +
+                   (magCenter - localMean) ^ 2 + (magRight - localMean) ^ 2 +
+                   (magFarRight - localMean) ^ 2) / 5
+
+            ' 对比度 = 标准差/均值（变异系数）
+            Dim contrast = Math.Sqrt(variance) / localMean
+
+            ' 归一化到0-1
+            Return Math.Min(1.0, contrast / 2.0) ' 假设2.0为最大合理CV
         End Function
 
         ''' <summary>

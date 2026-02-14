@@ -59,9 +59,6 @@ Module ModMain
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
-        '保存配置
-        Settings.Dispose()
-
         '解除事件关联
         Try
             RemoveHandler Commands.OnExit, AddressOf ExitApplication
@@ -69,8 +66,20 @@ Module ModMain
         Catch
         End Try
 
+        '注销控制台回调
+        SetConsoleCtrlHandler(AddressOf UnexpectedExit, False)
+
         '关闭指令系统
         Commands.Close()
+
+        '关闭服务
+        DLNAServer.Dispose()
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
+        WebServer.Dispose()
+        KCore.Dispose()
+
+        '保存配置
+        Settings.Dispose()
 
         '清理
         If Settings.Settings.CleanOnExit Then
@@ -83,12 +92,6 @@ Module ModMain
                 End Try
             Next
         End If
-
-        '关闭服务
-        DLNAServer.Dispose()
-        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
-        WebServer.Dispose()
-        KCore.Dispose()
 
         End
     End Sub
