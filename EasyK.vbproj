@@ -538,10 +538,10 @@
     <Compile Include="Commands\Implements\FrmLogin.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="K\View\FrmMain.Designer.vb">
-      <DependentUpon>FrmMain.vb</DependentUpon>
+    <Compile Include="K\View\FrmPlayer.Designer.vb">
+      <DependentUpon>FrmPlayer.vb</DependentUpon>
     </Compile>
-    <Compile Include="K\View\FrmMain.vb">
+    <Compile Include="K\View\FrmPlayer.vb">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ModMain.vb" />
@@ -593,8 +593,8 @@
     <EmbeddedResource Include="Commands\Implements\FrmLogin.resx">
       <DependentUpon>FrmLogin.vb</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="K\View\FrmMain.resx">
-      <DependentUpon>FrmMain.vb</DependentUpon>
+    <EmbeddedResource Include="K\View\FrmPlayer.resx">
+      <DependentUpon>FrmPlayer.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

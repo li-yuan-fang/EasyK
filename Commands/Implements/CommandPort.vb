@@ -3,12 +3,15 @@
     Public Class CommandPort
         Inherits Command
 
+        Private ReadOnly K As EasyK
+
         Private ReadOnly Web As KWebCore
 
         Private ReadOnly Settings As SettingContainer
 
-        Public Sub New(Web As KWebCore, Settings As SettingContainer)
+        Public Sub New(K As EasyK, Web As KWebCore, Settings As SettingContainer)
             MyBase.New("port", "port [端口] - 显示/设置HTTP服务器端口", CommandType.System)
+            Me.K = K
             Me.Web = Web
             Me.Settings = Settings
         End Sub
@@ -25,6 +28,7 @@
 
                 Settings.Settings.Web.Port = Port
                 Web.RestartServer()
+                K.RefreshQRCode()
                 Console.WriteLine("HTTP端口已修改为 {0}", Port)
             End If
         End Sub

@@ -41,7 +41,7 @@ End Class
 Public Class EasyK
     Implements IDisposable
 
-    Private PlayerForm As FrmMain
+    Private PlayerForm As FrmPlayer
 
     Private QRForm As FrmQRCode
 
@@ -227,7 +227,7 @@ Public Class EasyK
         Dummy = New DummyPlayer(Me, Settings)
         If Not Cef.IsInitialized Then Cef.Initialize(New CefSetting(Settings))
 
-        PlayerForm = New FrmMain(Me, Settings)
+        PlayerForm = New FrmPlayer(Me, Settings)
         AddHandler PlayerForm.OnDLNAReset, AddressOf TriggerMirrorReset
     End Sub
 
@@ -650,7 +650,7 @@ Public Class EasyK
 
     '重启主窗体
     Private Sub RestartPlayerForm()
-        Dim NewForm As FrmMain = Nothing
+        Dim NewForm As FrmPlayer = Nothing
 
         If QRForm IsNot Nothing Then CloseQRCode()
 
@@ -658,7 +658,7 @@ Public Class EasyK
             RemoveHandler .OnDLNAReset, AddressOf TriggerMirrorReset
 
             .Invoke(Sub()
-                        NewForm = New FrmMain(Me, Settings)
+                        NewForm = New FrmPlayer(Me, Settings)
                         NewForm.Show()
 
                         .Close()

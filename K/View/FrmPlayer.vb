@@ -1,14 +1,12 @@
 ﻿Imports System.ComponentModel
 Imports System.Drawing
-Imports System.Net
-Imports System.Web.UI.WebControls
 Imports System.Windows.Forms
 Imports CefSharp
 Imports CefSharp.WinForms
 Imports EasyK.DLNA.MusicProvider
 Imports LibVLCSharp.Shared
 
-Public Class FrmMain
+Public Class FrmPlayer
 
     Friend WithEvents Browser As ChromiumWebBrowser
 
@@ -148,9 +146,9 @@ Public Class FrmMain
 
     Private Class BrowserCallback
 
-        Private ReadOnly _Base As FrmMain
+        Private ReadOnly _Base As FrmPlayer
 
-        Public Sub New(Base As FrmMain)
+        Public Sub New(Base As FrmPlayer)
             _Base = Base
         End Sub
 
