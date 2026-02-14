@@ -30,7 +30,7 @@ Public Class CefSetting
         If Settings.Settings.DebugMode Then
             Console.WriteLine("CEFSharp 初始化完成")
         Else
-            CefCommandLineArgs.Add("log-severity", "fatal")
+            LogSeverity = LogSeverity.Disable
         End If
     End Sub
 
