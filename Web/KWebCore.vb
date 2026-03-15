@@ -162,6 +162,10 @@ Public Class KWebCore
         Uploader.Dispose()
     End Sub
 
+    Private Shared Sub UpdateUserName(ByRef User As String, ctx As HttpContext)
+        If String.IsNullOrWhiteSpace(User) Then User = $"未知用户({ctx.Connection.RemoteIpAddress})"
+    End Sub
+
     <WebApi("/current", HttpMethod.Get)>
     Private Function Current(ctx As HttpContext) As Task
         Return WebStartup.RespondJson(ctx, $"{{""current"":{JsonConvert.SerializeObject(K.GetCurrent())}}}")
@@ -181,7 +185,7 @@ Public Class KWebCore
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Dim User As String = ctx.Request.Cookies.Item("name")
-        If String.IsNullOrEmpty(User) Then User = "未知用户"
+        UpdateUserName(User, ctx)
 
         Dim Result As EasyKBookRecord = K.SendToTop(Id.Id)
         If Result IsNot Nothing Then
@@ -231,7 +235,7 @@ Public Class KWebCore
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Dim Order As String = ctx.Request.Cookies.Item("name")
-        If String.IsNullOrEmpty(Order) Then Order = "未知用户"
+        UpdateUserName(Order, ctx)
 
         Dim NewId As String = K.Reorder(Id.Id, Order)
         If Not String.IsNullOrEmpty(NewId) Then
@@ -255,7 +259,7 @@ Public Class KWebCore
         Dim Order As String = ctx.Request.Cookies.Item("name")
         Uploader.FreeSession(Order)
 
-        If String.IsNullOrEmpty(Order) Then Order = "未知用户"
+        UpdateUserName(Order, ctx)
 
         With Booking
             Dim NewId As String = K.Book(.Title, Order, DirectCast(.Type, EasyKType), If(.Type = EasyKType.DLNA, ctx.Connection.RemoteIpAddress.ToString(), .Content))
