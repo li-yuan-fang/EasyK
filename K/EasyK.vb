@@ -239,11 +239,19 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
-    ''' 部署并播放
+    ''' 部署
     ''' </summary>
-    Public Sub Play()
+    Public Sub Setup()
+        Setup(Drawing.Rectangle.Empty)
+    End Sub
+
+    ''' <summary>
+    ''' 部署
+    ''' </summary>
+    ''' <param name="Bounds">部署区域</param>
+    Public Sub Setup(Bounds As Drawing.Rectangle)
         _Running = True
-        PlayerForm.Setup()
+        PlayerForm.Setup(Bounds)
 
         '检测是否需要显示二维码
         If Settings.Settings.AutoShowQR Then ShowQRCode(False)

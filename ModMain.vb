@@ -1,4 +1,4 @@
-﻿Imports System.Net
+﻿Imports System.Text
 Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
 
@@ -18,6 +18,8 @@ Module ModMain
     Sub Main()
         Console.Title = "EasyK"
         Console.ForegroundColor = ConsoleColor.White
+        Console.InputEncoding = Encoding.Unicode
+        Console.OutputEncoding = Encoding.Unicode
 
         '加载配置
         Settings = New SettingContainer()

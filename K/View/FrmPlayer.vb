@@ -234,22 +234,23 @@ Public Class FrmPlayer
     ''' <summary>
     ''' 部署
     ''' </summary>
-    Public Sub Setup()
+    Public Sub Setup(selected As Rectangle)
         Me.BackColor = Drawing.Color.Black
         Btn_Setup.Visible = False
 
         Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
 
-        Dim selected As Rectangle = Nothing
-        Dim max As Integer = 0
-        For Each s In Screen.AllScreens()
-            Dim r As Rectangle = Rectangle.Intersect(s.Bounds, Me.DesktopBounds)
-            Dim size As Integer = r.Width * r.Height
-            If size > max Then
-                max = size
-                selected = s.Bounds
-            End If
-        Next
+        If selected.Size.IsEmpty Then
+            Dim max As Integer = 0
+            For Each s In Screen.AllScreens()
+                Dim r As Rectangle = Rectangle.Intersect(s.Bounds, Me.DesktopBounds)
+                Dim size As Integer = r.Width * r.Height
+                If size > max Then
+                    max = size
+                    selected = s.Bounds
+                End If
+            Next
+        End If
 
         If selected.Width <= 0 OrElse selected.Height <= 0 Then
             Me.WindowState = FormWindowState.Maximized
@@ -309,7 +310,7 @@ Public Class FrmPlayer
     End Sub
 
     Private Sub Btn_Setup_Click(sender As Object, e As EventArgs) Handles Btn_Setup.Click
-        K.Play()
+        K.Setup()
     End Sub
 
     '更新内置音乐播放器信息
