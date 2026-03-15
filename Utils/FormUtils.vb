@@ -5,6 +5,10 @@ Imports Microsoft.AspNetCore.Server.Kestrel
 
 Public Class FormUtils
 
+    <DllImport("user32.dll", SetLastError:=True, CharSet:=CharSet.Unicode)>
+    Public Shared Function SetPropW(hWnd As IntPtr, lpString As String, hData As IntPtr) As <MarshalAs(UnmanagedType.Bool)> Boolean
+    End Function
+
     <DllImport("user32.dll")>
     Public Shared Function GetParent(hWnd As IntPtr) As IntPtr
     End Function

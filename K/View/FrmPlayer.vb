@@ -257,6 +257,9 @@ Public Class FrmPlayer
             Me.Bounds = selected
         End If
 
+        Dim FullResult As Boolean = FormUtils.SetPropW(Me.Handle, "MarkFullscreenWindow", 1)
+        If Settings.Settings.DebugMode Then Console.WriteLine("全屏窗口配置: {0}", FullResult)
+
         _Setuped = True
     End Sub
 
