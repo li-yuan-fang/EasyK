@@ -16,6 +16,12 @@ Public Class FrmQRCode
     Private DragStart As Point
 
     ''' <summary>
+    ''' 位置更新事件
+    ''' </summary>
+    ''' <param name="Pos">位置</param>
+    Public Event OnPositionUpdate(Pos As Point)
+
+    ''' <summary>
     ''' 获取或设置圆角状态
     ''' </summary>
     ''' <returns></returns>
@@ -87,6 +93,8 @@ Public Class FrmQRCode
     Private Sub FrmQRCode_MouseUp(sender As Object, e As MouseEventArgs) Handles Me.MouseUp
         Dragging = False
         Cursor = Cursors.Default
+
+        RaiseEvent OnPositionUpdate(Location)
     End Sub
 
     Private Sub FrmQRCode_MouseMove(sender As Object, e As MouseEventArgs) Handles Me.MouseMove

@@ -1,4 +1,5 @@
-﻿Imports System.Net.NetworkInformation
+﻿Imports System.Drawing
+Imports System.Net.NetworkInformation
 Imports System.Web
 Imports CefSharp
 Imports Newtonsoft.Json
@@ -43,7 +44,7 @@ Public Class EasyK
 
     Private PlayerForm As FrmPlayer
 
-    Private QRForm As FrmQRCode
+    Private WithEvents QRForm As FrmQRCode
 
     Private Current As EasyKBookRecord = Nothing
 
@@ -58,6 +59,10 @@ Public Class EasyK
     Friend ReadOnly Dummy As DummyPlayer
 
     Friend _LyricOffset As Double = 0.0D
+
+    Private _Running As Boolean = False
+
+    Private _SavedQRPosition As Point
 
     ''' <summary>
     ''' 播放器暂停事件
@@ -217,8 +222,6 @@ Public Class EasyK
         End Get
     End Property
 
-    Private _Running As Boolean = False
-
     ''' <summary>
     ''' 初始化
     ''' </summary>
@@ -242,15 +245,16 @@ Public Class EasyK
     ''' 部署
     ''' </summary>
     Public Sub Setup()
-        Setup(Drawing.Rectangle.Empty)
+        Setup(Rectangle.Empty)
     End Sub
 
     ''' <summary>
     ''' 部署
     ''' </summary>
     ''' <param name="Bounds">部署区域</param>
-    Public Sub Setup(Bounds As Drawing.Rectangle)
+    Public Sub Setup(Bounds As Rectangle)
         _Running = True
+        _SavedQRPosition = New Point(-1, -1)
         PlayerForm.Setup(Bounds)
 
         '检测是否需要显示二维码
@@ -553,8 +557,13 @@ Public Class EasyK
             Height = CInt(.Height * 0.25)
             Width = CInt(Height * 0.9)
 
-            X = CInt(.Width - Width - 1)
-            Y = CInt((.Height - Height) / 2 - 1)
+            If _SavedQRPosition.X >= 0 AndAlso _SavedQRPosition.Y >= 0 Then
+                X = _SavedQRPosition.X
+                Y = _SavedQRPosition.Y
+            Else
+                X = CInt(.Width - Width - 1)
+                Y = CInt((.Height - Height) / 2 - 1)
+            End If
 
             .Invoke(Sub() QRForm.SetBounds(X, Y, Width, Height))
         End With
@@ -608,6 +617,7 @@ Public Class EasyK
                                 .FormBorderStyle = Windows.Forms.FormBorderStyle.None
                                 .ShowInTaskbar = False
                                 .Round = True
+
                                 .Show()
 
                                 FormUtils.SetParent(.Handle, PlayerForm.Handle)
@@ -615,8 +625,13 @@ Public Class EasyK
                         End Sub)
 
                 UpdateQRBounds()
+                AddHandler QRForm.OnPositionUpdate, AddressOf QRForm_OnPositionUpdate
             End If
         End With
+    End Sub
+
+    Private Sub QRForm_OnPositionUpdate(Pos As Point)
+        _SavedQRPosition = Pos
     End Sub
 
     ''' <summary>
@@ -644,6 +659,7 @@ Public Class EasyK
         If QRForm Is Nothing Then Return
 
         If PlayerForm IsNot Nothing AndAlso Not PlayerForm.IsDisposed Then PlayerForm.Invoke(Sub() QRForm.Close())
+        RemoveHandler QRForm.OnPositionUpdate, AddressOf QRForm_OnPositionUpdate
         QRForm = Nothing
     End Sub
 
