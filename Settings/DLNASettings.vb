@@ -57,7 +57,7 @@ Public Class DLNASettings
     ''' </summary>
     ''' <returns></returns>
     <JsonProperty("strict_permission")>
-    Public Property StrictPermission As Boolean = False
+    Public Property StrictPermission As Boolean = True
 
     ''' <summary>
     ''' 阻止连播的时间间隔(单位:s)

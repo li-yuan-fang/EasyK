@@ -9,7 +9,6 @@
 
         Private Sub PrintMonitor(monitor As ScreenUtils.MonitorInfo)
             With monitor
-                Console.WriteLine("设备ID: {0}", If(.DeviceID, "未知"))
                 Console.WriteLine("设备名称: {0}", If(.Name, "未知"))
                 Console.WriteLine("制造商: {0}", If(.ManufacturerName, "未知"))
                 Console.WriteLine("产品ID: {0}", If(.ProductCodeID, "未知"))
