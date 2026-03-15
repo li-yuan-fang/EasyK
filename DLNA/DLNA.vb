@@ -22,6 +22,8 @@ Namespace DLNA
 
         Private Const ConnectionManager As String = "/ConnectionManager"
 
+        Private Shared ReadOnly LocalAddr As String() = New String() {"127.0.0.1", "0.0.0.0", "localhost", "::1"}
+
         Private ReadOnly SSDPServer As SSDP
 
         Private ReadOnly Settings As SettingContainer
@@ -128,8 +130,11 @@ Namespace DLNA
 
             Dim Current = K.GetCurrent()
             If Current Is Nothing Then Return False
-            If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
-                Current.Content <> ctx.Connection.RemoteIpAddress.ToString() Then Return False
+            If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) Then
+                Dim Remote As String = ctx.Connection.RemoteIpAddress.ToString()
+
+                If Remote <> Current.Content AndAlso Not LocalAddr.Contains(Remote) Then Return False
+            End If
 
             Return True
         End Function
