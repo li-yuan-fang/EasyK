@@ -130,11 +130,9 @@ Namespace DLNA
 
             Dim Current = K.GetCurrent()
             If Current Is Nothing Then Return False
-            If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) Then
-                Dim Remote As String = ctx.Connection.RemoteIpAddress.ToString()
-
-                If Remote <> Current.Content AndAlso Not LocalAddr.Contains(Remote) Then Return False
-            End If
+            If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
+                Current.Content <> ctx.Connection.RemoteIpAddress.ToString() AndAlso
+                Not LocalAddr.Contains(Current.Content) Then Return False
 
             Return True
         End Function
