@@ -589,12 +589,12 @@ Public Class EasyK
         With PlayerForm
             If Outside OrElse Not .Setuped Then
                 .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url)
+                            QRForm = New FrmQRCode(Url, Drawing.Size.Empty)
                             QRForm.Show()
                         End Sub)
             Else
                 .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url)
+                            QRForm = New FrmQRCode(Url, .Bounds.Size)
 
                             With QRForm
                                 .FormBorderStyle = Windows.Forms.FormBorderStyle.None
