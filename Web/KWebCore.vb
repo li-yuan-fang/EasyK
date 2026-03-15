@@ -326,7 +326,7 @@ Public Class KWebCore
                             Try
                                 With K
                                     If Boolean.Parse(p.Value) Then
-                                        .ShowQRCode(Not .Running)
+                                        .ShowQRCode(Not .IsSetup)
                                     Else
                                         .CloseQRCode()
                                     End If

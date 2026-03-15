@@ -41,7 +41,7 @@
                 .Add(New CommandPass(K, Settings))
                 .Add(New CommandBili(K))
                 .Add(New CommandClean(K, Web, Settings))
-                .Add(New CommandLock(K))
+                .Add(New CommandRestore(K, Settings))
                 .Add(New CommandQR(K, Settings))
                 .Add(New CommandStrict(Settings))
                 .Add(New CommandPlugin())

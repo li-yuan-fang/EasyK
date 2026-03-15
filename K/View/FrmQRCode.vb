@@ -7,13 +7,13 @@ Public Class FrmQRCode
 
     Friend WithEvents QR As QRCodeBox
 
-    Private ReadOnly ParentSize As Size
-
     Private _Round As Boolean = False
 
     Private Dragging As Boolean = False
 
     Private DragStart As Point
+
+    Friend Shadows Parent As Form = Nothing
 
     ''' <summary>
     ''' 位置更新事件
@@ -56,7 +56,7 @@ Public Class FrmQRCode
         QR.SetBounds(0, 0, ValidWidth, ValidHeight)
     End Sub
 
-    Public Sub New(Url As String, ParentSize As Size)
+    Public Sub New(Url As String)
 
         ' 此调用是设计器所必需的。
         InitializeComponent()
@@ -65,8 +65,6 @@ Public Class FrmQRCode
         QR = New QRCodeBox(Url)
         Controls.Add(QR)
         TransparencyKey = Transparent
-
-        Me.ParentSize = ParentSize
     End Sub
 
     Private Sub FrmQRCode_Resize(sender As Object, e As EventArgs) Handles Me.Resize
@@ -94,7 +92,7 @@ Public Class FrmQRCode
         Dragging = False
         Cursor = Cursors.Default
 
-        RaiseEvent OnPositionUpdate(Location)
+        RaiseEvent OnPositionUpdate(New Point(Location.X - Parent.Bounds.X, Location.Y - Parent.Bounds.Y))
     End Sub
 
     Private Sub FrmQRCode_MouseMove(sender As Object, e As MouseEventArgs) Handles Me.MouseMove
@@ -103,16 +101,22 @@ Public Class FrmQRCode
             Dim X As Integer = e.X - DragStart.X
             Dim Y As Integer = e.Y - DragStart.Y
             If Math.Abs(X) > 1 OrElse Math.Abs(Y) > 1 Then
-                With ParentSize
-                    If .Width > 0 AndAlso .Height > 0 Then
-                        Dim LocX As Integer = Math.Max(Math.Min(Original.X + X, .Width - Width), 0)
-                        Dim LocY As Integer = Math.Max(Math.Min(Original.Y + Y, .Height - Height), 0)
+                X += Original.X
+                Y += Original.Y
+
+                If Parent Is Nothing Then
+                    Location = New Point(X, Y)
+                Else
+                    With Parent.Bounds
+                        X -= .X
+                        Y -= .Y
+
+                        Dim LocX As Integer = Math.Max(Math.Min(X, .Width - Width), 0)
+                        Dim LocY As Integer = Math.Max(Math.Min(Y, .Height - Height), 0)
 
                         Location = New Point(LocX, LocY)
-                    Else
-                        Location = New Point(Original.X + X, Original.Y + Y)
-                    End If
-                End With
+                    End With
+                End If
             End If
         End If
     End Sub

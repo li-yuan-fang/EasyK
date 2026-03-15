@@ -57,10 +57,15 @@ Module ModMain
         Console.WriteLine("=================")
         Console.WriteLine("可输入 help 以查看帮助")
 
+        '尝试自动部署
+        KCore.TryAutoSetup()
+
         Application.Run()
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
+        Console.WriteLine("正在关闭点歌系统...")
+
         '解除事件关联
         Try
             RemoveHandler Commands.OnExit, AddressOf ExitApplication

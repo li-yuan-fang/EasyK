@@ -213,10 +213,10 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取运行状态
+    ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>
-    Public ReadOnly Property Running As Boolean
+    Public ReadOnly Property IsSetup As Boolean
         Get
             Return _Running
         End Get
@@ -249,6 +249,37 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
+    ''' 尝试自动部署
+    ''' </summary>
+    Public Sub TryAutoSetup()
+        With Settings.Settings
+            If .Restore Is Nothing Then Return
+
+            '查找屏幕
+            Dim m = ScreenUtils.GetMonitors()
+            With .Restore
+                For i = 0 To m.Count - 1
+                    If m(i).Name = .Name AndAlso m(i).ManufacturerName = .ManufacturerName AndAlso
+                        m(i).ProductCodeID = .ProductCodeID AndAlso m(i).SerialNumber = .SerialNumber AndAlso
+                        m(i).ManufactureDate = .ManufactureDate Then
+                        Dim Screens As Windows.Forms.Screen() = Windows.Forms.Screen.AllScreens()
+                        If i >= Screens.Length Then Continue For
+
+                        '部署
+                        Setup(Screens(i).Bounds)
+
+                        Return
+                    End If
+                Next
+            End With
+
+            If .DebugMode Then
+                Console.WriteLine("自动部署失败 - 找不到对应的屏幕")
+            End If
+        End With
+    End Sub
+
+    ''' <summary>
     ''' 部署
     ''' </summary>
     ''' <param name="Bounds">部署区域</param>
@@ -268,7 +299,7 @@ Public Class EasyK
     ''' </summary>
     Public Sub Push()
         SyncLock Queue
-            If Not Running Then
+            If Not IsSetup Then
                 Current = Nothing
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
@@ -606,18 +637,18 @@ Public Class EasyK
         With PlayerForm
             If Outside OrElse Not .Setuped Then
                 .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url, Drawing.Size.Empty)
+                            QRForm = New FrmQRCode(Url)
                             QRForm.Show()
                         End Sub)
             Else
                 .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url, .Bounds.Size)
+                            QRForm = New FrmQRCode(Url)
 
                             With QRForm
+                                .Parent = PlayerForm
                                 .FormBorderStyle = Windows.Forms.FormBorderStyle.None
                                 .ShowInTaskbar = False
                                 .Round = True
-
                                 .Show()
 
                                 FormUtils.SetParent(.Handle, PlayerForm.Handle)
@@ -671,6 +702,23 @@ Public Class EasyK
 
         ShowQRCode(False)
     End Sub
+
+    ''' <summary>
+    ''' 获取主屏幕
+    ''' </summary>
+    ''' <returns></returns>
+    Public Function GetMainScreen() As ScreenUtils.OverlapScreen
+        If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then
+            Return New ScreenUtils.OverlapScreen With {
+                .Id = -1,
+                .Screen = Nothing
+            }
+        Else
+            With PlayerForm
+                Return .Invoke(Function() ScreenUtils.GetOverlapScreen(.DesktopBounds))
+            End With
+        End If
+    End Function
 
     '重启主窗体
     Private Sub RestartPlayerForm()

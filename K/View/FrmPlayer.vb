@@ -234,28 +234,23 @@ Public Class FrmPlayer
     ''' <summary>
     ''' 部署
     ''' </summary>
-    Public Sub Setup(selected As Rectangle)
+    Public Sub Setup(Selected As Rectangle)
         Me.BackColor = Drawing.Color.Black
         Btn_Setup.Visible = False
 
         Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
 
-        If selected.Size.IsEmpty Then
-            Dim max As Integer = 0
-            For Each s In Screen.AllScreens()
-                Dim r As Rectangle = Rectangle.Intersect(s.Bounds, Me.DesktopBounds)
-                Dim size As Integer = r.Width * r.Height
-                If size > max Then
-                    max = size
-                    selected = s.Bounds
-                End If
-            Next
+        If Selected.Size.IsEmpty Then
+            Dim Overlap = ScreenUtils.GetOverlapScreen(DesktopBounds)
+            With Overlap
+                If .Id >= 0 Then Selected = .Screen.Bounds
+            End With
         End If
 
-        If selected.Width <= 0 OrElse selected.Height <= 0 Then
+        If Selected.Width <= 0 OrElse Selected.Height <= 0 Then
             Me.WindowState = FormWindowState.Maximized
         Else
-            Me.Bounds = selected
+            Me.Bounds = Selected
         End If
 
         Dim FullResult As Boolean = FormUtils.SetPropW(Me.Handle, "MarkFullscreenWindow", 1)

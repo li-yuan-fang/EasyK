@@ -11,7 +11,6 @@
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            Console.WriteLine("正在关闭点歌系统...")
             ExitAction.Invoke()
         End Sub
 

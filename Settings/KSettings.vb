@@ -26,6 +26,13 @@ Public Class KSettings
     Public Property KeepLogin As Boolean = True
 
     ''' <summary>
+    ''' 自动部署参数
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("restore", NullValueHandling:=NullValueHandling.Ignore)>
+    Public Property Restore As ScreenUtils.MonitorInfo = Nothing
+
+    ''' <summary>
     ''' 部署后自动显示二维码
     ''' </summary>
     ''' <returns></returns>

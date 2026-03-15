@@ -481,7 +481,7 @@
     <Compile Include="Commands\Implements\CommandExit.vb" />
     <Compile Include="Commands\Implements\CommandHelp.vb" />
     <Compile Include="Commands\Implements\CommandList.vb" />
-    <Compile Include="Commands\Implements\CommandLock.vb" />
+    <Compile Include="Commands\Implements\CommandRestore.vb" />
     <Compile Include="Commands\Implements\CommandOutdated.vb" />
     <Compile Include="Commands\CommandParser.vb" />
     <Compile Include="Commands\Implements\CommandPass.vb" />
@@ -574,6 +574,7 @@
     <Compile Include="Utils\JsonUtils.vb" />
     <Compile Include="Utils\KeyboardUtils.vb" />
     <Compile Include="Utils\NetUtils.vb" />
+    <Compile Include="Utils\ScreenUtils.vb" />
     <Compile Include="Utils\TimeUtils.vb" />
     <Compile Include="Utils\XmlUtils.vb" />
     <Compile Include="Web\KWebCore.vb" />
