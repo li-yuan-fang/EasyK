@@ -130,7 +130,7 @@ Namespace Accompaniment
             Dim fft As New List(Of Complex())
 
             '前处理
-            Dim Remain As Integer = Channels
+            Dim Countdown As New CountdownEvent(Channels)
             For ch = 0 To Channels - 1
                 Dim f = New Complex(FFT_Size - 1) {}
                 Dim id = ch
@@ -148,18 +148,19 @@ Namespace Accompaniment
 
                              FastFourierTransform.FFT(True, FFT_Pow, f)
 
-                             Interlocked.Decrement(Remain)
+                             Countdown.Signal()
                          End Sub)
             Next
 
-            While Remain > 0
-            End While
+            Countdown.Wait()
 
             '清除人声
             Progress(fft)
 
             '后处理
-            Remain = Channels
+            Countdown.Dispose()
+            Countdown = New CountdownEvent(Channels)
+
             For ch = 0 To Channels - 1
                 Dim id = ch
 
@@ -195,12 +196,11 @@ Namespace Accompaniment
                                  _overlapBuffer(id)(i) = 0.0F
                              Next
 
-                             Interlocked.Decrement(Remain)
+                             Countdown.Signal()
                          End Sub)
             Next
 
-            While Remain > 0
-            End While
+            Countdown.Wait()
 
             _outputBufferFilled = Hop_Size * Channels
             _outputBufferPos = 0
@@ -232,24 +232,23 @@ Namespace Accompaniment
         ''' </summary>
         ''' <param name="fft">波形</param>
         Protected Sub Progress(fft As List(Of Complex()))
-            Dim Remain As Integer = SideChannelPairs.Count + CenterChannelIndices.Count
+            Dim Countdown As New CountdownEvent(SideChannelPairs.Count + CenterChannelIndices.Count)
 
             For Each Side In SideChannelPairs
                 Task.Run(Sub()
                              ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
-                             Interlocked.Decrement(Remain)
+                             Countdown.Signal()
                          End Sub)
             Next
 
             For Each Central In CenterChannelIndices
                 Task.Run(Sub()
                              AttenuateCenterChannel(fft(Central))
-                             Interlocked.Decrement(Remain)
+                             Countdown.Signal()
                          End Sub)
             Next
 
-            While Remain > 0
-            End While
+            Countdown.Wait()
         End Sub
 
         ''' <summary>

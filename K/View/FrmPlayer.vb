@@ -1,5 +1,6 @@
 ﻿Imports System.ComponentModel
 Imports System.Drawing
+Imports System.Threading
 Imports System.Windows.Forms
 Imports CefSharp
 Imports CefSharp.WinForms
@@ -109,7 +110,7 @@ Public Class FrmPlayer
     '浏览器播放标志
     Private Browser_Playing As Boolean = False
 
-    Private Browser_Loaded As Boolean = False
+    Private ReadOnly Browser_Loaded As New ManualResetEventSlim(False)
 
     'DLNA初次等待标志
     Private DLNA_Waiting As Boolean = True
@@ -337,10 +338,8 @@ Public Class FrmPlayer
                         DLNAMusicProviders.GenerateUpdateMusicScript(Attribute, DefaultTitle, DefaultDuration)
 
                      '等待
-                     While Not Browser_Loaded
-                         Threading.Thread.Sleep(5)
-                         If Not DLNA_Music Then Return
-                     End While
+                     Browser_Loaded.Wait()
+                     If Not DLNA_Music Then Return
 
                      '执行脚本
                      Try
@@ -362,10 +361,8 @@ Public Class FrmPlayer
                      End If
 
                      '等待
-                     While Not Browser_Loaded
-                         Threading.Thread.Sleep(5)
-                         If Not DLNA_Music Then Return
-                     End While
+                     Browser_Loaded.Wait()
+                     If Not DLNA_Music Then Return
 
                      '执行脚本
                      Try
@@ -393,10 +390,8 @@ Public Class FrmPlayer
                      End If
 
                      '等待
-                     While Not Browser_Loaded
-                         Threading.Thread.Sleep(5)
-                         If Not DLNA_Music Then Return
-                     End While
+                     Browser_Loaded.Wait()
+                     If Not DLNA_Music Then Return
 
                      '执行脚本
                      Try
@@ -415,10 +410,8 @@ Public Class FrmPlayer
         If Not DLNA_Music Then Return
 
         Task.Run(Sub()
-                     While Not Browser_Loaded
-                         Threading.Thread.Sleep(5)
-                         If Not DLNA_Music Then Return
-                     End While
+                     Browser_Loaded.Wait()
+                     If Not DLNA_Music Then Return
 
                      If IsDisposed Then Return
 
@@ -437,10 +430,8 @@ Public Class FrmPlayer
         If Not DLNA_Music Then Return
 
         Task.Run(Sub()
-                     While Not Browser_Loaded
-                         Threading.Thread.Sleep(5)
-                         If Not DLNA_Music Then Return
-                     End While
+                     Browser_Loaded.Wait()
+                     If Not DLNA_Music Then Return
 
                      If IsDisposed Then Return
 
@@ -468,12 +459,12 @@ Public Class FrmPlayer
     End Sub
 
     Private Sub Browser_FrameLoadEnd(sender As Object, e As FrameLoadEndEventArgs) Handles Browser.FrameLoadEnd
-        If Browser_Playing AndAlso Not Browser_Loaded AndAlso e.Frame.IsMain Then
+        If Browser_Playing AndAlso Not Browser_Loaded.IsSet() AndAlso e.Frame.IsMain Then
             If DLNA_Music Then
                 'DLNA音乐模式
                 UpdateDLNAMusicState()
 
-                Browser_Loaded = True
+                Browser_Loaded.Set()
             Else
                 'B站模式
 
@@ -483,12 +474,12 @@ Public Class FrmPlayer
                 Dim Checkpoint = e.Browser.EvaluateScriptAsync("document.getElementById('bilibili-player') != undefined")
                 Checkpoint.ContinueWith(Sub()
                                             With Checkpoint.Result
-                                                If Browser_Loaded Then Return
+                                                If Browser_Loaded.IsSet() Then Return
 
                                                 Try
                                                     If .Success AndAlso Boolean.Parse(.Result) Then
                                                         RunBiliScript(e.Browser)
-                                                        Browser_Loaded = True
+                                                        Browser_Loaded.Set()
                                                     End If
                                                 Catch
                                                 End Try
@@ -614,7 +605,7 @@ Public Class FrmPlayer
                        End Sub)
             Case EasyKType.Bilibili
                 Browser_Playing = True
-                Browser_Loaded = False
+                Browser_Loaded.Reset()
 
                 Console.WriteLine("加载 bilibili - {0}", Content)
 
@@ -697,7 +688,7 @@ Public Class FrmPlayer
                     DLNA_Music = True
                     DLNA_Music_Meta = Content
                     Browser_Playing = True
-                    Browser_Loaded = False
+                    Browser_Loaded.Reset()
 
                     '拉取音乐信息
                     UpdateDLNAMusic()
