@@ -176,24 +176,31 @@ Public Class KWebCore
         Return WebStartup.RespondJson(ctx, $"{{""list"":{JsonConvert.SerializeObject(K.GetBookList())}}}")
     End Function
 
-    <WebApi("/top", HttpMethod.Post)>
-    Private Function Top(ctx As HttpContext) As Task
+    <WebApi("/rank", HttpMethod.Post)>
+    Private Function Rank(ctx As HttpContext) As Task
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
-        Dim Id As RequestId = JsonUtils.SafeDeserializeObject(Of RequestId)(Request)
-        If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
+        Dim Req As RequestRank = JsonUtils.SafeDeserializeObject(Of RequestRank)(Request)
+        If Req Is Nothing OrElse String.IsNullOrEmpty(Req.Id) Then _
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
         Dim User As String = ctx.Request.Cookies.Item("name")
         UpdateUserName(User, ctx)
 
-        Dim Result As EasyKBookRecord = K.SendToTop(Id.Id)
-        If Result IsNot Nothing Then
-            Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
-            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
-        Else
-            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
-        End If
+        With Req
+            Dim Result As EasyKBookRecord = K.RankBook(.Id, .Rank)
+            If Result IsNot Nothing Then
+                If .Rank <= 0 Then
+                    Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
+                Else
+                    Console.WriteLine("{0}> 将 {1} 的播放次序调整为 #{2}", User, $"{Result.Title}(来自:{Result.Order})", .Rank)
+                End If
+
+                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+            Else
+                Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
+            End If
+        End With
     End Function
 
     <WebApi("/push", HttpMethod.Get)>

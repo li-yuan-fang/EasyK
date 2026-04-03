@@ -582,6 +582,7 @@
     <Compile Include="Web\Serializable\RequestBook.vb" />
     <Compile Include="Web\Serializable\RequestId.vb" />
     <Compile Include="Web\Serializable\RequestPanel.vb" />
+    <Compile Include="Web\Serializable\RequestRank.vb" />
     <Compile Include="Web\Serializable\RequestSize.vb" />
     <Compile Include="Web\Serializable\RequestVolume.vb" />
     <Compile Include="Web\UploadManager.vb" />

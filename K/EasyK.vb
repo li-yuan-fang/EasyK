@@ -371,17 +371,48 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Id">ID</param>
     Public Function SendToTop(Id As String) As EasyKBookRecord
-        SyncLock Queue
-            Dim node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
-            While node IsNot Nothing
-                If node.Value.Id.Equals(Id) Then
-                    Queue.Remove(node)
-                    Queue.AddFirst(node)
+        Return RankBook(Id, 0)
+    End Function
 
-                    Return node.Value
+    ''' <summary>
+    ''' 已点歌曲重排序
+    ''' </summary>
+    ''' <param name="Id">ID</param>
+    ''' <param name="Rank">序号</param>
+    ''' <returns></returns>
+    Public Function RankBook(Id As String, Rank As Integer) As EasyKBookRecord
+        SyncLock Queue
+            Dim Node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
+            While Node IsNot Nothing
+                If Node.Value.Id.Equals(Id) Then
+                    '查找成功
+                    Queue.Remove(Node)
+
+                    If Rank <= 0 Then
+                        '直接置顶
+                        Queue.AddFirst(Node)
+                    Else
+                        '查找插入点
+                        Dim Head As LinkedListNode(Of EasyKBookRecord) = Queue.First()
+                        Dim i As Integer = 1
+                        While Head IsNot Nothing AndAlso i < Rank
+                            Head = Head.Next
+                            i += 1
+                        End While
+
+                        If Head Is Nothing Then
+                            Queue.AddLast(Node)
+                        Else
+                            Queue.AddAfter(Head, Node)
+                        End If
+
+                        Return Node.Value
+                    End If
+
+                    Return Node.Value
                 End If
 
-                node = node.Next
+                Node = Node.Next
             End While
         End SyncLock
 
