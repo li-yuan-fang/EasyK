@@ -757,6 +757,9 @@ Public Class EasyK
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
+        Dim Storage As New CefStorage()
+        Cef.GetGlobalCookieManager().VisitAllCookies(Storage)
+
         With PlayerForm
             Try
                 .Invoke(Sub()
@@ -772,6 +775,8 @@ Public Class EasyK
             .Dispose()
         End With
         PlayerForm = Nothing
+
+        Storage.Clean()
     End Sub
 
 End Class

@@ -4,6 +4,8 @@ Imports CefSharp
 Public Class CefSetting
     Inherits CefSettingsBase
 
+    Public Const StoragePath As String = "cache"
+
     Private Const UA As String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
 
     ''' <summary>
@@ -12,7 +14,7 @@ Public Class CefSetting
     ''' <param name="Settings">配置容器</param>
     Public Sub New(Settings As SettingContainer)
         '缓存
-        Dim CachePath As String = IO.Path.Combine(Application.StartupPath, "cache")
+        Dim CachePath As String = IO.Path.Combine(Application.StartupPath, StoragePath)
         If Not IO.Directory.Exists(CachePath) Then IO.Directory.CreateDirectory(CachePath)
 
         Me.CachePath = CachePath

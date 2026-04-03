@@ -508,7 +508,8 @@
     <Compile Include="K\Audio\DummyPlayer.vb" />
     <Compile Include="K\Audio\VlcAudioHandler.vb" />
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
-    <Compile Include="K\CefSetting.vb" />
+    <Compile Include="K\Cef\CefSetting.vb" />
+    <Compile Include="K\Cef\CefStorage.vb" />
     <Compile Include="K\View\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </Compile>
