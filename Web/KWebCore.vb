@@ -193,7 +193,7 @@ Public Class KWebCore
                 If .Rank <= 0 Then
                     Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
                 Else
-                    Console.WriteLine("{0}> 将 {1} 的播放次序调整为 #{2}", User, $"{Result.Title}(来自:{Result.Order})", .Rank)
+                    Console.WriteLine("{0}> 将 {1} 的播放次序调整为 #{2}", User, $"{Result.Title}(来自:{Result.Order})", .Rank + 1)
                 End If
 
                 Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
