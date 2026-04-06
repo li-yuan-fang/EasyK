@@ -282,9 +282,11 @@ Public Class UploadManager
                 '上传完成
                 Dim Hash As String = Session.ComputeSHA256()
 
-                SyncLock Uploaded
-                    Uploaded.Add(Session.Id, Hash)
-                End SyncLock
+                Task.Run(Sub()
+                             SyncLock Uploaded
+                                 Uploaded.Add(Session.Id, Hash)
+                             End SyncLock
+                         End Sub)
 
                 Return WebStartup.RespondJson(ctx, $"{{""busy"":true,""id"":""{Session.Id}"",""complete"":true,""hash"":""{Hash}""}}")
             Else
@@ -335,7 +337,7 @@ Public Class UploadManager
                     Catch ex As Exception
                         Invalid.Add(s)
                         If Settings.Settings.DebugMode Then
-                            Console.WriteLine("获取缓存文件大小失败: {0}", ex.Message)
+                            Console.WriteLine("获取缓存文件大小失败 - {0}", ex.Message)
                         End If
                     End Try
                 Next
