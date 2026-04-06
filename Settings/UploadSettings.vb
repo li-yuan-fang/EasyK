@@ -39,4 +39,11 @@ Public Class UploadSettings
     <JsonProperty("flush_count")>
     Public Property RefreshThreshold As Integer = 10
 
+    ''' <summary>
+    ''' 减少上传次数策略
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("less_upload_policy")>
+    Public Property LessUploadPolicy As Boolean = True
+
 End Class

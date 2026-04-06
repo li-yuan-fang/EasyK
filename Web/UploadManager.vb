@@ -176,8 +176,11 @@ Public Class UploadManager
     '清理任务
     Private ReadOnly Cleaner As Task
 
-    '已占用的文件列表
+    '已占用的文件列表(上传中的文件)
     Private ReadOnly Occupied As New List(Of String)
+
+    '已上传的文件(Id, Hash)
+    Private ReadOnly Uploaded As New Dictionary(Of String, String)
 
     Private ReadOnly Settings As SettingContainer
 
@@ -276,7 +279,14 @@ Public Class UploadManager
             If Settings.Settings.DebugMode Then Console.WriteLine("{0}> 完成状态: {1}", Name, Session.IsCompleted().ToString().ToLower())
 
             If Session.IsCompleted() Then
-                Return WebStartup.RespondJson(ctx, $"{{""busy"":true,""id"":""{Session.Id}"",""complete"":true,""hash"":""{Session.ComputeSHA256()}""}}")
+                '上传完成
+                Dim Hash As String = Session.ComputeSHA256()
+
+                SyncLock Uploaded
+                    Uploaded.Add(Session.Id, Hash)
+                End SyncLock
+
+                Return WebStartup.RespondJson(ctx, $"{{""busy"":true,""id"":""{Session.Id}"",""complete"":true,""hash"":""{Hash}""}}")
             Else
                 Return WebStartup.RespondJson(ctx, $"{{""busy"":true,""id"":""{Session.Id}"",""complete"":false,""require"":{JsonConvert.SerializeObject(Session.GetRequirements)}}}")
             End If
@@ -289,8 +299,62 @@ Public Class UploadManager
     '请求新会话
     Private Function HandlePost(ctx As HttpContext, Name As String) As Task
         '解析请求
-        Dim Request As RequestSize = JsonUtils.SafeDeserializeObject(Of RequestSize)(WebStartup.GetRequestBody(ctx))
+        Dim Request As RequestCheck = JsonUtils.SafeDeserializeObject(Of RequestCheck)(WebStartup.GetRequestBody(ctx))
         If Request Is Nothing OrElse Request.Size <= 0 Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
+
+        '检查策略
+        If Settings.Settings.Web.Upload.LessUploadPolicy Then
+            Dim Suspicious As New List(Of String)
+
+            SyncLock Uploaded
+                For Each p In Uploaded
+                    If p.Value.ToLower() = Request.Hash.ToLower() Then Suspicious.Add(p.Key)
+                Next
+            End SyncLock
+
+            '检查是否发现可疑文件
+            If Suspicious.Count > 0 Then
+                Dim Invalid As New List(Of String)
+                Dim Bypass As String = vbNullString
+
+                '检查可疑文件
+                For Each s In Suspicious
+                    Dim Path As String = IO.Path.Combine(Application.StartupPath, Settings.Settings.TempFolder, s)
+                    If Not IO.File.Exists(Path) Then
+                        Invalid.Add(s)
+                        Continue For
+                    End If
+
+                    Try
+                        Dim fi As New IO.FileInfo(Path)
+                        If fi.Length = Request.Size Then
+                            '尺寸符合
+                            Bypass = s
+                            Exit For
+                        End If
+                    Catch ex As Exception
+                        Invalid.Add(s)
+                        If Settings.Settings.DebugMode Then
+                            Console.WriteLine("获取缓存文件大小失败: {0}", ex.Message)
+                        End If
+                    End Try
+                Next
+
+                '清理
+                If Invalid.Count > 0 Then
+                    SyncLock Uploaded
+                        For Each i In Invalid
+                            Uploaded.Remove(i)
+                        Next
+                    End SyncLock
+                End If
+
+                If Not String.IsNullOrEmpty(Bypass) Then
+                    '跳过
+                    Return WebStartup.RespondJson(ctx, $"{{""id"":""{Bypass}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize},""bypass"":true}}")
+                End If
+            End If
+        End If
 
         '移除旧会话
         Dim Session As UploadSession = Nothing
@@ -306,7 +370,7 @@ Public Class UploadManager
         If Settings.Settings.DebugMode Then Console.WriteLine("{0}> 新会话 {1}", Name, Session.Id)
 
         If Sessions.TryAdd(Name, Session) Then
-            Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize}}}")
+            Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize},""bypass"":false}}")
         Else
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status500InternalServerError)
         End If
