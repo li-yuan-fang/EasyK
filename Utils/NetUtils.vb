@@ -10,6 +10,8 @@ Public Class NetUtils
 
     Private Shared ReadOnly ValidDevices As String() = {"USB", "PCI", "BTH"}
 
+    Public Shared ReadOnly LocalAddresses As String() = New String() {"127.0.0.1", "0.0.0.0", "localhost", "::1"}
+
     ''' <summary>
     ''' 获取所有有效网卡
     ''' </summary>

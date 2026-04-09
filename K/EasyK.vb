@@ -1,43 +1,7 @@
 ﻿Imports System.Drawing
 Imports System.Net.NetworkInformation
-Imports System.Web
 Imports CefSharp
-Imports Newtonsoft.Json
-
-Public Enum EasyKType
-    Video = 0
-    Bilibili
-    DLNA
-End Enum
-
-<Serializable>
-Public Class EasyKBookRecord
-
-    <JsonProperty("id")>
-    Public ReadOnly Id As String
-
-    <JsonProperty("title")>
-    Public ReadOnly Title As String
-
-    <JsonProperty("order")>
-    Public ReadOnly Order As String
-
-    <JsonIgnore>
-    Public ReadOnly Type As EasyKType
-
-    <JsonIgnore>
-    Public ReadOnly Content As String
-
-    Public Sub New(Title As String, Order As String, Type As EasyKType, Content As String)
-        Dim Id As String = Now.Ticks.ToString("x2")
-        Me.Id = Id
-        Me.Title = Title
-        Me.Order = Order
-        Me.Type = Type
-        Me.Content = Content
-    End Sub
-
-End Class
+Imports Microsoft.AspNetCore.Http
 
 Public Class EasyK
     Implements IDisposable
@@ -53,6 +17,8 @@ Public Class EasyK
     Private ReadOnly OutdatedQueue As New LinkedList(Of EasyKBookRecord)
 
     Private LastValidAdapter As NetworkInterface = Nothing
+
+    Friend ReadOnly DLNAServer As DLNA.DLNA
 
     Friend ReadOnly Settings As SettingContainer
 
@@ -81,88 +47,6 @@ Public Class EasyK
     ''' 播放器终止事件
     ''' </summary>
     Public Event OnPlayerTerminated()
-
-    ''' <summary>
-    ''' 投屏功能重置事件
-    ''' </summary>
-    Public Event OnMirrorReset()
-
-    ''' <summary>
-    ''' 投屏播放事件
-    ''' </summary>
-    Public Event OnMirrorPlay()
-
-    ''' <summary>
-    ''' 获取或设置播放进度(仅VLC)
-    ''' </summary>
-    ''' <returns></returns>
-    Friend Property PlayingPosition As Single
-        Get
-            Try
-                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Position)
-            Catch
-                Return 0
-            End Try
-        End Get
-        Set(value As Single)
-            If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
-
-            Try
-                With PlayerForm
-                    .Invoke(Sub() .Position = value)
-                End With
-            Catch
-            End Try
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取或设置播放速度(仅VLC)
-    ''' </summary>
-    ''' <returns></returns>
-    Friend Property PlayingRate As Single
-        Get
-            Try
-                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Rate)
-            Catch
-                Return 1
-            End Try
-        End Get
-        Set(value As Single)
-            If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return
-
-            Try
-                With PlayerForm
-                    .Invoke(Sub() .Rate = value)
-                End With
-            Catch
-            End Try
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取视频长度(仅VLC)
-    ''' </summary>
-    ''' <returns></returns>
-    Friend ReadOnly Property PlayingDuration As Double
-        Get
-            Try
-                Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), 0, PlayerForm.Duration)
-            Catch
-                Return 0
-            End Try
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' 获取DLNA加载状态
-    ''' </summary>
-    ''' <returns></returns>
-    Friend ReadOnly Property DLNALoading As Boolean
-        Get
-            Return If(PlayerForm Is Nothing OrElse PlayerForm.IsDisposed(), True, PlayerForm.DLNALoading)
-        End Get
-    End Property
 
     ''' <summary>
     ''' 获取或设置音量
@@ -197,17 +81,18 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取或设置歌词偏移
+    ''' 获取或设置DLNA歌词偏移
     ''' </summary>
     ''' <returns></returns>
-    Public Property LyricOffset As Double
+    Public Property DLNALyricOffset As Double
         Get
             Return _LyricOffset
         End Get
         Set(value As Double)
             If _LyricOffset <> value Then
                 _LyricOffset = value
-                TriggerMirrorPlay("RefreshOffset")
+
+                If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOffset()
             End If
         End Set
     End Property
@@ -227,11 +112,23 @@ Public Class EasyK
     ''' </summary>
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
+
+        '初始化托管音频
         Dummy = New DummyPlayer(Me, Settings)
+
+        '初始化CefSharp
         If Not Cef.IsInitialized Then Cef.Initialize(New CefSetting(Settings))
 
+        '加载DLNA插件
+        DLNA.MusicProvider.DLNAMusicProviders.LoadProviders(Settings)
+
+        '加载DLNA服务
+        DLNAServer = New DLNA.DLNA(Me, Settings) With {
+            .CheckAccess = New DLNA.DLNAAccessCheck(AddressOf DLNAAccessCheck)
+        }
+
+        '启动播放器窗口
         PlayerForm = New FrmPlayer(Me, Settings)
-        AddHandler PlayerForm.OnDLNAReset, AddressOf TriggerMirrorReset
     End Sub
 
     ''' <summary>
@@ -240,6 +137,20 @@ Public Class EasyK
     Public Sub Show()
         PlayerForm.Show()
     End Sub
+
+    'DLNA访问权限检查
+    Private Function DLNAAccessCheck(ctx As HttpContext) As Boolean
+        If Not IsSetup OrElse Current Is Nothing Then Return False
+
+        If Current.Type <> EasyKType.DLNA Then Return False
+
+        '检测访问者
+        If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
+            Current.Content <> ctx.Connection.RemoteIpAddress.ToString() AndAlso
+            Not NetUtils.LocalAddresses.Contains(Current.Content) Then Return False
+
+        Return True
+    End Function
 
     ''' <summary>
     ''' 部署
@@ -298,6 +209,8 @@ Public Class EasyK
     ''' 推进播放进度/切歌
     ''' </summary>
     Public Sub Push()
+        Dim Temp As EasyKBookRecord
+
         SyncLock Queue
             If Not IsSetup Then
                 Current = Nothing
@@ -310,24 +223,26 @@ Public Class EasyK
 
             If Queue.Count = 0 Then
                 Current = Nothing
-                Task.Run(Sub() RaiseEvent OnPlayerTerminated())
+                Dim TaskEnd = Task.Run(Sub() RaiseEvent OnPlayerTerminated())
                 Return
             End If
 
-            Current = Queue.First.Value
+            Temp = Queue.First.Value
             Queue.RemoveFirst()
         End SyncLock
 
         SyncLock OutdatedQueue
-            OutdatedQueue.AddFirst(Current)
+            OutdatedQueue.AddFirst(Temp)
         End SyncLock
 
         Task.Run(Sub()
                      RaiseEvent OnPlayerTerminated()
+
+                     Current = Temp
                      RaiseEvent OnPlayerPlay(Current.Type, Current.Content)
                  End Sub)
 
-        With Current
+        With Temp
             Console.WriteLine("开始播放 {0} - {1} (来自 {2})", .Title, .Content, .Order)
         End With
     End Sub
@@ -339,17 +254,6 @@ Public Class EasyK
         If Current Is Nothing Then Return
         Task.Run(Sub() RaiseEvent OnPlayerPause(Current.Type))
     End Sub
-
-    ''' <summary>
-    ''' 获取播放器播放状态
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function IsPlaying() As Boolean
-        If PlayerForm Is Nothing Then Return False
-        With PlayerForm
-            Return DirectCast(.Invoke(Function() .Playing), Boolean)
-        End With
-    End Function
 
     ''' <summary>
     ''' 复位
@@ -523,20 +427,22 @@ Public Class EasyK
     ''' 调整进度
     ''' </summary>
     ''' <param name="Prev">向前调整</param>
-    Public Sub Seek(Prev As Boolean)
-        If Not IsPlaying() Then Return
+    ''' <param name="Step">步长</param>
+    Public Sub Seek(Prev As Boolean, Optional [Step] As Double = 5D)
+        With DLNAServer
+            If .Player Is Nothing Then Return
 
-        PlayerForm.Invoke(Sub()
-                              Dim Offset As Single = CSng(5D / PlayingDuration)
-                              If Prev Then
-                                  PlayingPosition = Math.Max(Math.Min(PlayingPosition - Offset, 1), 0)
-                              Else
-                                  PlayingPosition = Math.Max(Math.Min(PlayingPosition + Offset, 1), 0)
-                              End If
-                          End Sub)
+            With .Player
+                If Not PlayerForm.Playing Then Return
 
-        'DLNA响应
-        TriggerMirrorReset()
+                Dim Offset As Single = CSng(Math.Abs([Step]) / .Duration)
+                If Prev Then
+                    .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
+                Else
+                    .Position = Math.Max(Math.Min(.Position + Offset, 1), 0)
+                End If
+            End With
+        End With
     End Sub
 
     ''' <summary>
@@ -568,38 +474,6 @@ Public Class EasyK
 
         Return Occupied
     End Function
-
-    ''' <summary>
-    ''' 锁定主窗体到最顶层
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function Lock() As Boolean
-        If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then Return False
-
-        With PlayerForm
-            .Invoke(Sub() .TopMost = Not .TopMost)
-
-            Return .TopMost
-        End With
-    End Function
-
-    ''' <summary>
-    ''' 是否允许投屏
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function CanMirror() As Boolean
-        If Current Is Nothing OrElse Current.Type <> EasyKType.DLNA Then Return False
-        Return PlayerForm IsNot Nothing AndAlso PlayerForm.Setuped
-    End Function
-
-    ''' <summary>
-    ''' 触发投屏播放事件
-    ''' </summary>
-    ''' <param name="Content">内容</param>
-    Public Sub TriggerMirrorPlay(Content As String)
-        RaiseEvent OnPlayerPlay(EasyKType.DLNA, Content)
-    End Sub
-
 
     ''' <summary>
     ''' 获取二维码显示状态
@@ -651,7 +525,7 @@ Public Class EasyK
         If String.IsNullOrEmpty(Key) Then
             ShowQRCode($"http://{LocalIP}:{Port}/", Outside)
         Else
-            ShowQRCode($"http://{LocalIP}:{Port}/?pass={HttpUtility.UrlEncode(Key)}", Outside)
+            ShowQRCode($"http://{LocalIP}:{Port}/?pass={System.Web.HttpUtility.UrlEncode(Key)}", Outside)
         End If
     End Sub
 
@@ -751,6 +625,52 @@ Public Class EasyK
         End If
     End Function
 
+    ''' <summary>
+    ''' 刷新DLNA歌词
+    ''' </summary>
+    Public Sub RefreshDLNALyrics()
+        If DLNAServer.Player Is Nothing Then Return
+
+        DLNAServer.Player.PullMusicLyrics()
+    End Sub
+
+    ''' <summary>
+    ''' 刷新记录
+    ''' </summary>
+    ''' <param name="Id"></param>
+    ''' <param name="Content"></param>
+    Friend Sub UpdateRecord(Id As String, Content As String)
+        SyncLock OutdatedQueue
+            Dim Node As LinkedListNode(Of EasyKBookRecord) = OutdatedQueue.First()
+            While Node IsNot Nothing
+                If Node.Value.Id.Equals(Id) Then
+                    '查找成功
+                    Node.Value = New EasyKBookRecord(Node.Value, Content)
+                    If Current IsNot Nothing AndAlso Current.Id = Id Then Current = Node.Value
+
+                    Return
+                End If
+
+                Node = Node.Next
+            End While
+        End SyncLock
+
+        SyncLock Queue
+            Dim Node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
+            While Node IsNot Nothing
+                If Node.Value.Id.Equals(Id) Then
+                    '查找成功
+                    Node.Value = New EasyKBookRecord(Node.Value, Content)
+                    If Current IsNot Nothing AndAlso Current.Id = Id Then Current = Node.Value
+
+                    Return
+                End If
+
+                Node = Node.Next
+            End While
+        End SyncLock
+    End Sub
+
     '重启主窗体
     Private Sub RestartPlayerForm()
         Dim NewForm As FrmPlayer = Nothing
@@ -758,8 +678,6 @@ Public Class EasyK
         If QRForm IsNot Nothing Then CloseQRCode()
 
         With PlayerForm
-            RemoveHandler .OnDLNAReset, AddressOf TriggerMirrorReset
-
             .Invoke(Sub()
                         NewForm = New FrmPlayer(Me, Settings)
                         NewForm.Show()
@@ -771,23 +689,14 @@ Public Class EasyK
         End With
 
         PlayerForm = NewForm
-        AddHandler PlayerForm.OnDLNAReset, AddressOf TriggerMirrorReset
-    End Sub
-
-    '触发投屏复位
-    Private Sub TriggerMirrorReset()
-        RaiseEvent OnMirrorReset()
-    End Sub
-
-    '触发投屏播放
-    Friend Sub TriggerMirrorPlay()
-        RaiseEvent OnMirrorPlay()
     End Sub
 
     ''' <summary>
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
+        DLNAServer.Dispose()
+
         Dim Storage As New CefStorage()
         Cef.GetGlobalCookieManager().VisitAllCookies(Storage)
 

@@ -468,6 +468,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DLNA\Player\DLNAPlayer.vb" />
+    <Compile Include="DLNA\Player\StoredMusic.vb" />
     <Compile Include="K\Audio\Accompaniment\ChannelRole.vb" />
     <Compile Include="K\Audio\Accompaniment\ChannelUtils.vb" />
     <Compile Include="K\Audio\Accompaniment\IResetable.vb" />
@@ -510,6 +512,8 @@
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
     <Compile Include="K\Cef\CefSetting.vb" />
     <Compile Include="K\Cef\CefStorage.vb" />
+    <Compile Include="K\EasyKBookRecord.vb" />
+    <Compile Include="K\EasyKType.vb" />
     <Compile Include="K\View\QRCodeBox.Designer.vb">
       <DependentUpon>QRCodeBox.vb</DependentUpon>
     </Compile>

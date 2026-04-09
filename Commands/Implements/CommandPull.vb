@@ -6,12 +6,12 @@
         Private ReadOnly K As EasyK
 
         Public Sub New(K As EasyK)
-            MyBase.New("pull", "pull - 重新拉取音乐信息(仅限DLNA音乐模式)", CommandType.System)
+            MyBase.New("pull", "pull - 重新拉取歌词信息(仅限DLNA音乐模式)", CommandType.System)
             Me.K = K
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            K.TriggerMirrorPlay("Refresh")
+            K.RefreshDLNALyrics()
             Console.WriteLine("刷新指令已发送")
         End Sub
 

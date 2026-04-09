@@ -128,6 +128,15 @@ Namespace DLNA.MusicProvider
         ''' <returns></returns>
         Public Shared Function IsMusicMeta(Meta As String) As Boolean
             Dim Doc As XDocument = XmlUtils.SafeParseXml(Meta)
+            Return IsMusicMeta(Doc)
+        End Function
+
+        ''' <summary>
+        ''' 检查是否是音乐流
+        ''' </summary>
+        ''' <param name="Doc">元数据文档</param>
+        ''' <returns></returns>
+        Public Shared Function IsMusicMeta(Doc As XDocument) As Boolean
             If Doc Is Nothing Then Return False
 
             Dim Elements = From el In Doc.Descendants(UpnpNamespace + "class")
@@ -236,7 +245,7 @@ Namespace DLNA.MusicProvider
             Dim Builder As New StringBuilder()
             With Builder
                 .Append($"window.setPlaying({Playing.ToString().ToLower()});")
-                .Append($"window.setCurrent({Position.ToString()});")
+                .Append($"window.setCurrent({Math.Max(Position, 0).ToString()});")
                 .Append($"window.setRate({Rate.ToString()});")
             End With
             Return Builder.ToString()

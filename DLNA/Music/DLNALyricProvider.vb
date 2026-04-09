@@ -175,7 +175,9 @@ Namespace DLNA.MusicProvider
             Try
                 Using ms As New IO.MemoryStream(Buffer)
                     Using img As Image = Image.FromStream(ms, True, True)
-                        Dim cs = ColorUtils.CalcColorSchemaFromImage(img, Highlight)
+                        Dim cs = ColorUtils.CalcColorSchemaFromImage(img,
+                                                                     Highlight,
+                                                                     ModMain.Settings.Settings.DLNA.LyricContrastThreshold)
 
                         With cs
                             Return $"{ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .BackAlpha.ToString("0.000")}"

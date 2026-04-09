@@ -1,22 +1,91 @@
-﻿Namespace DLNA.Protocol
+﻿Imports CefSharp.DevTools
+Imports EasyK.DLNA.Player
+
+Namespace DLNA.Protocol
 
     Public Class AVTransport
         Inherits DLNAService
 
-        '暂停播放
-        Private Sub OnPause(Type As EasyKType)
-            If Type <> EasyKType.DLNA Then Return
+        Private WithEvents DPlayer As DLNAPlayer
 
-            Task.Run(Sub()
-                         Threading.Thread.Sleep(20)
+        ''' <summary>
+        ''' 获取播放器对象
+        ''' </summary>
+        ''' <returns></returns>
+        Public ReadOnly Property Player As DLNAPlayer
+            Get
+                Return DPlayer
+            End Get
+        End Property
 
-                         SetState("TransportState", If(Protocol.DLNA.K.IsPlaying(), "PLAYING", "PAUSED_PLAYBACK"))
-                     End Sub)
+        ''' <summary>
+        ''' 构建服务
+        ''' </summary>
+        ''' <param name="Protocol">协议管理器</param>
+        Public Sub New(Protocol As DLNAProtocol)
+            MyBase.New(Protocol, NameOf(AVTransport), My.Resources.AVTransport)
+
+            '配置默认状态值
+            SetState("CurrentTrack", "1")
+            SetState("NumberOfTracks", "1")
+            SetState("PlaybackStorageMedium", "NONE")
+            SetState("RelativeCounterPosition", Integer.MaxValue.ToString())
+            SetState("AbsoluteCounterPosition", Integer.MaxValue.ToString())
+
+            ResetState()
+
+            '配置推送
+            SetStateEvent("LastChange", False)
+            SetStateEvent("TransportState", True)
+            SetStateEvent("TransportStatus", True)
+            SetStateEvent("CurrentMediaDuration", True)
+            SetStateEvent("CurrentTrackDuration", True)
+            SetStateEvent("CurrentTrack", True)
+            SetStateEvent("NumberOfTracks", True)
         End Sub
 
-        '停止播放
-        Private Sub OnTerminated()
+        ''' <summary>
+        ''' 注册DLNA播放器
+        ''' </summary>
+        Public Sub RegisterPlayer(Player As DLNAPlayer)
+            DPlayer = Player
+
+            AddHandler Player.OnPause, AddressOf OnPause
+            AddHandler Player.OnTerminated, AddressOf ResetState
+            AddHandler Player.OnPlay, AddressOf OnPlay
+        End Sub
+
+        ''' <summary>
+        ''' 解除DLNA播放器注册
+        ''' </summary>
+        Public Sub UnregisterPlayer()
+            RemoveHandler Player.OnPause, AddressOf OnPause
+            RemoveHandler Player.OnTerminated, AddressOf ResetState
+            RemoveHandler Player.OnPlay, AddressOf OnPlay
+
+            DPlayer = Nothing
+        End Sub
+
+        '复位状态
+        Private Sub ResetState()
+            SetState("CurrentPlayMode", "NORMAL")
+            SetState("CurrentTrackURI", vbNullString)
+            SetState("CurrentTrackMetaData", vbNullString)
+            SetState("CurrentMediaDuration", "0:00:00")
+            SetState("CurrentTrackDuration", "0:00:00")
+            SetState("TransportPlaySpeed", "1")
             SetState("TransportState", "NO_MEDIA_PRESENT")
+            SetState("TransportStatus", "OK")
+        End Sub
+
+        '暂停播放
+        Private Sub OnPause()
+            Task.Run(Sub()
+                         Threading.Thread.Sleep(50)
+
+                         If Player Is Nothing Then Return
+                         SetState("TransportState", If(Player.Playing(), "PLAYING", "PAUSED_PLAYBACK"))
+                     End Sub)
         End Sub
 
         '开始播放
@@ -27,38 +96,6 @@
             Threading.Thread.Sleep(100)
             SetState("TransportState", "PLAYING")
             Broadcast()
-        End Sub
-
-        ''' <summary>
-        ''' 构建服务
-        ''' </summary>
-        ''' <param name="Protocol">协议管理器</param>
-        Public Sub New(Protocol As DLNAProtocol)
-            MyBase.New(Protocol, NameOf(AVTransport), My.Resources.AVTransport)
-
-            '配置默认状态值
-            SetState("TransportPlaySpeed", "1")
-            SetState("TransportStatus", "OK")
-
-            SetState("CurrentTrack", "1")
-            SetState("NumberOfTracks", "1")
-            SetState("PlaybackStorageMedium", "NONE")
-            SetState("RelativeCounterPosition", Integer.MaxValue.ToString())
-            SetState("AbsoluteCounterPosition", Integer.MaxValue.ToString())
-
-            '配置推送
-            SetStateEvent("LastChange", False)
-            SetStateEvent("TransportState", True)
-            SetStateEvent("TransportStatus", True)
-            SetStateEvent("CurrentMediaDuration", True)
-            SetStateEvent("CurrentTrackDuration", True)
-            SetStateEvent("CurrentTrack", True)
-            SetStateEvent("NumberOfTracks", True)
-
-            '绑定事件
-            AddHandler Protocol.DLNA.K.OnPlayerPause, AddressOf OnPause
-            AddHandler Protocol.DLNA.K.OnPlayerTerminated, AddressOf OnTerminated
-            AddHandler Protocol.DLNA.K.OnMirrorPlay, AddressOf OnPlay
         End Sub
 
         ''' <summary>
@@ -91,24 +128,13 @@
         End Function
 
         Protected Function SetAVTransportURI(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            With Protocol
-                With .DLNA.K
-                    '投屏连播(比如B站多集连播)
-                    Dim Remain As Single = (1 - .PlayingPosition) * .PlayingDuration
-                    If Remain > 0 AndAlso Remain < Settings.Settings.DLNA.PreventContinueRange Then _
-                        Throw New InvalidOperationException("禁止连续投屏")
+            With Protocol.DLNA
+                If .Player Is Nothing Then
+                    Handled = True
+                    Return Nothing
+                End If
 
-                    If .CanMirror() Then
-                        '设置资源路径
-                        .TriggerMirrorPlay($"@{Args("CurrentURI")}")
-
-                        '检查是否为音乐模式
-                        If MusicProvider.DLNAMusicProviders.IsMusicMeta(Args("CurrentURIMetaData")) Then
-                            '设置音乐模式资源
-                            .TriggerMirrorPlay(Args("CurrentURIMetaData"))
-                        End If
-                    End If
-                End With
+                .Player.CommitResource(Args("CurrentURI"), Args("CurrentURIMetaData"))
             End With
 
             SetState("TransportState", "STOPPED")
@@ -119,10 +145,12 @@
         End Function
 
         Protected Function Play(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            With Protocol
-                With .DLNA.K
-                    .TriggerMirrorPlay(Nothing)
-                    .PlayingRate = Val(Args("Speed"))
+            With Protocol.DLNA
+                If .Player Is Nothing Then Return Nothing
+
+                With .Player
+                    .Play()
+                    .Rate = Val(Args("Speed"))
                 End With
             End With
 
@@ -132,16 +160,18 @@
         End Function
 
         Protected Function Seek(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            With Protocol.DLNA.K
+            With Protocol.DLNA
+                If .Player Is Nothing Then Return Nothing
+
                 If Not Args.ContainsKey("Unit") OrElse Args("Unit") <> "REL_TIME" Then _
                     Throw New ArgumentException("不支持的快进方式")
 
                 If Not Args.ContainsKey("Target") Then Throw New ArgumentException("无效的转跳目标")
                 Dim Target As Long = TimeUtils.ParseString(Args("Target"))
 
-                Dim Position As Single = Target / .PlayingDuration
-                Position = Math.Max(Math.Min(Position, 1), 0)
-                .PlayingPosition = Position
+                With .Player
+                    .Position = Math.Max(Math.Min(Target / .Duration, 1), 0)
+                End With
             End With
 
             SetState("TransportState", GetState("TransportState"))
@@ -151,11 +181,11 @@
 
         Protected Function Pause(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
-                With .DLNA.K
-                    If .IsPlaying() Then
-                        RemoveHandler .OnPlayerPause, AddressOf OnPause
-                        .Pause()
-                        AddHandler .OnPlayerPause, AddressOf OnPause
+                With .DLNA
+                    If .Player IsNot Nothing AndAlso .Player.Playing Then
+                        RemoveHandler Player.OnPause, AddressOf OnPause
+                        .K.Pause()
+                        AddHandler Player.OnPause, AddressOf OnPause
                     End If
                 End With
             End With
@@ -166,10 +196,8 @@
         End Function
 
         Protected Function [Stop](ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            With Protocol
-                With .DLNA.K
-                    If .IsPlaying Then .Push()
-                End With
+            With Protocol.DLNA
+                If .Player IsNot Nothing Then .Player.Stop()
             End With
 
             SetState("TransportState", "STOPPED")
@@ -180,11 +208,15 @@
         Protected Function GetPositionInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             Dim Duration As String
             Dim Progress As String
-            With Protocol.DLNA.K
-                Duration = TimeUtils.SecondToString(Math.Round(.PlayingDuration))
+            With Protocol.DLNA
+                If .Player Is Nothing Then Return Nothing
 
-                Dim p As Double = Math.Round(.PlayingDuration * .PlayingPosition)
-                Progress = TimeUtils.SecondToString(p)
+                With .Player
+                    Duration = TimeUtils.SecondToString(Math.Round(.Duration))
+
+                    Dim p As Double = Math.Round(.Duration * .Position)
+                    Progress = TimeUtils.SecondToString(p)
+                End With
             End With
 
             Dim Returns As New Dictionary(Of String, String)
@@ -200,18 +232,23 @@
         End Function
 
         Protected Function GetMediaInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            SetState("CurrentMediaDuration", TimeUtils.SecondToString(Math.Round(Protocol.DLNA.K.PlayingDuration)))
+            With Protocol.DLNA
+                If .Player Is Nothing Then Return Nothing
+
+                SetState("CurrentMediaDuration", TimeUtils.SecondToString(Math.Round(.Player.Duration)))
+            End With
 
             Return Nothing
         End Function
 
         Protected Function GetTransportInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-            With Protocol.DLNA.K
-                Return If(.DLNALoading,
-                    New Dictionary(Of String, String) From {
-                        {"CurrentTransportState", "TRANSITIONING"}
-                    },
-                    Nothing)
+
+            With Protocol.DLNA
+                If .Player Is Nothing OrElse Not .Player.Loading Then Return Nothing
+
+                Return New Dictionary(Of String, String) From {
+                                        {"CurrentTransportState", "TRANSITIONING"}
+                                    }
             End With
         End Function
 

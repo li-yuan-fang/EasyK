@@ -12,8 +12,6 @@ Module ModMain
 
     Public WebServer As KWebCore
 
-    Public DLNAServer As DLNA.DLNA
-
     <STAThread>
     Sub Main()
         Console.Title = "EasyK"
@@ -30,12 +28,6 @@ Module ModMain
         '运行网络服务器
         WebServer = New KWebCore(KCore, Settings)
         AddHandler WebServer.OnUncaughtError, AddressOf ExitApplication
-
-        '加载DLNA插件
-        DLNA.MusicProvider.DLNAMusicProviders.LoadProviders(Settings)
-
-        '运行DLNA服务器
-        DLNAServer = New DLNA.DLNA(KCore, Settings)
 
         '运行指令系统
         Commands = New Commands.CommandParser(KCore, WebServer, Settings)
@@ -80,10 +72,9 @@ Module ModMain
         Commands.Close()
 
         '关闭服务
-        DLNAServer.Dispose()
-        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
         WebServer.Dispose()
         KCore.Dispose()
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
 
         '保存配置
         Settings.Dispose()

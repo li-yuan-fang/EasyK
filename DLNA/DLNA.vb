@@ -1,7 +1,15 @@
-﻿Imports Microsoft.AspNetCore.Http
+﻿Imports EasyK.DLNA.Player
+Imports Microsoft.AspNetCore.Http
 Imports Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http
 
 Namespace DLNA
+
+    ''' <summary>
+    ''' DLNA访问权限检查
+    ''' </summary>
+    ''' <param name="Context">HTTP上下文</param>
+    ''' <returns></returns>
+    Public Delegate Function DLNAAccessCheck(Context As HttpContext) As Boolean
 
     Public Class DLNA
         Implements IDisposable
@@ -22,8 +30,6 @@ Namespace DLNA
 
         Private Const ConnectionManager As String = "/ConnectionManager"
 
-        Private Shared ReadOnly LocalAddr As String() = New String() {"127.0.0.1", "0.0.0.0", "localhost", "::1"}
-
         Private ReadOnly SSDPServer As SSDP
 
         Private ReadOnly Settings As SettingContainer
@@ -32,7 +38,33 @@ Namespace DLNA
 
         Private ReadOnly Protocol As Protocol.DLNAProtocol
 
-        Friend WithEvents K As EasyK
+        Friend ReadOnly K As EasyK
+
+        ''' <summary>
+        ''' DLNA访问权限检查
+        ''' </summary>
+        ''' <returns></returns>
+        Public Property CheckAccess As DLNAAccessCheck = (Function() True)
+
+        ''' <summary>
+        ''' DLNA播放器
+        ''' </summary>
+        ''' <remarks>部署窗口后不为Nothing</remarks>
+        ''' <returns></returns>
+        Public Property Player As DLNAPlayer
+            Get
+                Return Protocol.AVTransportService.Player
+            End Get
+            Set(value As DLNAPlayer)
+                With Protocol.AVTransportService
+                    If value Is Nothing Then
+                        .UnregisterPlayer()
+                    Else
+                        .RegisterPlayer(value)
+                    End If
+                End With
+            End Set
+        End Property
 
         ''' <summary>
         ''' 初始化DLNA协议栈
@@ -41,8 +73,6 @@ Namespace DLNA
         ''' <param name="Settings">配置容器</param>
         Public Sub New(K As EasyK, Settings As SettingContainer)
             Me.K = K
-            AddHandler Me.K.OnMirrorReset, AddressOf PlayerReset
-
             Me.Settings = Settings
 
             '绑定API
@@ -88,33 +118,8 @@ Namespace DLNA
         ''' 销毁资源
         ''' </summary>
         Public Sub Dispose() Implements IDisposable.Dispose
-            RemoveHandler K.OnMirrorReset, AddressOf PlayerReset
-
             SSDPServer.Dispose()
             Protocol.Dispose()
-        End Sub
-
-        '播放参数复位
-        Private Sub PlayerReset()
-            With Protocol
-                With .AVTransportService
-                    .SetState("CurrentPlayMode", "NORMAL")
-                    .SetState("CurrentTrackURI", vbNullString)
-                    .SetState("CurrentTrackMetaData", vbNullString)
-                    .SetState("CurrentMediaDuration", "0:00:00")
-                    .SetState("CurrentTrackDuration", "0:00:00")
-                    .SetState("TransportPlaySpeed", "1")
-                    .SetState("TransportState", "NO_MEDIA_PRESENT")
-                    .SetState("TransportStatus", "OK")
-                End With
-
-                With .RenderingControlService
-                    .SetState("Volume", "30")
-                    .SetState("CurrentPlayMode", "NORMAL")
-
-                    .FirstVolume = True
-                End With
-            End With
         End Sub
 
         Private Shared Sub AddHeaders(ctx As HttpContext)
@@ -124,18 +129,6 @@ Namespace DLNA
                 WebStartup.AddHeaderSafe(.Headers, "Ext", "")
             End With
         End Sub
-
-        Private Function CheckAccess(ctx As HttpContext) As Boolean
-            If Not K.CanMirror() Then Return False
-
-            Dim Current = K.GetCurrent()
-            If Current Is Nothing Then Return False
-            If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
-                Current.Content <> ctx.Connection.RemoteIpAddress.ToString() AndAlso
-                Not LocalAddr.Contains(Current.Content) Then Return False
-
-            Return True
-        End Function
 
         '添加允许头
         Private Shared Sub AddAllowHeader(ctx As HttpContext)

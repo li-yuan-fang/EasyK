@@ -3,12 +3,6 @@
     Public Class RenderingControl
         Inherits DLNAService
 
-        ''' <summary>
-        ''' 获取或设置是否为第一次调整音量
-        ''' </summary>
-        ''' <returns></returns>
-        Friend Property FirstVolume As Boolean = True
-
         '缓存的音量
         Private StoredVolume As Single = 0
 

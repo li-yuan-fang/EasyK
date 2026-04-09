@@ -30,8 +30,6 @@ Public Class ColorUtils
     Private Const MinLightness As Double = 0.2
     Private Const MaxLightness As Double = 0.7
 
-    '亮度要求
-    Private Const LuminanceThreshold As Double = 0.1
     '背景遮罩透明度范围
     Private Const MinAlpha As Double = 0.2
     Private Const MaxAlpha As Double = 0.9
@@ -40,7 +38,7 @@ Public Class ColorUtils
         Return (0.299 * R + 0.587 * G + 0.114 * B) / Byte.MaxValue
     End Function
 
-    Private Shared Function CalcBackAlpha(Luminance As Double, Fore As Color) As Double
+    Private Shared Function CalcBackAlpha(Luminance As Double, Fore As Color, LuminanceThreshold As Double) As Double
         Dim fl = CalcLuminance(Fore.R, Fore.G, Fore.B)
         If fl - Luminance > LuminanceThreshold Then Return MinAlpha
 
@@ -51,12 +49,14 @@ Public Class ColorUtils
     ''' <summary>
     ''' 计算图片的高饱和度代表色
     ''' </summary>
-    ''' <param name="image">图片</param>
+    ''' <param name="img">图片</param>
     ''' <param name="highlight">校正颜色</param>
+    ''' <param name="threshold">亮度差阈值</param>
     ''' <returns>色彩方案</returns>
     ''' <exception cref="Exception">生成失败</exception>
-    Public Shared Function CalcColorSchemaFromImage(image As Image, highlight As Boolean) As ColorSchema
-        Using bmp As New Bitmap(image)
+    Public Shared Function CalcColorSchemaFromImage(img As Image, highlight As Boolean,
+                                                    threshold As Double) As ColorSchema
+        Using bmp As New Bitmap(img)
             Dim rect As New Rectangle(0, 0, bmp.Width, bmp.Height)
             Dim bmpData = bmp.LockBits(rect, Imaging.ImageLockMode.ReadOnly, bmp.PixelFormat)
             Dim stride As Integer = bmpData.Stride
@@ -117,7 +117,7 @@ Public Class ColorUtils
             Dim Fore = HslToRgb(dominantHue, 0.8, 0.5)
             If highlight Then Fore = HighlightColor(Fore)
 
-            Return New ColorSchema(Fore, CalcBackAlpha(Luminance, Fore))
+            Return New ColorSchema(Fore, CalcBackAlpha(Luminance, Fore, threshold))
         End Using
     End Function
 

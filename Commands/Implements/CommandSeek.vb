@@ -6,7 +6,7 @@
         Private ReadOnly K As EasyK
 
         Public Sub New(K As EasyK)
-            MyBase.New("seek", "seek <prev/next>  - 快进/快退(暂时不支持bilibili)", CommandType.User)
+            MyBase.New("seek", "seek <-/+/具体秒数>  - 快进/快退(暂时不支持bilibili)", CommandType.User)
             Me.K = K
         End Sub
 
@@ -17,13 +17,21 @@
             End If
 
             Select Case Args(1).ToLower()
-                Case "prev", "p", "-"
+                Case "-"
                     K.Seek(True)
-                Case "next", "n", "+"
+                Case "+"
                     K.Seek(False)
                 Case Else
-                    InvalidUsage()
-                    Return
+                    Dim [Step] As Double
+
+                    Try
+                        [Step] = Double.Parse(Args(1))
+                    Catch
+                        InvalidUsage()
+                        Return
+                    End Try
+
+                    If [Step] <> 0 Then K.Seek([Step] < 0, [Step])
             End Select
 
             Console.WriteLine("操作成功")

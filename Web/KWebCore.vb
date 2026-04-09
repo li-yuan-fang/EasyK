@@ -287,7 +287,7 @@ Public Class KWebCore
             .Add("volume", K.Volume)
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
-            .Add("offset", K.LyricOffset)
+            .Add("offset", K.DLNALyricOffset)
             If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
         End With
 
@@ -323,7 +323,7 @@ Public Class KWebCore
                     Case "offset"
                         '更改歌词偏移
                         Try
-                            K.LyricOffset = Double.Parse(p.Value)
+                            K.DLNALyricOffset = Double.Parse(p.Value)
                         Catch
                             Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
                         End Try
@@ -348,7 +348,7 @@ Public Class KWebCore
                             Settings.Settings.PluginCommon(p.Id) = p.Value
                             DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
 
-                            K.TriggerMirrorPlay("Refresh")
+                            K.RefreshDLNALyrics()
                         Else
                             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
                         End If

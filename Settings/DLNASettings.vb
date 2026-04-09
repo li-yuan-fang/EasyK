@@ -87,4 +87,16 @@ Public Class DLNASettings
     <JsonProperty("auto_reset_offset")>
     Public Property AutoResetOffset As Boolean = True
 
+    ''' <summary>
+    ''' DLNA音乐模式歌词对比度阈值
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property LyricContrastThreshold As Double = 0.1D
+
+    ''' <summary>
+    ''' DLNA音乐模式自动缓存
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property MusicBufferMode As Boolean = True
+
 End Class
