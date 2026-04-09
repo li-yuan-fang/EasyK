@@ -1,8 +1,10 @@
 ﻿Imports System.Reflection
+Imports System.Threading
 Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
 Public Class DummyPlayer
+    Implements IDisposable
 
     Private WaveProvider As BufferedWaveProvider = Nothing
 
@@ -15,6 +17,12 @@ Public Class DummyPlayer
     '储存的音量
     Private StoredVolume As Single = 0.5
 
+    '加载播放设备信号量
+    Private ReadOnly Loading As New ManualResetEventSlim(False)
+
+    '播放设备传感器
+    Private WithEvents DeviceSensor As New DeviceChangeHandler()
+
     Private ReadOnly Settings As SettingContainer
 
     ''' <summary>
@@ -25,6 +33,13 @@ Public Class DummyPlayer
     Public Sub New(K As EasyK, Settings As SettingContainer)
         Me.Settings = Settings
         AddHandler K.OnPlayerTerminated, AddressOf OnPlayerTerminated
+    End Sub
+
+    ''' <summary>
+    ''' 释放资源
+    ''' </summary>
+    Public Sub Dispose() Implements IDisposable.Dispose
+        DeviceSensor.Dispose()
     End Sub
 
     '自动关闭伴唱
@@ -55,7 +70,33 @@ Public Class DummyPlayer
         End Set
     End Property
 
-    Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean)
+    '重载播放设备
+    Private Sub ReloadDevice(DeviceId As String) Handles DeviceSensor.OnDeviceUpdate
+        If Loading.IsSet() Then Loading.Reset()
+        If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
+
+        If Direct IsNot Nothing Then
+            SyncLock Direct
+                Direct.Stop()
+                Direct.Dispose()
+                Direct = Nothing
+            End SyncLock
+        End If
+
+        Direct = New DirectSoundOut()
+        SyncLock Direct
+            Direct.Init(VolumeProvider)
+        End SyncLock
+
+        '允许播放
+        Loading.Set()
+
+        '如果是被迫重载 则自动播放
+        If Not String.IsNullOrEmpty(DeviceId) Then Play()
+    End Sub
+
+    Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean, Optional Id As String = vbNullString)
+        '释放所有托管播放器
         [Stop]()
 
         '缓冲区
@@ -85,14 +126,12 @@ Public Class DummyPlayer
             .Volume = StoredVolume
         }
 
-        '播放
-        Direct = New DirectSoundOut()
-        SyncLock Direct
-            Direct.Init(VolumeProvider)
-        End SyncLock
+        '配置输出
+        ReloadDevice(vbNullString)
     End Sub
 
     Public Sub Append(Wave As Byte(), pts As Long)
+        Loading.Wait()
         If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
 
         SyncLock Direct
@@ -101,6 +140,7 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub Play()
+        Loading.Wait()
         If Direct Is Nothing Then Return
 
         SyncLock Direct
@@ -109,6 +149,7 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub Pause()
+        Loading.Wait()
         If Direct Is Nothing Then Return
 
         SyncLock Direct
@@ -126,6 +167,9 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub [Stop]()
+        '阻塞播放
+        Loading.Reset()
+
         If Direct IsNot Nothing Then
             SyncLock Direct
                 Direct.Stop()

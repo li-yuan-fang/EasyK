@@ -59,6 +59,8 @@ Namespace DLNA.Protocol
         ''' 解除DLNA播放器注册
         ''' </summary>
         Public Sub UnregisterPlayer()
+            If DPlayer Is Nothing Then Return
+
             RemoveHandler Player.OnPause, AddressOf OnPause
             RemoveHandler Player.OnTerminated, AddressOf ResetState
             RemoveHandler Player.OnPlay, AddressOf OnPlay

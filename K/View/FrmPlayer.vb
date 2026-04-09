@@ -240,7 +240,7 @@ Public Class FrmPlayer
             .DLNAServer.Player = Nothing
         End With
 
-        DPlayer.Dispose()
+        If DPlayer IsNot Nothing Then DPlayer.Dispose()
 
         With VLCPlayer
             With .MediaPlayer

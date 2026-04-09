@@ -507,6 +507,7 @@
     <Compile Include="K\Audio\Accompaniment\CenterAccompaniment.vb" />
     <Compile Include="K\Audio\Accompaniment\STFTWindowType.vb" />
     <Compile Include="K\Audio\CefAudioHandler.vb" />
+    <Compile Include="K\Audio\DeviceChangeHandler.vb" />
     <Compile Include="K\Audio\DummyPlayer.vb" />
     <Compile Include="K\Audio\VlcAudioHandler.vb" />
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />

@@ -695,6 +695,7 @@ Public Class EasyK
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
+        Dummy.Dispose()
         DLNAServer.Dispose()
 
         Dim Storage As New CefStorage()
