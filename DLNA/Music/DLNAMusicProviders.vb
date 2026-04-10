@@ -302,6 +302,15 @@ Namespace DLNA.MusicProvider
             Return vbNullString
         End Function
 
+        ''' <summary>
+        ''' 获取歌词交错模式脚本
+        ''' </summary>
+        ''' <param name="Intersect">交错模式</param>
+        ''' <returns></returns>
+        Public Shared Function GenerateUpdateLyricIntersectScript(Intersect As Boolean) As String
+            Return $"window.setLyricKMode({Intersect.ToString().ToLower()});"
+        End Function
+
     End Class
 
 End Namespace

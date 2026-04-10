@@ -91,12 +91,21 @@ Public Class DLNASettings
     ''' DLNA音乐模式歌词对比度阈值
     ''' </summary>
     ''' <returns></returns>
+    <JsonProperty("lyric_contrast_threshold")>
     Public Property LyricContrastThreshold As Double = 0.15D
+
+    ''' <summary>
+    ''' DLNA音乐模式歌词双层交错
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("lyric_intersect")>
+    Public Property LyricIntersect As Boolean = False
 
     ''' <summary>
     ''' DLNA音乐模式自动缓存
     ''' </summary>
     ''' <returns></returns>
+    <JsonProperty("music_buffer_enabled")>
     Public Property MusicBufferMode As Boolean = True
 
 End Class

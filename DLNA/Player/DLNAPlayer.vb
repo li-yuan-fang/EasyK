@@ -494,6 +494,28 @@ Namespace DLNA.Player
         End Sub
 
         ''' <summary>
+        ''' 更新音乐模式歌词交错
+        ''' </summary>
+        Public Sub UpdateMusicLyricIntersect()
+            If Not Accessible() OrElse Cancelled OrElse Not MusicMode Then Return
+
+            Task.Run(Sub()
+                         BrowserLoaded.Wait()
+                         If Not Accessible() OrElse Cancelled Then Return
+
+                         Try
+                             Player.RunScript(
+                                DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
+                             )
+                         Catch ex As Exception
+                             If K.Settings.Settings.DebugMode Then
+                                 Console.WriteLine("DLNA音乐模式更新歌词交错模式出错 - {0}", ex.Message)
+                             End If
+                         End Try
+                     End Sub)
+        End Sub
+
+        ''' <summary>
         ''' 重新拉取音乐模式歌词
         ''' </summary>
         Public Sub PullMusicLyrics()
@@ -584,6 +606,9 @@ Namespace DLNA.Player
                 '生成信息脚本
                 Dim Base = DLNAMusicProviders.GenerateUpdateMusicScript(.Attribute, CurrentRecord.Title, DefaultDuration)
 
+                '生成交错脚本
+                Dim Intersect = DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
+
                 '等待浏览器加载
                 BrowserLoaded.Wait()
                 If Not Accessible() OrElse Cancelled Then Return
@@ -591,9 +616,9 @@ Namespace DLNA.Player
                 '执行脚本
                 Try
                     If String.IsNullOrEmpty(.LyricColor) Then
-                        Player.RunScript(Base)
+                        Player.RunScript(Base, Intersect)
                     Else
-                        Player.RunScript(Base, .LyricColor)
+                        Player.RunScript(Base, .LyricColor, Intersect)
                     End If
                 Catch ex As Exception
                     If K.Settings.Settings.DebugMode Then

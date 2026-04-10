@@ -101,6 +101,41 @@ Public Class EasyK
     End Property
 
     ''' <summary>
+    ''' 获取或设置DLNA歌词交错
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property DLNALyricIntersect As Boolean
+        Get
+            Return Settings.Settings.DLNA.LyricIntersect
+        End Get
+        Set(value As Boolean)
+            With Settings.Settings.DLNA
+                If .LyricIntersect <> value Then
+                    .LyricIntersect = value
+
+                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricIntersect()
+                End If
+            End With
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取DLNA音乐面板显示状态
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property CanDLNAPanelShow As Boolean
+        Get
+            If Current IsNot Nothing AndAlso Current.Type = EasyKType.DLNA Then Return True
+
+            SyncLock Queue
+                If Queue.Count = 0 Then Return False
+
+                Return Queue(0).Type = EasyKType.DLNA
+            End SyncLock
+        End Get
+    End Property
+
+    ''' <summary>
     ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>
@@ -220,19 +255,21 @@ Public Class EasyK
 
         SyncLock Queue
             If Not IsSetup Then
-                Current = Nothing
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
+                             Current = Nothing
                              RestartPlayerForm()
+
                              Interlocked.Exchange(PushLock, 0)
                          End Sub)
                 Return
             End If
 
             If Queue.Count = 0 Then
-                Current = Nothing
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
+                             Current = Nothing
+
                              Interlocked.Exchange(PushLock, 0)
                          End Sub)
                 Return

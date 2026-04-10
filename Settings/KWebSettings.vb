@@ -45,4 +45,11 @@ Public Class KWebSettings
     <JsonProperty("upload")>
     Public Property Upload As UploadSettings = New UploadSettings()
 
+    ''' <summary>
+    ''' DLNA音乐面板自动隐藏
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("auto_hide_music_panel")>
+    Public Property AutoHideMusicPanel As Boolean = True
+
 End Class

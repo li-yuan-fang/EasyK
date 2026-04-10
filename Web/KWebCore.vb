@@ -288,7 +288,9 @@ Public Class KWebCore
             .Add("volume", K.Volume)
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
+            .Add("lyric_show", Not Settings.Settings.Web.AutoHideMusicPanel OrElse K.CanDLNAPanelShow)
             .Add("offset", K.DLNALyricOffset)
+            .Add("intersect", K.DLNALyricIntersect)
             If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
         End With
 
@@ -328,6 +330,13 @@ Public Class KWebCore
                         Catch
                             Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
                         End Try
+                    Case "intersect"
+                        '更改歌词交错
+                        Try
+                            K.DLNALyricIntersect = Boolean.Parse(p.Value)
+                        Catch
+                            Console.WriteLine("错误的歌词交错 - {0}", p.Value)
+                        End Try
                     Case "qrcode"
                         '更改二维码显示状态
                         If Settings.Settings.AllowRemoteQR Then
@@ -343,6 +352,8 @@ Public Class KWebCore
                                 Console.WriteLine("错误的二维码状态 - {0}", p.Value)
                             End Try
                         End If
+                    Case "lyric_show"
+                        '只读
                     Case Else
                         If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
                             '更新插件配置
