@@ -1,5 +1,6 @@
 ﻿Imports System.Drawing
 Imports System.Net.NetworkInformation
+Imports System.Threading
 Imports CefSharp
 Imports Microsoft.AspNetCore.Http
 
@@ -29,6 +30,8 @@ Public Class EasyK
     Private _Running As Boolean = False
 
     Private _SavedQRPosition As Point
+
+    Private PushLock As Integer = 0
 
     ''' <summary>
     ''' 播放器暂停事件
@@ -209,6 +212,10 @@ Public Class EasyK
     ''' 推进播放进度/切歌
     ''' </summary>
     Public Sub Push()
+        '原子操作 阻止短时多次切歌
+        Dim value As Integer = Interlocked.Exchange(PushLock, 1)
+        If value <> 0 Then Return
+
         Dim Temp As EasyKBookRecord
 
         SyncLock Queue
@@ -217,13 +224,17 @@ Public Class EasyK
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
                              RestartPlayerForm()
+                             Interlocked.Exchange(PushLock, 0)
                          End Sub)
                 Return
             End If
 
             If Queue.Count = 0 Then
                 Current = Nothing
-                Dim TaskEnd = Task.Run(Sub() RaiseEvent OnPlayerTerminated())
+                Task.Run(Sub()
+                             RaiseEvent OnPlayerTerminated()
+                             Interlocked.Exchange(PushLock, 0)
+                         End Sub)
                 Return
             End If
 
@@ -240,6 +251,8 @@ Public Class EasyK
 
                      Current = Temp
                      RaiseEvent OnPlayerPlay(Current.Type, Current.Content)
+
+                     Interlocked.Exchange(PushLock, 0)
                  End Sub)
 
         With Temp

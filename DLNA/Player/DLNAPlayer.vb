@@ -62,8 +62,21 @@ Namespace DLNA.Player
         '解析标志
         Private ReadOnly ResourceParsed As New ManualResetEventSlim(False)
 
-        '上一次解析的标题(用于防止连播)
-        Private LastTitle As String = vbNullString
+        '当前的标题(用于防止连播)
+        Private CurrentTitle As String = vbNullString
+
+        '缓存模式(拒绝外部操作)
+        Private _Buffered As Boolean = False
+
+        ''' <summary>
+        ''' 获取缓存模式状态
+        ''' </summary>
+        ''' <returns></returns>
+        Public ReadOnly Property Buffered As Boolean
+            Get
+                Return _Buffered
+            End Get
+        End Property
 
         '音乐模式
         Private _MusicMode As Boolean = False
@@ -372,6 +385,7 @@ Namespace DLNA.Player
                                                    '更新信息
                                                    Update.Invoke(CurrentRecord.Id, MusicBuffer.Original)
                                                    CurrentRecord = K.GetCurrent()
+                                                   _Buffered = False
                                                    _Waiting = True
 
                                                    '更新UI
@@ -638,7 +652,7 @@ Namespace DLNA.Player
                 '初次加载
 
                 '获取标题
-                LastTitle = GetMetaTitle(MDoc)
+                CurrentTitle = GetMetaTitle(MDoc)
 
                 '检测音乐模式
                 _MusicMode = DLNAMusicProviders.IsMusicMeta(MDoc)
@@ -673,10 +687,10 @@ Namespace DLNA.Player
                     If CheckContinueByTime() Then Throw New InvalidOperationException("禁止自动连续投屏")
                 Else
                     Dim Title As String = GetMetaTitle(MDoc)
-                    If String.IsNullOrEmpty(Title) AndAlso String.IsNullOrEmpty(LastTitle) Then
+                    If String.IsNullOrEmpty(Title) AndAlso String.IsNullOrEmpty(CurrentTitle) Then
                         '无法通过Title判断 通过时间检测连播
                         If CheckContinueByTime() Then Throw New InvalidOperationException("禁止自动连续投屏")
-                    ElseIf Title <> LastTitle Then
+                    ElseIf Title <> CurrentTitle Then
                         '自动连续投屏
                         Throw New InvalidOperationException("禁止自动连续投屏")
                     End If
@@ -789,6 +803,9 @@ Namespace DLNA.Player
                         '更新等待标志
                         _Waiting = False
 
+                        '更新缓存标志
+                        _Buffered = True
+
                         '禁用Download标志 避免重复缓存
                         Downloaded = False
 
@@ -814,6 +831,9 @@ Namespace DLNA.Player
             End If
 
             '常规投屏
+
+            '更新缓存标志
+            _Buffered = False
 
             '更新等待标志
             _Waiting = True

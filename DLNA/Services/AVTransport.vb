@@ -131,7 +131,7 @@ Namespace DLNA.Protocol
 
         Protected Function SetAVTransportURI(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA
-                If .Player Is Nothing Then
+                If .Player Is Nothing OrElse .Player.Buffered Then
                     Handled = True
                     Return Nothing
                 End If
@@ -148,7 +148,7 @@ Namespace DLNA.Protocol
 
         Protected Function Play(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA
-                If .Player Is Nothing Then Return Nothing
+                If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
                 With .Player
                     .Play()
@@ -163,7 +163,7 @@ Namespace DLNA.Protocol
 
         Protected Function Seek(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA
-                If .Player Is Nothing Then Return Nothing
+                If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
                 If Not Args.ContainsKey("Unit") OrElse Args("Unit") <> "REL_TIME" Then _
                     Throw New ArgumentException("不支持的快进方式")
@@ -184,7 +184,7 @@ Namespace DLNA.Protocol
         Protected Function Pause(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol
                 With .DLNA
-                    If .Player IsNot Nothing AndAlso .Player.Playing Then
+                    If .Player IsNot Nothing AndAlso Not .Player.Buffered AndAlso .Player.Playing Then
                         RemoveHandler Player.OnPause, AddressOf OnPause
                         .K.Pause()
                         AddHandler Player.OnPause, AddressOf OnPause
@@ -199,7 +199,7 @@ Namespace DLNA.Protocol
 
         Protected Function [Stop](ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA
-                If .Player IsNot Nothing Then .Player.Stop()
+                If .Player IsNot Nothing AndAlso Not .Player.Buffered Then .Player.Stop()
             End With
 
             SetState("TransportState", "STOPPED")
@@ -211,7 +211,7 @@ Namespace DLNA.Protocol
             Dim Duration As String
             Dim Progress As String
             With Protocol.DLNA
-                If .Player Is Nothing Then Return Nothing
+                If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
                 With .Player
                     Duration = TimeUtils.SecondToString(Math.Round(.Duration))
@@ -235,7 +235,7 @@ Namespace DLNA.Protocol
 
         Protected Function GetMediaInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
             With Protocol.DLNA
-                If .Player Is Nothing Then Return Nothing
+                If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
                 SetState("CurrentMediaDuration", TimeUtils.SecondToString(Math.Round(.Player.Duration)))
             End With
@@ -246,7 +246,7 @@ Namespace DLNA.Protocol
         Protected Function GetTransportInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
 
             With Protocol.DLNA
-                If .Player Is Nothing OrElse Not .Player.Loading Then Return Nothing
+                If .Player Is Nothing OrElse .Player.Buffered OrElse Not .Player.Loading Then Return Nothing
 
                 Return New Dictionary(Of String, String) From {
                                         {"CurrentTransportState", "TRANSITIONING"}

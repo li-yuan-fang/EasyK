@@ -263,6 +263,7 @@ Public Class FrmPlayer
     End Sub
 
     Private Sub Btn_Setup_Click(sender As Object, e As EventArgs) Handles Btn_Setup.Click
+        Btn_Setup.Enabled = False
         K.Setup()
     End Sub
 

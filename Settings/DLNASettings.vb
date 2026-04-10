@@ -91,7 +91,7 @@ Public Class DLNASettings
     ''' DLNA音乐模式歌词对比度阈值
     ''' </summary>
     ''' <returns></returns>
-    Public Property LyricContrastThreshold As Double = 0.1D
+    Public Property LyricContrastThreshold As Double = 0.15D
 
     ''' <summary>
     ''' DLNA音乐模式自动缓存

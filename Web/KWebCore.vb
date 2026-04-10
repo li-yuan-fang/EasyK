@@ -1,4 +1,5 @@
-﻿Imports System.Windows.Forms
+﻿Imports System.Threading
+Imports System.Windows.Forms
 Imports Microsoft.AspNetCore.Http
 Imports Newtonsoft.Json
 Imports HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod
@@ -210,7 +211,7 @@ Public Class KWebCore
     End Function
 
     <WebApi("/pause", HttpMethod.Get)>
-    Private Function Puause(ctx As HttpContext) As Task
+    Private Function Pause(ctx As HttpContext) As Task
         K.Pause()
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
