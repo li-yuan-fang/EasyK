@@ -494,19 +494,37 @@ Namespace DLNA.Player
         End Sub
 
         ''' <summary>
-        ''' 更新音乐模式歌词交错
+        ''' 更新音乐模式歌词选项
         ''' </summary>
-        Public Sub UpdateMusicLyricIntersect()
+        Public Sub UpdateMusicLyricOptions()
             If Not Accessible() OrElse Cancelled OrElse Not MusicMode Then Return
 
             Task.Run(Sub()
+                         '生成交错脚本
+                         Dim Intersect = DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
+
+                         '生成对比度脚本
+                         Dim Contrast As String = vbNullString
+                         If MusicBuffer IsNot Nothing AndAlso MusicBuffer.Attribute IsNot Nothing AndAlso
+                            Not String.IsNullOrEmpty(MusicBuffer.Meta) Then
+                             With MusicBuffer
+                                 Contrast = DLNAMusicProviders.GenerateUpdateLyricColorScript(
+                                     .Meta,
+                                     .Attribute,
+                                     K.Settings.Settings.DLNA.LyricHighlight
+                                )
+                             End With
+                         End If
+
                          BrowserLoaded.Wait()
                          If Not Accessible() OrElse Cancelled Then Return
 
                          Try
-                             Player.RunScript(
-                                DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
-                             )
+                             If String.IsNullOrEmpty(Contrast) Then
+                                 Player.RunScript(Intersect)
+                             Else
+                                 Player.RunScript(Intersect, Contrast)
+                             End If
                          Catch ex As Exception
                              If K.Settings.Settings.DebugMode Then
                                  Console.WriteLine("DLNA音乐模式更新歌词交错模式出错 - {0}", ex.Message)
@@ -871,7 +889,7 @@ Namespace DLNA.Player
         Private Sub OnPlayerTerminated()
             '更新偏移量
             With K
-                If .Settings.Settings.DLNA.AutoResetOffset Then ._LyricOffset = 0
+                If CurrentRecord IsNot Nothing AndAlso .Settings.Settings.DLNA.AutoResetOffset Then ._LyricOffset = 0
             End With
 
             '播放速度复位

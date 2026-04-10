@@ -113,7 +113,26 @@ Public Class EasyK
                 If .LyricIntersect <> value Then
                     .LyricIntersect = value
 
-                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricIntersect()
+                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOptions()
+                End If
+            End With
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取或设置DLNA歌词对比度阈值
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property DLNALyricContrast As Double
+        Get
+            Return Settings.Settings.DLNA.LyricContrastThreshold
+        End Get
+        Set(value As Double)
+            With Settings.Settings.DLNA
+                If .LyricContrastThreshold <> value Then
+                    .LyricContrastThreshold = value
+
+                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOptions()
                 End If
             End With
         End Set

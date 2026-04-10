@@ -289,8 +289,11 @@ Public Class KWebCore
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
             .Add("lyric_show", Not Settings.Settings.Web.AutoHideMusicPanel OrElse K.CanDLNAPanelShow)
-            .Add("offset", K.DLNALyricOffset)
             .Add("intersect", K.DLNALyricIntersect)
+
+            .Add("offset", K.DLNALyricOffset)
+            .Add("contrast", K.DLNALyricContrast)
+
             If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
         End With
 
@@ -329,6 +332,13 @@ Public Class KWebCore
                             K.DLNALyricOffset = Double.Parse(p.Value)
                         Catch
                             Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
+                        End Try
+                    Case "contrast"
+                        '更改歌词对比度
+                        Try
+                            K.DLNALyricContrast = Double.Parse(p.Value)
+                        Catch
+                            Console.WriteLine("错误的歌词对比度 - {0}", p.Value)
                         End Try
                     Case "intersect"
                         '更改歌词交错
