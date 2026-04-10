@@ -26,7 +26,7 @@ Namespace DLNA.Protocol
             MyBase.New(Protocol, NameOf(AVTransport), My.Resources.AVTransport)
 
             '配置默认状态值
-            SetState("CurrentTrack", "1")
+            SetState("CurrentTrack", "0")
             SetState("NumberOfTracks", "1")
             SetState("PlaybackStorageMedium", "NONE")
             SetState("RelativeCounterPosition", Integer.MaxValue.ToString())
@@ -91,11 +91,14 @@ Namespace DLNA.Protocol
         End Sub
 
         '开始播放
-        Private Sub OnPlay()
-            '主要解决缓存文件加载时间过长导致轴对不上的问题
-            SetState("TransportState", "PAUSED_PLAYBACK")
-            Broadcast()
-            Threading.Thread.Sleep(100)
+        Private Sub OnPlay(PauseFirst As Boolean)
+            If PauseFirst Then
+                '主要解决缓存文件加载时间过长导致轴对不上的问题
+                SetState("TransportState", "PAUSED_PLAYBACK")
+                Broadcast()
+                Threading.Thread.Sleep(100)
+            End If
+
             SetState("TransportState", "PLAYING")
             Broadcast()
         End Sub
@@ -156,8 +159,6 @@ Namespace DLNA.Protocol
                 End With
             End With
 
-            SetState("TransportState", "PLAYING")
-
             Return Nothing
         End Function
 
@@ -216,19 +217,22 @@ Namespace DLNA.Protocol
                 With .Player
                     Duration = TimeUtils.SecondToString(Math.Round(.Duration))
 
-                    Dim p As Double = Math.Round(.Duration * .Position)
+                    Dim p As Double = Math.Round(.Duration * Math.Max(.Position, 0))
                     Progress = TimeUtils.SecondToString(p)
                 End With
             End With
 
+            '检查State中的时长
+            If GetState("CurrentTrackDuration") <> Duration Then
+                '更新并发布订阅
+                SetState("CurrentTrackDuration", Duration)
+            End If
+
             Dim Returns As New Dictionary(Of String, String)
             With Returns
-                .Add("TrackDuration", Duration)
                 .Add("RelTime", Progress)
                 .Add("AbsTime", Progress)
             End With
-
-            SetState("CurrentTrackDuration", Duration)
 
             Return Returns
         End Function
@@ -237,14 +241,19 @@ Namespace DLNA.Protocol
             With Protocol.DLNA
                 If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
-                SetState("CurrentMediaDuration", TimeUtils.SecondToString(Math.Round(.Player.Duration)))
+                Dim Duration As String = TimeUtils.SecondToString(Math.Round(.Player.Duration))
+
+                '检查State中的时长
+                If GetState("CurrentMediaDuration") <> Duration Then
+                    '更新并发布订阅
+                    SetState("CurrentMediaDuration", Duration)
+                End If
             End With
 
             Return Nothing
         End Function
 
         Protected Function GetTransportInfo(ByRef Handled As Boolean, ByVal Args As Dictionary(Of String, String)) As Dictionary(Of String, String)
-
             With Protocol.DLNA
                 If .Player Is Nothing OrElse .Player.Buffered OrElse Not .Player.Loading Then Return Nothing
 

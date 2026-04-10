@@ -25,7 +25,7 @@ Namespace DLNA.Player
         ''' <summary>
         ''' 播放事件
         ''' </summary>
-        Public Event OnPlay()
+        Public Event OnPlay(PauseFirst As Boolean)
 
         ''' <summary>
         ''' 终止事件
@@ -162,6 +162,7 @@ Namespace DLNA.Player
                 End With
 
                 UpdateMusicState()
+                If Playing Then Task.Run(Sub() RaiseEvent OnPlay(True))
             End Set
         End Property
 
@@ -347,9 +348,6 @@ Namespace DLNA.Player
                                                End If
                                            End Try
                                            ResourceParsed.Set()
-
-                                           '发送播放消息
-                                           RaiseEvent OnPlay()
                                        End Sub)
         End Sub
 
@@ -765,6 +763,8 @@ Namespace DLNA.Player
             With Player
                 .Invoke(Sub() .VLCPlayer.MediaPlayer.Play())
             End With
+
+            RaiseEvent OnPlay(False)
         End Sub
 
         ''' <summary>
