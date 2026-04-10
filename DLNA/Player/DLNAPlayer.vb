@@ -537,7 +537,7 @@ Namespace DLNA.Player
                             .VLCPlayer.Visible = False
 
                             With .Browser
-                                .LoadUrl($"file:///{IO.Path.Combine(Application.StartupPath, "wwwroot", "dlna", "music_box.html").Replace("\", "/")}")
+                                .LoadUrl(NetUtils.GetUrl(IO.Path.Combine(Application.StartupPath, "wwwroot", "dlna", "music_box.html")))
                                 .Visible = True
                             End With
                         End Sub)
@@ -769,7 +769,7 @@ Namespace DLNA.Player
         End Sub
 
         Private Sub OnPlayerPause(Type As EasyKType)
-            If Type <> EasyKType.DLNA Then Return
+            If Type <> EasyKType.DLNA OrElse Buffered Then Return
 
             RaiseEvent OnPause()
         End Sub
@@ -816,7 +816,7 @@ Namespace DLNA.Player
                         Task.Run(AddressOf LoadMusicMode)
 
                         '加载资源
-                        Player.Invoke(Sub() HandleResource($"file:///{FileName.Replace("\", "/")}", True))
+                        Player.Invoke(Sub() HandleResource(NetUtils.GetUrl(FileName), True))
 
                         Return
                     End If

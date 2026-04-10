@@ -256,7 +256,10 @@ Public Class EasyK
                  End Sub)
 
         With Temp
-            Console.WriteLine("开始播放 {0} - {1} (来自 {2})", .Title, .Content, .Order)
+            Console.WriteLine("开始播放 {0} - {1} (来自 {2})",
+                              .Title,
+                              If(.Content.Length > 20, $"{ .Content.Substring(0, 20)}..", .Content),
+                              .Order)
         End With
     End Sub
 

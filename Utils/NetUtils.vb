@@ -2,6 +2,7 @@
 Imports System.Net
 Imports System.Net.NetworkInformation
 Imports System.Net.Sockets
+Imports System.Text
 Imports System.Text.RegularExpressions
 
 Public Class NetUtils
@@ -186,6 +187,15 @@ Public Class NetUtils
     ''' <returns></returns>
     Public Shared Function IsURL(Url As String) As Boolean
         Return UrlRegex.IsMatch(Url)
+    End Function
+
+    ''' <summary>
+    ''' 获取文件的Url
+    ''' </summary>
+    ''' <param name="FileName">文件名称</param>
+    ''' <returns></returns>
+    Public Shared Function GetUrl(FileName As String) As String
+        Return New Uri(FileName).AbsoluteUri
     End Function
 
 End Class
