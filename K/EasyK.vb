@@ -139,22 +139,6 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取DLNA音乐面板显示状态
-    ''' </summary>
-    ''' <returns></returns>
-    Public ReadOnly Property CanDLNAPanelShow As Boolean
-        Get
-            If Current IsNot Nothing AndAlso Current.Type = EasyKType.DLNA Then Return True
-
-            SyncLock Queue
-                If Queue.Count = 0 Then Return False
-
-                Return Queue(0).Type = EasyKType.DLNA
-            End SyncLock
-        End Get
-    End Property
-
-    ''' <summary>
     ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>

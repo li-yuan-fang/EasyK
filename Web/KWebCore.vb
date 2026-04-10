@@ -288,7 +288,6 @@ Public Class KWebCore
             .Add("volume", K.Volume)
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
-            .Add("lyric_show", Not Settings.Settings.Web.AutoHideMusicPanel OrElse K.CanDLNAPanelShow)
             .Add("intersect", K.DLNALyricIntersect)
 
             .Add("offset", K.DLNALyricOffset)
@@ -362,8 +361,6 @@ Public Class KWebCore
                                 Console.WriteLine("错误的二维码状态 - {0}", p.Value)
                             End Try
                         End If
-                    Case "lyric_show"
-                        '只读
                     Case Else
                         If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
                             '更新插件配置
