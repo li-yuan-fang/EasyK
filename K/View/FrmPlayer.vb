@@ -21,7 +21,9 @@ Public Class FrmPlayer
 
     Private WithEvents K As EasyK
 
-    Private ReadOnly BigFont As Font
+    Private TitleFont As Font
+
+    Private SubtitleFont As Font
 
     Private ReadOnly Settings As SettingContainer
 
@@ -126,9 +128,6 @@ Public Class FrmPlayer
         '加载配置
         Me.Settings = Settings
 
-        '初始化字体
-        BigFont = New Font(Font.FontFamily, 50, FontStyle.Bold)
-
         '初始化浏览器
         Browser = New ChromiumWebBrowser()
 
@@ -180,27 +179,37 @@ Public Class FrmPlayer
     ''' 部署
     ''' </summary>
     Public Sub Setup(Selected As Rectangle)
+        '配置基本信息
         Me.BackColor = Drawing.Color.Black
         Btn_Setup.Visible = False
 
-        Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
-
         If Selected.Size.IsEmpty Then
+            '查找屏幕
             Dim Overlap = ScreenUtils.GetOverlapScreen(DesktopBounds)
             With Overlap
                 If .Id >= 0 Then Selected = .Screen.Bounds
             End With
         End If
 
+        '部署窗口
+        Me.FormBorderStyle = Windows.Forms.FormBorderStyle.None
         If Selected.Width <= 0 OrElse Selected.Height <= 0 Then
             Me.WindowState = FormWindowState.Maximized
         Else
             Me.Bounds = Selected
         End If
 
+        '全屏
         Dim FullResult As Boolean = FormUtils.SetPropW(Me.Handle, "MarkFullscreenWindow", 1)
         If Settings.Settings.DebugMode Then Console.WriteLine("全屏窗口配置: {0}", FullResult)
 
+        '初始化字体
+        Dim TitleSize As Single = 50.0F * Height / 1080.0F
+        Dim SubtitleSize As Single = 30.0F * Height / 1080.0F
+        TitleFont = New Font(Font.FontFamily, TitleSize, FontStyle.Bold)
+        SubtitleFont = New Font(Font.FontFamily, SubtitleSize, FontStyle.Bold)
+
+        '初始化DLNA播放器
         DPlayer = New DLNAPlayer(K, Me, VLCLib, Browser_Loaded) With {
             .Update = New UpdateRecord(AddressOf K.UpdateRecord)
         }
@@ -216,12 +225,38 @@ Public Class FrmPlayer
             With e.Graphics
                 .TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAlias
 
-                Dim Title As String = If(DPlayer IsNot Nothing AndAlso DPlayer.Waiting, Title_Waiting_DLNA, Title_None)
+                '生成标题
+                Dim Title As String
+                Dim SubTitle As String = vbNullString
+                If DPlayer IsNot Nothing AndAlso DPlayer.Waiting Then
+                    Title = Title_Waiting_DLNA
 
-                Dim MySizeF = .MeasureString(Title, BigFont)
-                Dim x As Single = (Me.Width - MySizeF.Width) / 2 - 1
-                Dim y As Single = (Me.Height - MySizeF.Height) / 2 - 1
-                .DrawString(Title, BigFont, Brushes.White, x, y)
+                    Dim Current = K.GetCurrent()
+                    If Current IsNot Nothing AndAlso Not String.IsNullOrWhiteSpace(Current.Title) Then _
+                        SubTitle = Current.Title
+                Else
+                    Title = Title_None
+                End If
+
+                If String.IsNullOrEmpty(SubTitle) Then
+                    '只有主标题
+                    Dim MySizeF = .MeasureString(Title, TitleFont)
+                    Dim x As Single = (Me.Width - MySizeF.Width) / 2 - 1
+                    Dim y As Single = (Me.Height - MySizeF.Height) / 2 - 1
+                    .DrawString(Title, TitleFont, Brushes.White, x, y)
+                Else
+                    Dim CenterY As Single = Me.Height / 2 - 1
+
+                    Dim TitleSizeF = .MeasureString(Title, TitleFont)
+                    Dim TitleX As Single = (Me.Width - TitleSizeF.Width) / 2 - 1
+                    Dim TitleY As Single = CenterY - TitleSizeF.Height
+
+                    Dim SubtitleSizeF = .MeasureString(SubTitle, SubtitleFont)
+                    Dim SubtitleX As Single = (Me.Width - SubtitleSizeF.Width) / 2 - 1
+
+                    .DrawString(Title, TitleFont, Brushes.White, TitleX, TitleY)
+                    .DrawString(SubTitle, SubtitleFont, Brushes.White, SubtitleX, CenterY)
+                End If
             End With
         End If
     End Sub

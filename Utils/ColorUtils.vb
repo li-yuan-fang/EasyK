@@ -31,7 +31,7 @@ Public Class ColorUtils
     Private Const MaxLightness As Double = 0.7
 
     '背景遮罩透明度范围
-    Private Const MinAlpha As Double = 0.2
+    Private Const MinAlpha As Double = 0.1
     Private Const MaxAlpha As Double = 0.9
 
     Private Shared Function CalcLuminance(R As Byte, G As Byte, B As Byte) As Double
