@@ -118,6 +118,25 @@ Public Class FrmPlayer
         End Get
     End Property
 
+    Private _Duration As Long = 0
+
+    ''' <summary>
+    ''' 获取播放时长
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property Duration As Double
+        Get
+            If DPlayer IsNot Nothing Then
+                Dim Current = K.GetCurrent()
+                If Current IsNot Nothing AndAlso Current.Type = EasyKType.DLNA Then
+                    Return DPlayer.Duration
+                End If
+            End If
+
+            Return Math.Max(_Duration / 1000D, 0)
+        End Get
+    End Property
+
     Public Sub New(K As EasyK, Settings As SettingContainer)
 
         ' 此调用是设计器所必需的。
@@ -402,7 +421,7 @@ Public Class FrmPlayer
                            With VLCPlayer
                                With .MediaPlayer
                                    .Media = New Media(VLCLib, VideoPath, FromType.FromPath)
-                                   .Media.Parse().Wait()
+                                   .Media.Parse().ContinueWith(Sub() _Duration = .Media.Duration)
 
                                    .Play()
                                End With
@@ -426,7 +445,7 @@ Public Class FrmPlayer
     End Sub
 
     Private Sub OnPlayerTerminated()
-        'Browser_Loaded.Reset()
+        _Duration = 0
 
         Invoke(Sub()
                    With Browser

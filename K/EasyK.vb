@@ -491,7 +491,7 @@ Public Class EasyK
             With .Player
                 If Not PlayerForm.Playing Then Return
 
-                Dim Offset As Single = CSng(Math.Abs([Step]) / .Duration)
+                Dim Offset As Single = CSng(Math.Abs([Step]) / PlayerForm.Duration)
                 If Prev Then
                     .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
                 Else
