@@ -1,10 +1,12 @@
-﻿Imports System.Reflection
+﻿Imports System.Text.RegularExpressions
 Imports System.Threading
 Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
 Public Class DummyPlayer
     Implements IDisposable
+
+    Private Shared ReadOnly DeviceIdRegex As New Regex("(\{[A-Fa-f\d\-].{35,35}\})(?=$)")
 
     Private WaveProvider As BufferedWaveProvider = Nothing
 
@@ -14,11 +16,13 @@ Public Class DummyPlayer
 
     Private Direct As DirectSoundOut = Nothing
 
+    Private StoredDevice As String = vbNullString
+
     '储存的音量
     Private StoredVolume As Single = 0.5
 
     '加载播放设备信号量
-    Private ReadOnly Loading As New ManualResetEventSlim(False)
+    Private ReadOnly Loading As New ManualResetEventSlim(True)
 
     '播放设备传感器
     Private WithEvents DeviceSensor As New DeviceChangeHandler()
@@ -70,34 +74,68 @@ Public Class DummyPlayer
         End Set
     End Property
 
-    '重载播放设备
+    ''' <summary>
+    ''' 重载播放设备
+    ''' </summary>
+    ''' <param name="DeviceId">指定设备ID</param>
+    ''' <remarks>指定设备ID说明重装请求来自事件</remarks>
     Private Sub ReloadDevice(DeviceId As String) Handles DeviceSensor.OnDeviceUpdate
-        If Loading.IsSet() Then Loading.Reset()
-        If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
+        '检测访问来源
+        Dim Trigger As Boolean = Not String.IsNullOrEmpty(DeviceId)
+
+        If Trigger Then
+            If Settings.Settings.DebugMode Then
+                Console.WriteLine("更新播放设备事件> {0}", DeviceId)
+            End If
+
+            If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
+
+            '来自事件的请求需要先锁定访问
+            With Loading
+                .Wait()
+                .Reset()
+            End With
+        End If
 
         If Direct IsNot Nothing Then
             SyncLock Direct
-                Direct.Stop()
-                Direct.Dispose()
+                Try
+                    Direct.Stop()
+                    Direct.Dispose()
+                Catch ex As Exception
+                    If Settings.Settings.DebugMode Then
+                        Console.WriteLine("卸载音频设备时出错 - {0}", ex.Message)
+                    End If
+                End Try
+
                 Direct = Nothing
             End SyncLock
         End If
 
-        Direct = New DirectSoundOut()
+        If Trigger Then
+            StoredDevice = DeviceId
+            Direct = New DirectSoundOut(Guid.Parse(DeviceId))
+
+            '如果是来自事件的更新 需要执行播放
+            Task.Run(Sub() Play(True))
+        Else
+            If String.IsNullOrEmpty(StoredDevice) Then
+                Direct = New DirectSoundOut()
+            Else
+                Direct = New DirectSoundOut(Guid.Parse(StoredDevice))
+            End If
+        End If
         SyncLock Direct
             Direct.Init(VolumeProvider)
         End SyncLock
 
         '允许播放
         Loading.Set()
-
-        '如果是被迫重载 则自动播放
-        If Not String.IsNullOrEmpty(DeviceId) Then Play()
     End Sub
 
-    Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean, Optional Id As String = vbNullString)
+    Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean)
         '释放所有托管播放器
-        [Stop]()
+        [Stop](False)
 
         '缓冲区
         WaveProvider = New BufferedWaveProvider(WaveFormat) With {
@@ -140,11 +178,15 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub Play()
+        Play(False)
+    End Sub
+
+    Private Sub Play(Force As Boolean)
         Loading.Wait()
         If Direct Is Nothing Then Return
 
         SyncLock Direct
-            If Direct.PlaybackState <> PlaybackState.Playing Then Direct.Play()
+            If Force OrElse Direct.PlaybackState <> PlaybackState.Playing Then Direct.Play()
         End SyncLock
     End Sub
 
@@ -158,6 +200,7 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub CleanBuffer()
+        Loading.Wait()
         If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
 
         SyncLock Direct
@@ -167,13 +210,31 @@ Public Class DummyPlayer
     End Sub
 
     Public Sub [Stop]()
-        '阻塞播放
-        Loading.Reset()
+        [Stop](True)
+    End Sub
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="Free"></param>
+    Private Sub [Stop](Free As Boolean)
+        '访问Direct之前先上锁
+        With Loading
+            .Wait()
+            .Reset()
+        End With
 
         If Direct IsNot Nothing Then
             SyncLock Direct
-                Direct.Stop()
-                Direct.Dispose()
+                Try
+                    Direct.Stop()
+                    Direct.Dispose()
+                Catch ex As Exception
+                    If Settings.Settings.DebugMode Then
+                        Console.WriteLine("卸载音频设备时出错 - {0}", ex.Message)
+                    End If
+                End Try
+
                 Direct = Nothing
             End SyncLock
         End If
@@ -185,6 +246,8 @@ Public Class DummyPlayer
 
         If WaveProvider IsNot Nothing Then WaveProvider = Nothing
         If MusicProvider IsNot Nothing Then MusicProvider = Nothing
+
+        If Free Then Loading.Set()
     End Sub
 
 End Class

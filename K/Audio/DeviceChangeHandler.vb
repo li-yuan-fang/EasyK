@@ -41,7 +41,10 @@ Public Class DeviceChangeHandler
                 Device = defaultDeviceId
                 LastUpdate = Now
 
-                Task.Run(Sub() RaiseEvent OnDeviceUpdate(Device))
+                Dim Dev = Emu.GetDevice(Device)
+                Dim Guid = Dev.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID)
+
+                Task.Run(Sub() RaiseEvent OnDeviceUpdate(Guid.Value))
             End If
         End SyncLock
     End Sub

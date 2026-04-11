@@ -79,7 +79,6 @@ Namespace DLNA.Protocol
                          For Each Url As String In Deliver
                              If Protocol.Settings.Settings.DebugMode Then
                                  Console.WriteLine("开始投递订阅: {0}({1})", Url, Seq)
-                                 Console.WriteLine(Text.Encoding.UTF8.GetString(Updated))
                              End If
 
                              Dim Request As HttpWebRequest = DirectCast(WebRequest.Create(Url), HttpWebRequest)
