@@ -40,6 +40,14 @@ Public Class KSettings
     Public Property AutoShowQR As Boolean = True
 
     ''' <summary>
+    ''' 消息提示时长(单位:s)
+    ''' </summary>
+    ''' <remarks>设置为0可关闭</remarks>
+    ''' <returns></returns>
+    <JsonProperty("alert_duration")>
+    Public Property AlertDuration As Double = 2D
+
+    ''' <summary>
     ''' 允许通过点歌界面显示/隐藏二维码
     ''' </summary>
     ''' <returns></returns>

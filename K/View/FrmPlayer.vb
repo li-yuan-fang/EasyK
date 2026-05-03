@@ -4,8 +4,6 @@ Imports System.Threading
 Imports System.Windows.Forms
 Imports CefSharp
 Imports CefSharp.WinForms
-Imports EasyK.DLNA
-Imports EasyK.DLNA.MusicProvider
 Imports EasyK.DLNA.Player
 Imports LibVLCSharp.Shared
 
@@ -60,6 +58,9 @@ Public Class FrmPlayer
 
     'DLNA播放器逻辑
     Private DPlayer As DLNAPlayer = Nothing
+
+    '消息提示窗口
+    Private _Alert As AlertManager = Nothing
 
     '空白右键菜单
     Private Class BrowserMenuHandler
@@ -195,6 +196,17 @@ Public Class FrmPlayer
     End Sub
 
     ''' <summary>
+    ''' 发送提示消息
+    ''' </summary>
+    ''' <param name="Title">消息标题</param>
+    ''' <param name="Icon">消息图标</param>
+    Public Sub Alert(Title As String, Icon As AlertIcon)
+        If Not Setuped OrElse _Alert Is Nothing Then Return
+
+        _Alert.Show(Title, Icon)
+    End Sub
+
+    ''' <summary>
     ''' 部署
     ''' </summary>
     Public Sub Setup(Selected As Rectangle)
@@ -233,6 +245,9 @@ Public Class FrmPlayer
             .Update = New UpdateRecord(AddressOf K.UpdateRecord)
         }
         K.DLNAServer.Player = DPlayer
+
+        '初始化消息提示窗口
+        _Alert = New AlertManager(Me, Settings)
 
         _Setuped = True
     End Sub
@@ -295,6 +310,7 @@ Public Class FrmPlayer
         End With
 
         If DPlayer IsNot Nothing Then DPlayer.Dispose()
+        If _Alert IsNot Nothing Then _Alert.Dispose()
 
         With VLCPlayer
             With .MediaPlayer
@@ -397,7 +413,17 @@ Public Class FrmPlayer
             Case EasyKType.Bilibili
                 Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click();"))
             Case EasyKType.Video, EasyKType.DLNA
-                Invoke(Sub() VLCPlayer.MediaPlayer.Pause())
+                Invoke(Sub()
+                           With VLCPlayer.MediaPlayer
+                               If .IsPlaying Then
+                                   Alert("暂停", AlertIcon.Pause)
+                               Else
+                                   Alert("播放", AlertIcon.Play)
+                               End If
+
+                               .Pause()
+                           End With
+                       End Sub)
                 If DPlayer IsNot Nothing Then DPlayer.UpdateMusicState()
         End Select
     End Sub

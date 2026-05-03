@@ -65,6 +65,8 @@ Public Class EasyK
             ElseIf Settings.Settings.Audio.AllowUpdateSystemVolume Then
                 AudioUtils.SetSystemVolume(value)
             End If
+
+            Alert(Math.Round(value * 100.0F), If(value > 0, AlertIcon.Volume, AlertIcon.Mute))
         End Set
     End Property
 
@@ -80,6 +82,12 @@ Public Class EasyK
         Set(value As Boolean)
             If Not Settings.Settings.Audio.AllowAccompaniment Then Return
             Dummy.Accompaniment = value
+
+            If value Then
+                Alert("实时伴奏", AlertIcon.Accompaniment)
+            Else
+                Alert("原声", AlertIcon.Original)
+            End If
         End Set
     End Property
 
@@ -530,6 +538,13 @@ Public Class EasyK
 
         Return Occupied
     End Function
+
+    '发送提示消息
+    Private Sub Alert(Title As String, Icon As AlertIcon)
+        If PlayerForm Is Nothing Then Return
+
+        PlayerForm.Alert(Title, Icon)
+    End Sub
 
     ''' <summary>
     ''' 获取二维码显示状态
