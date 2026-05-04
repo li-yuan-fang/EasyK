@@ -46,8 +46,8 @@ Public Class FrmAlert
             h = 0.16 * .Height
             w = 0.9 * h
 
-            x = (.Width - w) / 2 - 1
-            y = 0.15 * .Height - 1
+            x = .Left + (.Width - w) / 2 - 1
+            y = .Top + 0.15 * .Height - 1
 
             Show(Player)
             SetBounds(x, y, w, h)
