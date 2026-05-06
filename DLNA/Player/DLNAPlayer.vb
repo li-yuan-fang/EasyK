@@ -760,10 +760,7 @@ Namespace DLNA.Player
         End Sub
 
         Private Sub InsidePlay()
-            With Player
-                .Invoke(Sub() .VLCPlayer.MediaPlayer.Play())
-            End With
-
+            Player.VLCPlayer.MediaPlayer.Play()
             RaiseEvent OnPlay(False)
         End Sub
 

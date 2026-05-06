@@ -471,7 +471,7 @@ Public Class FrmPlayer
         Invoke(Sub()
                    With Browser
                        If Browser_Bili Then
-                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); window.location.href = 'http://easyk/';")
+                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); window.location.href = 'about:blank';")
                            Browser_Bili = False
                        End If
 
