@@ -793,7 +793,7 @@ Namespace DLNA.Player
             If Not Accessible() OrElse Cancelled OrElse Waiting Then Return
 
             Cancel()
-            K.Push()
+            K.Push(True)
         End Sub
 
         ''' <summary>

@@ -188,6 +188,15 @@ Namespace My.Resources
         End Property
         
         '''<summary>
+        '''  查找类似 &lt;?xml version=&quot;1.0&quot; standalone=&quot;no&quot;?&gt;&lt;!DOCTYPE svg PUBLIC &quot;-//W3C//DTD SVG 1.1//EN&quot; &quot;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&quot;&gt;&lt;svg t=&quot;1778071479117&quot; class=&quot;icon&quot; viewBox=&quot;0 0 1024 1024&quot; version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; p-id=&quot;5647&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; width=&quot;32&quot; height=&quot;32&quot;&gt;&lt;path d=&quot;M810.666667 512a52.92 52.92 0 0 1-25.78 45.666667l-618.666667 373.28a53.333333 53.333333 0 0 1-80.886667-45.666667V138.72a53.333333 53.333333 0 0 1 80.886667-45.666667l618.666667 37 [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        '''</summary>
+        Friend ReadOnly Property SVG_Push() As String
+            Get
+                Return ResourceManager.GetString("SVG_Push", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; standalone=&quot;no&quot;?&gt;&lt;!DOCTYPE svg PUBLIC &quot;-//W3C//DTD SVG 1.1//EN&quot; &quot;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&quot;&gt;&lt;svg t=&quot;1777817881575&quot; class=&quot;icon&quot; viewBox=&quot;0 0 1024 1024&quot; version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; p-id=&quot;6235&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; width=&quot;32&quot; height=&quot;32&quot;&gt;&lt;path d=&quot;M469.333333 106.666667v810.666666a21.333333 21.333333 0 0 1-36.42 15.086667L225.833333 725.333333H53.333333a53.393333 53.393333 0 0 1-53.333333-53.333333V352a53.393333 53.393333 0 0 [字符串的其余部分被截断]&quot;; 的本地化字符串。
         '''</summary>
         Friend ReadOnly Property SVG_Volume() As String

@@ -115,7 +115,7 @@ Public Class FrmPlayer
     ''' <returns></returns>
     Public ReadOnly Property Playing As Boolean
         Get
-            Return DirectCast(Invoke(Function() VLCPlayer.MediaPlayer.IsPlaying), Boolean)
+            Return VLCPlayer.MediaPlayer.IsPlaying
         End Get
     End Property
 
@@ -395,14 +395,11 @@ Public Class FrmPlayer
 
     Private Sub VLC_Stopped(sender As Object, e As EventArgs)
         '播放器复位
-        Invoke(Sub()
-                   With VLCPlayer
-                       .Visible = False
-                       With .MediaPlayer
-                           If .Media IsNot Nothing Then .Media.Dispose()
-                       End With
-                   End With
-               End Sub)
+        Invoke(Sub() VLCPlayer.Visible = False)
+
+        With VLCPlayer.MediaPlayer
+            If .Media IsNot Nothing Then .Media.Dispose()
+        End With
 
         '推进进度
         K.Push()
@@ -413,17 +410,15 @@ Public Class FrmPlayer
             Case EasyKType.Bilibili
                 Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click();"))
             Case EasyKType.Video, EasyKType.DLNA
-                Invoke(Sub()
-                           With VLCPlayer.MediaPlayer
-                               If .IsPlaying Then
-                                   Alert("暂停", AlertIcon.Pause)
-                               Else
-                                   Alert("播放", AlertIcon.Play)
-                               End If
+                With VLCPlayer.MediaPlayer
+                    If .IsPlaying Then
+                        Alert("暂停", AlertIcon.Pause)
+                    Else
+                        Alert("播放", AlertIcon.Play)
+                    End If
 
-                               .Pause()
-                           End With
-                       End Sub)
+                    .Pause()
+                End With
                 If DPlayer IsNot Nothing Then DPlayer.UpdateMusicState()
         End Select
     End Sub
@@ -482,22 +477,18 @@ Public Class FrmPlayer
 
                        .Visible = False
                    End With
+
+                   VLCPlayer.Visible = False
                End Sub)
 
-        Invoke(Sub()
-                   With VLCPlayer
-                       .Visible = False
-
-                       With .MediaPlayer
-                           If .IsPlaying Then
-                               RemoveHandler .Stopped, AddressOf VLC_Stopped
-                               .Stop()
-                               AddHandler .Stopped, AddressOf VLC_Stopped
-                           End If
-                           If .Media IsNot Nothing Then .Media.Dispose()
-                       End With
-                   End With
-               End Sub)
+        With VLCPlayer.MediaPlayer
+            If .IsPlaying Then
+                RemoveHandler .Stopped, AddressOf VLC_Stopped
+                .Stop()
+                AddHandler .Stopped, AddressOf VLC_Stopped
+            End If
+            If .Media IsNot Nothing Then .Media.Dispose()
+        End With
     End Sub
 
 End Class

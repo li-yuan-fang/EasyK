@@ -11,7 +11,7 @@
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            K.Push()
+            K.Push(True)
             Console.WriteLine("切歌执行成功")
         End Sub
 

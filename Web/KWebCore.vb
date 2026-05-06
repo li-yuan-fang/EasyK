@@ -206,7 +206,7 @@ Public Class KWebCore
 
     <WebApi("/push", HttpMethod.Get)>
     Private Function Push(ctx As HttpContext) As Task
-        K.Push()
+        K.Push(True)
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 

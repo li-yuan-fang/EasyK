@@ -258,6 +258,14 @@ Public Class EasyK
     ''' 推进播放进度/切歌
     ''' </summary>
     Public Sub Push()
+        Push(False)
+    End Sub
+
+    ''' <summary>
+    ''' 推进播放进度/切歌
+    ''' </summary>
+    ''' <param name="Manual">手动切歌</param>
+    Public Sub Push(Manual As Boolean)
         '原子操作 阻止短时多次切歌
         Dim value As Integer = Interlocked.Exchange(PushLock, 1)
         If value <> 0 Then Return
@@ -275,6 +283,8 @@ Public Class EasyK
                          End Sub)
                 Return
             End If
+
+            If Manual AndAlso Current IsNot Nothing Then Alert("切歌", AlertIcon.Push)
 
             If Queue.Count = 0 Then
                 Task.Run(Sub()

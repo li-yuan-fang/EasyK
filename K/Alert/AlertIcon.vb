@@ -23,4 +23,8 @@
     ''' 暂停图标
     ''' </summary>
     Pause
+    ''' <summary>
+    ''' 切歌图标
+    ''' </summary>
+    Push
 End Enum
