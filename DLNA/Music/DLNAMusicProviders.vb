@@ -281,25 +281,35 @@ Namespace DLNA.MusicProvider
         End Function
 
         ''' <summary>
-        ''' 获取歌词颜色脚本
+        ''' 获取歌词色彩方案
         ''' </summary>
         ''' <param name="Meta">元数据</param>
         ''' <param name="Attritube">属性</param>
         ''' <param name="Highlight">颜色高亮校正</param>
         ''' <returns></returns>
-        Public Shared Function GenerateUpdateLyricColorScript(Meta As String, Attritube As DLNAMusicAttribute, Highlight As Boolean) As String
+        Public Shared Function GetLyricColorSchema(Meta As String, Attritube As DLNAMusicAttribute, Highlight As Boolean) As ColorUtils.ColorSchema
             For Each Provider In Providers
                 With Provider
                     If Not .IsMatch(Meta) Then Continue For
 
-                    Dim LyricColor = .GetLyricColor(Attritube, Highlight)
-                    If String.IsNullOrEmpty(LyricColor) Then Continue For
-
-                    Return $"window.setLyricColor({LyricColor});"
+                    Return .GetLyricColor(Attritube, Highlight)
                 End With
             Next
 
-            Return vbNullString
+            Return Nothing
+        End Function
+
+        ''' <summary>
+        ''' 获取歌词颜色脚本
+        ''' </summary>
+        ''' <param name="Color">歌词颜色方案</param>
+        ''' <param name="Threshold">亮度阈值</param>
+        ''' <returns></returns>
+        Public Shared Function GenerateUpdateLyricColorScript(Color As ColorUtils.ColorSchema, Threshold As Double) As String
+            With Color
+
+                Return $"window.setLyricColor({ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .GetMaskAlpha(Threshold)});"
+            End With
         End Function
 
         ''' <summary>

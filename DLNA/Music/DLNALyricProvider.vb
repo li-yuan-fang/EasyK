@@ -148,10 +148,10 @@ Namespace DLNA.MusicProvider
         ''' <param name="Attribute">属性</param>
         ''' <param name="Highlight">颜色高亮校正</param>
         ''' <returns></returns>
-        Public Overridable Function GetLyricColor(Attribute As DLNAMusicAttribute, Highlight As Boolean) As String
+        Public Overridable Function GetLyricColor(Attribute As DLNAMusicAttribute, Highlight As Boolean) As ColorUtils.ColorSchema
             If String.IsNullOrEmpty(Attribute.Album) Then
                 Console.WriteLine("无法获取专辑图片")
-                Return vbNullString
+                Return Nothing
             End If
 
             Dim Buffer As Byte()
@@ -167,7 +167,7 @@ Namespace DLNA.MusicProvider
                         Buffer = .DownloadData(Attribute.Album)
                     Catch ex As Exception
                         Console.WriteLine("获取专辑图片失败 - {0}", ex.Message)
-                        Return vbNullString
+                        Return Nothing
                     End Try
                 End With
             End Using
@@ -175,20 +175,16 @@ Namespace DLNA.MusicProvider
             Try
                 Using ms As New IO.MemoryStream(Buffer)
                     Using img As Image = Image.FromStream(ms, True, True)
-                        Dim cs = ColorUtils.CalcColorSchemaFromImage(img,
-                                                                     Highlight,
-                                                                     ModMain.Settings.Settings.DLNA.LyricContrastThreshold)
-
-                        With cs
-                            Return $"{ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .BackAlpha:0.000}"
-                        End With
+                        Return ColorUtils.CalcColorSchemaFromImage(img,
+                                                                   Highlight,
+                                                                   ModMain.Settings.Settings.DLNA.LyricContrastThreshold)
                     End Using
                 End Using
             Catch ex As Exception
                 Console.WriteLine("解析专辑图片失败 - {0}", ex.Message)
             End Try
 
-            Return vbNullString
+            Return Nothing
         End Function
 
         ''' <summary>

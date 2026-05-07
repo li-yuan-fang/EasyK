@@ -503,12 +503,10 @@ Namespace DLNA.Player
 
                          '生成对比度脚本
                          Dim Contrast As String = vbNullString
-                         If MusicBuffer IsNot Nothing AndAlso MusicBuffer.Attribute IsNot Nothing AndAlso
-                            Not String.IsNullOrEmpty(MusicBuffer.Meta) Then
+                         If MusicBuffer IsNot Nothing AndAlso MusicBuffer.LyricColor IsNot Nothing Then
                              With MusicBuffer
                                  Contrast = DLNAMusicProviders.GenerateUpdateLyricColorScript(
-                                     .Meta,
-                                     .Attribute,
+                                     .LyricColor,
                                      K.Settings.Settings.DLNA.LyricHighlight
                                 )
                              End With
@@ -602,11 +600,17 @@ Namespace DLNA.Player
                 End If
 
                 '获取歌词颜色
-                .LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
-                    .Meta,
-                    .Attribute,
-                    K.Settings.Settings.DLNA.LyricHighlight
-                )
+                Dim LyricColor As String = vbNullString
+                If .LyricColor Is Nothing Then
+                    .LyricColor = DLNAMusicProviders.GetLyricColorSchema(.Meta, .Attribute, K.Settings.Settings.DLNA.LyricHighlight)
+
+                    If .LyricColor IsNot Nothing Then
+                        LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
+                            .LyricColor,
+                            K.Settings.Settings.DLNA.LyricContrastThreshold
+                        )
+                    End If
+                End If
 
                 '获取默认时长
                 Dim DefaultDuration As Long = 0
@@ -632,10 +636,10 @@ Namespace DLNA.Player
 
                 '执行脚本
                 Try
-                    If String.IsNullOrEmpty(.LyricColor) Then
+                    If String.IsNullOrEmpty(LyricColor) Then
                         Player.RunScript(Base, Intersect, Offset)
                     Else
-                        Player.RunScript(Base, Intersect, Offset, .LyricColor)
+                        Player.RunScript(Base, Intersect, Offset, LyricColor)
                     End If
                 Catch ex As Exception
                     If K.Settings.Settings.DebugMode Then

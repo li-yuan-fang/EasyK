@@ -12,15 +12,24 @@ Public Class ColorUtils
         Public ReadOnly Property ForeColor As Color
 
         ''' <summary>
-        ''' 获取背景遮罩
+        ''' 获取背景亮度
         ''' </summary>
         ''' <returns></returns>
-        Public ReadOnly Property BackAlpha As Double
+        Public ReadOnly Property Luminance As Double
 
-        Friend Sub New(Fore As Color, Back As Double)
+        Friend Sub New(Fore As Color, Luminance As Double)
             ForeColor = Fore
-            BackAlpha = Back
+            Me.Luminance = Luminance
         End Sub
+
+        ''' <summary>
+        ''' 获取背景遮罩透明度
+        ''' </summary>
+        ''' <param name="Threshold">亮度阈值</param>
+        ''' <returns></returns>
+        Public Function GetMaskAlpha(Threshold As Double) As Double
+            Return CalcBackAlpha(Luminance, ForeColor, Threshold)
+        End Function
 
     End Class
 
@@ -38,7 +47,7 @@ Public Class ColorUtils
         Return (0.299 * R + 0.587 * G + 0.114 * B) / Byte.MaxValue
     End Function
 
-    Private Shared Function CalcBackAlpha(Luminance As Double, Fore As Color, LuminanceThreshold As Double) As Double
+    Friend Shared Function CalcBackAlpha(Luminance As Double, Fore As Color, LuminanceThreshold As Double) As Double
         Dim fl = CalcLuminance(Fore.R, Fore.G, Fore.B)
         If fl - Luminance > LuminanceThreshold Then Return MinAlpha
 
@@ -117,7 +126,7 @@ Public Class ColorUtils
             Dim Fore = HslToRgb(dominantHue, 0.8, 0.5)
             If highlight Then Fore = HighlightColor(Fore)
 
-            Return New ColorSchema(Fore, CalcBackAlpha(Luminance, Fore, threshold))
+            Return New ColorSchema(Fore, Luminance)
         End Using
     End Function
 

@@ -1,4 +1,5 @@
-﻿Imports EasyK.DLNA.MusicProvider
+﻿Imports System.Drawing
+Imports EasyK.DLNA.MusicProvider
 Imports Newtonsoft.Json
 
 Namespace DLNA.Player
@@ -19,7 +20,7 @@ Namespace DLNA.Player
         Public Property Original As String
 
         <JsonProperty("lyric_color")>
-        Public Property LyricColor As String = vbNullString
+        Public Property LyricColor As ColorUtils.ColorSchema = Nothing
 
     End Class
 
