@@ -361,6 +361,9 @@ Public Class FrmPlayer
 
             '关闭弹幕
             .EvaluateScriptAsync("var interval3 = setInterval(() => { let group = document.getElementsByClassName('bui-danmaku-switch-on'); if (group.length > 0) { if (window.getComputedStyle(group[0]).display !== 'none') { if (document.getElementsByClassName('bui-danmaku-switch-input').length > 0) { document.getElementsByClassName('bui-danmaku-switch-input')[0].click(); clearInterval(interval3); } } else { clearInterval(interval3); } } }, 50);")
+
+            '尝试从头播放
+            .EvaluateScriptAsync("var head_cnt = 0; var interval4 = setInterval(() => { let buttons = document.getElementsByClassName('bpx-player-toast-confirm'); for (let i = 0; i < buttons.length; i++) { if (buttons[i].textContent == '从头播放') { buttons[i].click(); clearInterval(interval4); break; } } head_cnt++; if (head_cnt >= 50) clearInterval(interval4); }, 100);")
         End With
     End Sub
 
