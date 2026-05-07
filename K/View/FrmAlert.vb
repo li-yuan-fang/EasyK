@@ -157,7 +157,7 @@ Public Class FrmAlert
                     TitleSizeF = .MeasureString(Title, Font)
                 End If
 
-                Dim SvgWidth As Integer = ContentWidth - 0.15 * Width
+                Dim SvgWidth As Integer = ContentWidth - 0.18 * Width
 
                 Dim GapHeight As Single = 0.08 * Height
 
