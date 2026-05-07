@@ -180,7 +180,7 @@ Namespace DLNA.MusicProvider
                                                                      ModMain.Settings.Settings.DLNA.LyricContrastThreshold)
 
                         With cs
-                            Return $"{ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .BackAlpha.ToString("0.000")}"
+                            Return $"{ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .BackAlpha:0.000}"
                         End With
                     End Using
                 End Using

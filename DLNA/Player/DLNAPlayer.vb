@@ -602,13 +602,11 @@ Namespace DLNA.Player
                 End If
 
                 '获取歌词颜色
-                If String.IsNullOrEmpty(.LyricColor) Then
-                    .LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
-                        .Meta,
-                        .Attribute,
-                        K.Settings.Settings.DLNA.LyricHighlight
-                    )
-                End If
+                .LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
+                    .Meta,
+                    .Attribute,
+                    K.Settings.Settings.DLNA.LyricHighlight
+                )
 
                 '获取默认时长
                 Dim DefaultDuration As Long = 0
@@ -625,6 +623,9 @@ Namespace DLNA.Player
                 '生成交错脚本
                 Dim Intersect = DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
 
+                '生成偏移脚本
+                Dim Offset = DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNALyricOffset)
+
                 '等待浏览器加载
                 BrowserLoaded.Wait()
                 If Not Accessible() OrElse Cancelled Then Return
@@ -632,9 +633,9 @@ Namespace DLNA.Player
                 '执行脚本
                 Try
                     If String.IsNullOrEmpty(.LyricColor) Then
-                        Player.RunScript(Base, Intersect)
+                        Player.RunScript(Base, Intersect, Offset)
                     Else
-                        Player.RunScript(Base, .LyricColor, Intersect)
+                        Player.RunScript(Base, Intersect, Offset, .LyricColor)
                     End If
                 Catch ex As Exception
                     If K.Settings.Settings.DebugMode Then
@@ -711,7 +712,7 @@ Namespace DLNA.Player
                         .Resource = FileName
                     }
 
-                    '音频+基础信息(Attr+Color)+歌词
+                    '音频+基础信息+歌词
                     LoadingCountdown = New CountdownEvent(3)
 
                     '异步拉取数据

@@ -66,7 +66,11 @@ Public Class EasyK
                 AudioUtils.SetSystemVolume(value)
             End If
 
-            Alert(Math.Round(value * 100.0F), If(value > 0, AlertIcon.Volume, AlertIcon.Mute))
+            If value > 0 Then
+                Alert(Math.Round(value * 100.0F), AlertIcon.Volume)
+            Else
+                Alert("静音", AlertIcon.Mute)
+            End If
         End Set
     End Property
 

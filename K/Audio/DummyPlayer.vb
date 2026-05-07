@@ -18,8 +18,11 @@ Public Class DummyPlayer
 
     Private StoredDevice As String = vbNullString
 
-    '储存的音量
+    '储存的音量(主要用于VolumeProvider未初始化时储存音量)
     Private StoredVolume As Single = 0.5
+
+    '内部名义音量(实际音量要考虑伴奏增益)
+    Private InternalVolume As Single = 0.5
 
     '加载播放设备信号量
     Private ReadOnly Loading As New ManualResetEventSlim(True)
@@ -51,11 +54,22 @@ Public Class DummyPlayer
         If Settings.Settings.Audio.AutoResetAccompaniment Then Accompaniment = False
     End Sub
 
+    '伴奏模式
+    Private _Accompaniment As Boolean = False
+
     ''' <summary>
     ''' 获取或设置伴唱模式
     ''' </summary>
     ''' <returns></returns>
-    Public Property Accompaniment As Boolean = False
+    Public Property Accompaniment As Boolean
+        Get
+            Return _Accompaniment
+        End Get
+        Set(value As Boolean)
+            _Accompaniment = value
+            UpdateRealVolume()
+        End Set
+    End Property
 
     ''' <summary>
     ''' 获取或设置音量
@@ -63,16 +77,34 @@ Public Class DummyPlayer
     ''' <returns></returns>
     Public Property Volume As Single
         Get
-            Return If(VolumeProvider IsNot Nothing, VolumeProvider.Volume, StoredVolume)
+            Return If(VolumeProvider IsNot Nothing, InternalVolume, StoredVolume)
         End Get
         Set(value As Single)
             If VolumeProvider IsNot Nothing Then
-                VolumeProvider.Volume = value
+                InternalVolume = value
+                UpdateRealVolume()
             Else
                 StoredVolume = value
             End If
         End Set
     End Property
+
+    '更新实际音量
+    Private Sub UpdateRealVolume()
+        If VolumeProvider Is Nothing Then Return
+
+        '名义音量静音则直接静音
+        If InternalVolume = 0 Then
+            VolumeProvider.Volume = 0
+            Return
+        End If
+
+        If Accompaniment Then
+            VolumeProvider.Volume = InternalVolume + Settings.Settings.Audio.AccompanimentVolumeGain
+        Else
+            VolumeProvider.Volume = InternalVolume
+        End If
+    End Sub
 
     ''' <summary>
     ''' 重载播放设备
@@ -160,9 +192,9 @@ Public Class DummyPlayer
         End If
 
         '音量调整
-        VolumeProvider = New VolumeSampleProvider(Commit) With {
-            .Volume = StoredVolume
-        }
+        InternalVolume = StoredVolume
+        VolumeProvider = New VolumeSampleProvider(Commit)
+        UpdateRealVolume()
 
         '配置输出
         ReloadDevice(vbNullString)
@@ -240,7 +272,7 @@ Public Class DummyPlayer
         End If
 
         If VolumeProvider IsNot Nothing Then
-            StoredVolume = VolumeProvider.Volume
+            StoredVolume = InternalVolume
             VolumeProvider = Nothing
         End If
 

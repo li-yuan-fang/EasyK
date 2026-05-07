@@ -50,6 +50,13 @@ Public Class KAudioSetting
     Public Property AutoResetAccompaniment As Boolean = True
 
     ''' <summary>
+    ''' 伴奏音量增益
+    ''' </summary>
+    ''' <remarks>实时伴奏模式下的音量增益</remarks>
+    ''' <returns></returns>
+    Public Property AccompanimentVolumeGain As Single = 0.2F
+
+    ''' <summary>
     ''' 获取托管音频启用状态
     ''' </summary>
     ''' <returns></returns>
