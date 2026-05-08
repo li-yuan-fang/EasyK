@@ -772,7 +772,8 @@ Namespace DLNA.Player
         ''' <summary>
         ''' 播放
         ''' </summary>
-        Public Sub Play()
+        ''' <param name="Paused">已暂停</param>
+        Public Sub Play(Paused As Boolean)
             If Not Accessible() OrElse Waiting Then Return
 
             If LoadingCountdown IsNot Nothing AndAlso Not LoadingCountdown.IsSet Then
@@ -785,7 +786,16 @@ Namespace DLNA.Player
                          End Sub)
             Else
                 InsidePlay()
+
+                If Paused Then Player.Alert("播放", AlertIcon.Play)
             End If
+        End Sub
+
+        ''' <summary>
+        ''' 播放
+        ''' </summary>
+        Public Sub Play()
+            Play(False)
         End Sub
 
         ''' <summary>

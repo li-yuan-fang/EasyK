@@ -1,5 +1,6 @@
 ﻿Imports CefSharp.DevTools
 Imports EasyK.DLNA.Player
+Imports MS.Internal.Xaml
 
 Namespace DLNA.Protocol
 
@@ -154,7 +155,7 @@ Namespace DLNA.Protocol
                 If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
                 With .Player
-                    .Play()
+                    .Play(GetState("TransportState") = "PAUSED_PLAYBACK")
                     .Rate = Val(Args("Speed"))
                 End With
             End With
