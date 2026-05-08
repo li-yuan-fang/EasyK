@@ -507,7 +507,7 @@ Namespace DLNA.Player
                              With MusicBuffer
                                  Contrast = DLNAMusicProviders.GenerateUpdateLyricColorScript(
                                      .LyricColor,
-                                     K.Settings.Settings.DLNA.LyricHighlight
+                                     K.Settings.Settings.DLNA.LyricContrastThreshold
                                 )
                              End With
                          End If
