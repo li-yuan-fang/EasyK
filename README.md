@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.1.2🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.1.2)
+## 🌟当前版本🌟 ➡️ [✌v1.1.3🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.1.3)
 
 ![播放窗口1](./docs/assets/r1.png)
 
@@ -36,7 +36,9 @@
 
 ## 要怎么用
 
-参考➡️[**⭐用户指南⭐**](https://github.com/li-yuan-fang/EasyK/wiki/EasyK-%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97)
+小白请看➡️[**❓使用手册❓**](https://github.com/li-yuan-fang/EasyK/blob/master/docs/EasyK%20%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C.pdf)
+
+高手请看Wiki➡️[**⭐用户指南⭐**](https://github.com/li-yuan-fang/EasyK/wiki/EasyK-%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97)
 
 ![指令界面](./docs/assets/r3.png)
 
