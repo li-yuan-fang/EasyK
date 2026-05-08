@@ -55,7 +55,7 @@ Public Class KAudioSetting
     ''' <remarks>实时伴奏模式下的音量增益</remarks>
     ''' <returns></returns>
     <JsonProperty("accompaniment_volume_gain")>
-    Public Property AccompanimentVolumeGain As Single = 0.2F
+    Public Property AccompanimentVolumeGain As Single = 0.15F
 
     ''' <summary>
     ''' 获取托管音频启用状态
