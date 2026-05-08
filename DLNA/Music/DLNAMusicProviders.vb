@@ -245,8 +245,8 @@ Namespace DLNA.MusicProvider
             Dim Builder As New StringBuilder()
             With Builder
                 .Append($"window.setPlaying({Playing.ToString().ToLower()});")
-                .Append($"window.setCurrent({Math.Max(Position, 0).ToString()});")
-                .Append($"window.setRate({Rate.ToString()});")
+                .Append($"window.setCurrent({Math.Max(Position, 0)});")
+                .Append($"window.setRate({Rate});")
             End With
             Return Builder.ToString()
         End Function
@@ -308,7 +308,7 @@ Namespace DLNA.MusicProvider
         Public Shared Function GenerateUpdateLyricColorScript(Color As ColorUtils.ColorSchema, Threshold As Double) As String
             With Color
 
-                Return $"window.setLyricColor({ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .GetMaskAlpha(Threshold)});"
+                Return $"window.setLyricColor({ .ForeColor.R}, { .ForeColor.G}, { .ForeColor.B}, { .GetMaskAlpha(Threshold):0.000});"
             End With
         End Function
 
