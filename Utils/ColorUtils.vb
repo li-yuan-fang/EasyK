@@ -47,12 +47,9 @@ Public Class ColorUtils
         <JsonProperty("luminance")>
         Public ReadOnly Property Luminance As Double
 
-        '用于JSON反序列化
-        Private Sub New()
-            Me.New(Color.Empty, 0)
-        End Sub
-
-        Friend Sub New(Fore As Color, Luminance As Double)
+        <JsonConstructor>
+        Friend Sub New(<JsonProperty("fore_color")> Fore As Color,
+                      <JsonProperty("luminance")> Luminance As Double)
             ForeColor = Fore
             Me.Luminance = Luminance
         End Sub
