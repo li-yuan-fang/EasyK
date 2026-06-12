@@ -1,21 +1,56 @@
 ﻿Imports System.Drawing
 Imports System.Runtime.InteropServices
+Imports Newtonsoft.Json
 
 Public Class ColorUtils
 
+    ''' <summary>
+    ''' 颜色转换器
+    ''' </summary>
+    Public Class ColorConverter
+        Inherits JsonConverter(Of Color)
+
+        Public Overrides Sub WriteJson(writer As JsonWriter, value As Color, serializer As JsonSerializer)
+            writer.WriteValue(If(value.A < 255,
+                                $"#{value.A:X2}{value.R:X2}{value.G:X2}{value.B:X2}",
+                                $"#{value.R:X2}{value.G:X2}{value.B:X2}"))
+        End Sub
+
+        Public Overrides Function ReadJson(reader As JsonReader, objectType As Type, existingValue As Color, hasExistingValue As Boolean, serializer As JsonSerializer) As Color
+            Dim colorStr As String = reader.Value?.ToString()
+
+            If String.IsNullOrEmpty(colorStr) Then Return Color.Empty
+
+            Try
+                Return ColorTranslator.FromHtml(colorStr)
+            Catch
+                Return Color.FromName(colorStr)
+            End Try
+        End Function
+
+    End Class
+
+    <Serializable>
     Public Class ColorSchema
 
         ''' <summary>
         ''' 获取前景颜色
         ''' </summary>
         ''' <returns></returns>
+        <JsonProperty("fore_color"), JsonConverter(GetType(ColorConverter))>
         Public ReadOnly Property ForeColor As Color
 
         ''' <summary>
         ''' 获取背景亮度
         ''' </summary>
         ''' <returns></returns>
+        <JsonProperty("luminance")>
         Public ReadOnly Property Luminance As Double
+
+        '用于JSON反序列化
+        Private Sub New()
+            Me.New(Color.Empty, 0)
+        End Sub
 
         Friend Sub New(Fore As Color, Luminance As Double)
             ForeColor = Fore

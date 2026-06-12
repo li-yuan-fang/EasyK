@@ -766,10 +766,6 @@ Namespace DLNA.Player
             '更新下载标志
             Downloaded = False
 
-            '自动播放
-            'Universal Media Server 不会自动播放
-            Play()
-
             With Player
                 .Invoke(Sub()
                             '更新标志
