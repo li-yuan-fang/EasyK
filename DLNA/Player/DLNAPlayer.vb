@@ -697,6 +697,9 @@ Namespace DLNA.Player
             If Waiting Then
                 '初次加载
 
+                'Xml文档无效则忽略该请求
+                If MDoc Is Nothing Then Return
+
                 '获取标题
                 CurrentTitle = GetMetaTitle(MDoc)
 
@@ -846,12 +849,12 @@ Namespace DLNA.Player
                 MusicBuffer = JsonUtils.SafeDeserializeObject(Of StoredMusic)(Content)
                 _MusicMode = True
 
-                Dim FileName As String = IO.Path.Combine(TempFolder, MusicBuffer.Resource)
-
                 Dim Original As String = "127.0.0.1"
 
                 '缓存无效则转常规投屏
                 If MusicBuffer IsNot Nothing Then
+                    Dim FileName As String = IO.Path.Combine(TempFolder, MusicBuffer.Resource)
+
                     If IO.File.Exists(FileName) Then
                         '播放缓存资源
 
