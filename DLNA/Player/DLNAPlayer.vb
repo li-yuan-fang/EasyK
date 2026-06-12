@@ -610,15 +610,14 @@ Namespace DLNA.Player
 
                 '获取歌词颜色
                 Dim LyricColor As String = vbNullString
-                If .LyricColor Is Nothing Then
-                    .LyricColor = DLNAMusicProviders.GetLyricColorSchema(.Meta, .Attribute, K.Settings.Settings.DLNA.LyricHighlight)
+                If .LyricColor Is Nothing Then .LyricColor = DLNAMusicProviders.GetLyricColorSchema(.Meta, .Attribute, K.Settings.Settings.DLNA.LyricHighlight)
 
-                    If .LyricColor IsNot Nothing Then
-                        LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
+                '生成歌词颜色更新脚本
+                If .LyricColor IsNot Nothing Then
+                    LyricColor = DLNAMusicProviders.GenerateUpdateLyricColorScript(
                             .LyricColor,
                             K.Settings.Settings.DLNA.LyricContrastThreshold
                         )
-                    End If
                 End If
 
                 '获取默认时长
