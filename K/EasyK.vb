@@ -1,7 +1,9 @@
 ﻿Imports System.Drawing
 Imports System.Net.NetworkInformation
 Imports System.Threading
+Imports System.Web.UI.WebControls
 Imports CefSharp
+Imports EasyK.DLNA.Player
 Imports Microsoft.AspNetCore.Http
 
 Public Class EasyK
@@ -523,7 +525,7 @@ Public Class EasyK
         End With
     End Sub
 
-    Private Function GetOccupied(Record As EasyKBookRecord) As String
+    Private Shared Function GetOccupied(Record As EasyKBookRecord) As String
         With Record
             Select Case .Type
                 Case EasyKType.Video
@@ -531,7 +533,8 @@ Public Class EasyK
                 Case EasyKType.DLNA
                     If Not .Content.StartsWith("{") Then Return vbNullString
 
-
+                    Dim MusicBuffer = JsonUtils.SafeDeserializeObject(Of StoredMusic)(.Content)
+                    Return If(MusicBuffer IsNot Nothing, MusicBuffer.Resource, vbNullString)
                 Case Else
                     Return vbNullString
             End Select

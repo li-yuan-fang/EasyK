@@ -10,10 +10,10 @@ Imports Newtonsoft.Json
 Public Class UploadManager
     Implements IDisposable
 
-    Private Shared NumericRegex As New Text.RegularExpressions.Regex("^\d+$")
+    Private Shared ReadOnly NumericRegex As New Text.RegularExpressions.Regex("^\d+$")
 
     'Tip.此处长度为64 所以单个字符重复次数是63
-    Private Shared HashRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d].{63}$")
+    Private Shared ReadOnly HashRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d].{63}$")
 
     '上传会话
     Private Class UploadSession
