@@ -131,13 +131,20 @@ Namespace DLNA.Protocol
             If value Is Nothing Then Return value
 
             Select Case GetType(T)
-                Case = GetType(Boolean), GetType(Short), GetType(UShort), GetType(Integer), GetType(UInteger)
+                Case = GetType(Boolean)
+                    Try
+                        Return DirectCast(Boolean.Parse(value), Object)
+                    Catch ex As FormatException
+                        Dim v = Integer.Parse(value)
+                        Return DirectCast(v <> 0, Object)
+                    End Try
+                Case GetType(Short), GetType(UShort), GetType(Integer), GetType(UInteger)
                     Dim Parse As MethodInfo = Type.GetMethod("Parse",
                                                              BindingFlags.Public Or BindingFlags.Static,
                                                              Nothing,
                                                              New Type() {value.GetType()},
                                                              Nothing)
-                    If GetType(T) <> GetType(Boolean) AndAlso AllowedValueType = AllowValueType.Range Then
+                    If AllowedValueType = AllowValueType.Range Then
                         Return FitRange(Parse.Invoke(Nothing, {value}))
                     Else
                         Return Parse.Invoke(Nothing, {value})

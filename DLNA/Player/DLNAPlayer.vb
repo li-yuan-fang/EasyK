@@ -240,7 +240,16 @@ Namespace DLNA.Player
         '下载资源
         Private Async Function Download(Url As String) As Task(Of String)
             '生成可用文件名
-            Dim FileName As String = IO.Path.Combine(TempFolder, MusicBuffer.Resource)
+            Dim FileName As String
+            If MusicBuffer IsNot Nothing Then
+                FileName = IO.Path.Combine(TempFolder, MusicBuffer.Resource)
+            Else
+                Do
+                    FileName = Guid.NewGuid().ToString()
+                Loop Until Not IO.File.Exists(IO.Path.Combine(TempFolder, FileName))
+
+                FileName = IO.Path.Combine(TempFolder, FileName)
+            End If
 
             '下载
             Using wc As New Net.WebClient()
@@ -697,6 +706,8 @@ Namespace DLNA.Player
             If Waiting Then
                 '初次加载
 
+                Console.WriteLine("MDoc: {0}", MDoc IsNot Nothing)
+
                 'Xml文档无效则忽略该请求
                 If MDoc Is Nothing Then Return
 
@@ -754,6 +765,10 @@ Namespace DLNA.Player
 
             '更新下载标志
             Downloaded = False
+
+            '自动播放
+            'Universal Media Server 不会自动播放
+            Play()
 
             With Player
                 .Invoke(Sub()

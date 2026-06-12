@@ -523,6 +523,21 @@ Public Class EasyK
         End With
     End Sub
 
+    Private Function GetOccupied(Record As EasyKBookRecord) As String
+        With Record
+            Select Case .Type
+                Case EasyKType.Video
+                    Return .Content
+                Case EasyKType.DLNA
+                    If Not .Content.StartsWith("{") Then Return vbNullString
+
+
+                Case Else
+                    Return vbNullString
+            End Select
+        End With
+    End Function
+
     ''' <summary>
     ''' 获取已占用的缓存文件
     ''' </summary>
@@ -532,21 +547,15 @@ Public Class EasyK
 
         SyncLock Queue
             For Each Record As EasyKBookRecord In Queue
-                With Record
-                    If .Type <> EasyKType.Video Then Continue For
-
-                    Occupied.Add(.Content)
-                End With
+                Dim o = GetOccupied(Record)
+                If Not String.IsNullOrEmpty(o) Then Occupied.Add(o)
             Next
         End SyncLock
 
         SyncLock OutdatedQueue
             For Each Record As EasyKBookRecord In OutdatedQueue
-                With Record
-                    If .Type <> EasyKType.Video Then Continue For
-
-                    Occupied.Add(.Content)
-                End With
+                Dim o = GetOccupied(Record)
+                If Not String.IsNullOrEmpty(o) Then Occupied.Add(o)
             Next
         End SyncLock
 
