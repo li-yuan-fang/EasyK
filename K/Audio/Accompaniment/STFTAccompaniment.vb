@@ -309,16 +309,14 @@ Namespace Accompaniment
                     Dim attenuation As Double = GetVocalFrequencyWeight(freq)
                     attenuation *= coherence
 
-                    '中置/侧向分解
-                    Dim centerX As Double = (fft1(k).X + fft2(k).X) * 0.5
-                    Dim centerY As Double = (fft1(k).Y + fft2(k).Y) * 0.5
-                    Dim sideX As Double = (fft1(k).X - fft2(k).X) * 0.5
-                    Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
-
                     '衰减中置（人声），保留侧向（伴奏）
                     Dim att As Double = Math.Max(1 - attenuation * _ReductionFactor, 0)
-                    centerX *= att
-                    centerY *= att
+
+                    '中置/侧向分解
+                    Dim centerX As Double = (fft1(k).X + fft2(k).X) * 0.5 * att
+                    Dim centerY As Double = (fft1(k).Y + fft2(k).Y) * 0.5 * att
+                    Dim sideX As Double = (fft1(k).X - fft2(k).X) * 0.5
+                    Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
 
                     fft1(k).X = CSng(centerX + sideX)
                     fft1(k).Y = CSng(centerY + sideY)

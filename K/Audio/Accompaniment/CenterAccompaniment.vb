@@ -57,7 +57,10 @@
                     For ch As Integer = 0 To Channels - 1
                         Dim sampleOffset = frameOffset + (ch * BytesPerPCMSample)
                         Dim rawValue As Short = BitConverter.ToInt16(Buffer, sampleOffset)
-                        samples(ch) = rawValue / 32768.0F
+
+                        '以乘代除
+                        'samples(ch) = rawValue / 32768.0F
+                        samples(ch) = rawValue * 3.05175781E-05
                     Next
 
                     ' 步骤2: 计算各对侧面声道的差分信号（去除中置内容）
