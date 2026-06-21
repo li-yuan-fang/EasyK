@@ -705,8 +705,6 @@ Namespace DLNA.Player
             If Waiting Then
                 '初次加载
 
-                Console.WriteLine("MDoc: {0}", MDoc IsNot Nothing)
-
                 'Xml文档无效则忽略该请求
                 If MDoc Is Nothing Then Return
 

@@ -589,6 +589,7 @@
     <Compile Include="Settings\KWebSettings.vb" />
     <Compile Include="Settings\SettingContainer.vb" />
     <Compile Include="Settings\UploadSettings.vb" />
+    <Compile Include="Utils\AsyncUtils.vb" />
     <Compile Include="Utils\AudioUtils.vb" />
     <Compile Include="Utils\ColorUtils.vb" />
     <Compile Include="Utils\ConsoleUtils.vb" />

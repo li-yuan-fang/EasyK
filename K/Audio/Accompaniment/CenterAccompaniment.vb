@@ -1,6 +1,4 @@
-﻿Imports System.Threading
-
-Namespace Accompaniment
+﻿Namespace Accompaniment
 
     Public Class CenterAccompaniment
 
@@ -46,40 +44,36 @@ Namespace Accompaniment
             Dim framesToProcess = BytesRead \ PCMFrameSize
             Dim actualBytes = framesToProcess * PCMFrameSize
 
-            Dim Countdown As New CountdownEvent(framesToProcess)
+            AsyncUtils.Process(
+                Settings.Settings.Audio.DisableAsyncProcess,
+                Settings.Settings.Audio.AsyncMode,
+                framesToProcess,
+                Nothing,
+                Sub(i)
+                    Dim frameOffset = i * PCMFrameSize
 
-            For frame As Integer = 0 To framesToProcess - 1
-                Dim fid As Integer = frame
+                    ' 步骤1: 解析所有声道样本到浮点数组
+                    Dim samples(Channels - 1) As Single
+                    For ch As Integer = 0 To Channels - 1
+                        Dim sampleOffset = frameOffset + (ch * BytesPerPCMSample)
+                        Dim rawValue As Short = BitConverter.ToInt16(Buffer, sampleOffset)
+                        samples(ch) = rawValue / 32768.0F
+                    Next
 
-                Task.Run(Sub()
-                             Dim frameOffset = fid * PCMFrameSize
+                    ' 步骤2: 计算各对侧面声道的差分信号（去除中置内容）
+                    Dim processedSamples = ProcessFrame(samples)
 
-                             ' 步骤1: 解析所有声道样本到浮点数组
-                             Dim samples(Channels - 1) As Single
-                             For ch As Integer = 0 To Channels - 1
-                                 Dim sampleOffset = frameOffset + (ch * BytesPerPCMSample)
-                                 Dim rawValue As Short = BitConverter.ToInt16(Buffer, sampleOffset)
-                                 samples(ch) = rawValue / 32768.0F
-                             Next
+                    ' 步骤3: 写回缓冲区
+                    For ch As Integer = 0 To Channels - 1
+                        Dim sampleOffset = frameOffset + (ch * BytesPerPCMSample)
+                        Dim clamped As Single = Math.Max(-1.0F, Math.Min(1.0F, processedSamples(ch)))
+                        Dim newValue As Short = CShort(clamped * 32767.0F)
 
-                             ' 步骤2: 计算各对侧面声道的差分信号（去除中置内容）
-                             Dim processedSamples = ProcessFrame(samples)
-
-                             ' 步骤3: 写回缓冲区
-                             For ch As Integer = 0 To Channels - 1
-                                 Dim sampleOffset = frameOffset + (ch * BytesPerPCMSample)
-                                 Dim clamped As Single = Math.Max(-1.0F, Math.Min(1.0F, processedSamples(ch)))
-                                 Dim newValue As Short = CShort(clamped * 32767.0F)
-
-                                 Buffer(Offset + sampleOffset) = CByte(newValue And &HFF)
-                                 Buffer(Offset + sampleOffset + 1) = CByte((newValue >> 8) And &HFF)
-                             Next
-
-                             Countdown.Signal()
-                         End Sub)
-            Next
-
-            Countdown.Wait()
+                        Buffer(Offset + sampleOffset) = CByte(newValue And &HFF)
+                        Buffer(Offset + sampleOffset + 1) = CByte((newValue >> 8) And &HFF)
+                    Next
+                End Sub
+            )
         End Sub
 
         ''' <summary>
@@ -89,21 +83,18 @@ Namespace Accompaniment
         ''' <param name="Offset">偏移量</param>
         ''' <param name="SamplesRead">长度</param>
         Public Sub Progress(Buffer As Single(), Offset As Integer, SamplesRead As Integer)
-            Dim Countdown As New CountdownEvent(SamplesRead \ Channels)
-
-            For i = Offset To Offset + SamplesRead - 1 Step Channels
-                Dim index As Integer = i
-                Task.Run(Sub()
-                             Dim Frame = ProcessFrame(Buffer.Skip(index).Take(Channels).ToArray())
-
-                             System.Buffer.BlockCopy(Frame, 0, Buffer, index << 2, Channels << 2)
-                             'Array.Copy(Frame, 0, Buffer, index, Channels)
-
-                             Countdown.Signal()
-                         End Sub)
-            Next
-
-            Countdown.Wait()
+            AsyncUtils.Process(
+                Settings.Settings.Audio.DisableAsyncProcess,
+                Settings.Settings.Audio.AsyncMode,
+                Offset + SamplesRead,
+                Nothing,
+                Sub(i)
+                    Dim Frame = ProcessFrame(Buffer.Skip(i).Take(Channels).ToArray())
+                    System.Buffer.BlockCopy(Frame, 0, Buffer, i << 2, Channels << 2)
+                End Sub,
+                Offset,
+                Channels
+            )
         End Sub
 
         ''' <summary>

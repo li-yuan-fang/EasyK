@@ -21,6 +21,9 @@ Namespace Accompaniment
         '采样率
         Protected ReadOnly SampleRate As Integer
 
+        '频率表
+        Protected ReadOnly FreqTable(FFT_Size - 1) As Double
+
         ' 缓冲区
         Protected ReadOnly _inputBuffer As Single()     ' 输入缓冲区
         Protected ReadOnly _outputBuffer As Single()    ' 输出缓冲区（重叠相加）
@@ -34,6 +37,9 @@ Namespace Accompaniment
 
         '声道数
         Protected ReadOnly Channels As Integer
+
+        'Channels*FFTSize
+        Protected ReadOnly FFTStep As Integer
 
         '声道角色
         Protected ReadOnly ChannelRoles As List(Of ChannelRole)
@@ -69,6 +75,11 @@ Namespace Accompaniment
             Channels = WaveFormat.Channels
             SampleRate = WaveFormat.SampleRate
 
+            '计算频率表
+            For i = 0 To FFT_Size - 1
+                FreqTable(i) = SampleRate * i / FFT_Size
+            Next
+
             ' 生成窗函数
             Window = GenerateWindow(FFT_Size, WindowType)
 
@@ -78,9 +89,9 @@ Namespace Accompaniment
             SideChannelPairs = ChannelUtils.GetSideChannelPairs(ChannelRoles)
 
             ' 初始化缓冲区
-            Dim FFT_Step As Integer = FFT_Size * Channels
-            _inputBuffer = New Single(FFT_Step - 1) {}
-            _outputBuffer = New Single(FFT_Step - 1) {}
+            FFTStep = FFT_Size * Channels
+            _inputBuffer = New Single(FFTStep - 1) {}
+            _outputBuffer = New Single(FFTStep - 1) {}
 
             _overlapBuffer = New Single(Channels - 1)() {}
             For ch = 0 To Channels - 1
@@ -126,81 +137,72 @@ Namespace Accompaniment
         ''' 执行STFT和逆变换
         ''' </summary>
         Protected Sub PerformSTFT()
-            Dim FFTStep As Integer = FFT_Size * Channels
             Dim fft As New List(Of Complex())
 
             '前处理
-            Dim Countdown As New CountdownEvent(Channels)
-            For ch = 0 To Channels - 1
-                Dim f = New Complex(FFT_Size - 1) {}
-                Dim id = ch
-                fft.Add(f)
+            AsyncUtils.Process(
+                Settings.Settings.Audio.DisableAsyncProcess,
+                Settings.Settings.Audio.AsyncMode,
+                Channels,
+                Sub(i) fft.Add(New Complex(FFT_Size - 1) {}),
+                Sub(ch)
+                    Dim f As Complex() = fft(ch)
+                    Dim j As Integer = 0
 
-                Task.Run(Sub()
-                             Dim j = 0
-                             For i As Integer = id To FFTStep - 1 Step Channels
-                                 With f(j)
-                                     .X = _inputBuffer(i) * Window(j)
-                                     .Y = 0
-                                 End With
-                                 j += 1
-                             Next
+                    For i As Integer = ch To FFTStep - 1 Step Channels
+                        With f(j)
+                            .X = _inputBuffer(i) * Window(j)
+                            .Y = 0
+                        End With
+                        j += 1
+                    Next
 
-                             FastFourierTransform.FFT(True, FFT_Pow, f)
-
-                             Countdown.Signal()
-                         End Sub)
-            Next
-
-            Countdown.Wait()
+                    FastFourierTransform.FFT(True, FFT_Pow, f)
+                End Sub
+            )
 
             '清除人声
             Progress(fft)
 
             '后处理
-            Countdown.Dispose()
-            Countdown = New CountdownEvent(Channels)
+            AsyncUtils.Process(
+                Settings.Settings.Audio.DisableAsyncProcess,
+                Settings.Settings.Audio.AsyncMode,
+                Channels,
+                Nothing,
+                Sub(ch)
+                    Dim f As Complex() = fft(ch)
 
-            For ch = 0 To Channels - 1
-                Dim id = ch
+                    FastFourierTransform.FFT(False, FFT_Pow, f)
 
-                Task.Run(Sub()
-                             Dim f = fft(id)
+                    ' 重叠相加合成
+                    For i As Integer = 0 To FFT_Size - 1
+                        Dim windowedSample As Single = f(i).X * Window(i)
 
-                             FastFourierTransform.FFT(False, FFT_Pow, f)
+                        If _isFirstFrame Then
+                            ' 第一帧直接写入
+                            _overlapBuffer(ch)(i) = windowedSample
+                        Else
+                            ' 后续帧进行重叠相加
+                            _overlapBuffer(ch)(i) += windowedSample
+                        End If
+                    Next
 
-                             ' 重叠相加合成
-                             For i As Integer = 0 To FFT_Size - 1
-                                 Dim windowedSample As Single = f(i).X * Window(i)
+                    '将前hopSize个样本复制到输出缓冲区
+                    For i = 0 To Hop_Size - 1
+                        _outputBuffer(i * Channels + ch) = _overlapBuffer(ch)(i)
+                    Next
 
-                                 If _isFirstFrame Then
-                                     ' 第一帧直接写入
-                                     _overlapBuffer(id)(i) = windowedSample
-                                 Else
-                                     ' 后续帧进行重叠相加
-                                     _overlapBuffer(id)(i) += windowedSample
-                                 End If
-                             Next
+                    ' 移动重叠缓冲区
+                    ' 将剩余数据移到前面，为下一帧做准备
+                    Array.Copy(_overlapBuffer(ch), Hop_Size, _overlapBuffer(ch), 0, Overlap_Size)
 
-                             '将前hopSize个样本复制到输出缓冲区
-                             For i = 0 To Hop_Size - 1
-                                 _outputBuffer(i * Channels + id) = _overlapBuffer(id)(i)
-                             Next
-
-                             ' 移动重叠缓冲区
-                             ' 将剩余数据移到前面，为下一帧做准备
-                             Array.Copy(_overlapBuffer(id), Hop_Size, _overlapBuffer(id), 0, Overlap_Size)
-
-                             ' 清空新移动区域的后部（避免残留数据影响）
-                             For i As Integer = Overlap_Size To FFT_Size - 1
-                                 _overlapBuffer(id)(i) = 0.0F
-                             Next
-
-                             Countdown.Signal()
-                         End Sub)
-            Next
-
-            Countdown.Wait()
+                    ' 清空新移动区域的后部（避免残留数据影响）
+                    For i As Integer = Overlap_Size To FFT_Size - 1
+                        _overlapBuffer(ch)(i) = 0.0F
+                    Next
+                End Sub
+            )
 
             _outputBufferFilled = Hop_Size * Channels
             _outputBufferPos = 0
@@ -232,23 +234,38 @@ Namespace Accompaniment
         ''' </summary>
         ''' <param name="fft">波形</param>
         Protected Sub Progress(fft As List(Of Complex()))
-            Dim Countdown As New CountdownEvent(SideChannelPairs.Count + CenterChannelIndices.Count)
+            '暂且不封装异步和同步方法
+            Dim Cores As Integer = AsyncUtils.GetPhysicalCores()
 
-            For Each Side In SideChannelPairs
-                Task.Run(Sub()
-                             ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
-                             Countdown.Signal()
-                         End Sub)
-            Next
+            If Settings.Settings.Audio.DisableAsyncProcess OrElse Cores < 4 Then
+                '同步执行
+                For Each Side In SideChannelPairs
+                    ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
+                Next
 
-            For Each Central In CenterChannelIndices
-                Task.Run(Sub()
-                             AttenuateCenterChannel(fft(Central))
-                             Countdown.Signal()
-                         End Sub)
-            Next
+                For Each Central In CenterChannelIndices
+                    AttenuateCenterChannel(fft(Central))
+                Next
+            Else
+                '异步执行
+                Dim Countdown As New CountdownEvent(SideChannelPairs.Count + CenterChannelIndices.Count)
 
-            Countdown.Wait()
+                For Each Side In SideChannelPairs
+                    Task.Run(Sub()
+                                 ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
+                                 Countdown.Signal()
+                             End Sub)
+                Next
+
+                For Each Central In CenterChannelIndices
+                    Task.Run(Sub()
+                                 AttenuateCenterChannel(fft(Central))
+                                 Countdown.Signal()
+                             End Sub)
+                Next
+
+                Countdown.Wait()
+            End If
         End Sub
 
         ''' <summary>
@@ -276,7 +293,7 @@ Namespace Accompaniment
                 coherence = Math.Max(0, Math.Min(1, coherence))
 
                 '频率
-                Dim freq As Double = k * SampleRate / FFT_Size
+                Dim freq As Double = FreqTable(k)
 
                 '计算局部对比度
                 Dim contrast = ComputeLocalContrast(k, fft1) ' 使用左声道或平均
@@ -341,7 +358,7 @@ Namespace Accompaniment
         ''' <param name="fft">声道</param>
         Protected Sub AttenuateCenterChannel(ByRef fft As Complex())
             For k As Integer = 0 To FFT_Size \ 2
-                Dim freq As Double = k * SampleRate / FFT_Size
+                Dim freq As Double = FreqTable(k)
                 ' 中置声道通常包含清晰人声，进行轻度宽频衰减
                 If freq >= 1000 AndAlso freq <= 6000 Then
                     Dim attenuation As Single = Math.Max(1 - GetVocalFrequencyWeight(freq) * _ReductionFactor, 0)
