@@ -31,7 +31,7 @@ Public Class EasyK
 
     Private _Running As Boolean = False
 
-    Private _SavedQRPosition As Point
+    Private _SavedQRBounds As Rectangle
 
     Private PushLock As Integer = 0
 
@@ -251,7 +251,7 @@ Public Class EasyK
     ''' <param name="Bounds">部署区域</param>
     Public Sub Setup(Bounds As Rectangle)
         _Running = True
-        _SavedQRPosition = New Point(-1, -1)
+        _SavedQRBounds = New Rectangle(-1, -1, 0, 0)
         PlayerForm.Setup(Bounds)
 
         '检测是否需要显示二维码
@@ -587,13 +587,17 @@ Public Class EasyK
             Dim Width, Height As Integer
             Dim X, Y As Integer
 
-            Height = CInt(.Height * 0.25)
-            Width = CInt(Height * 0.9)
-
-            If _SavedQRPosition.X >= 0 AndAlso _SavedQRPosition.Y >= 0 Then
-                X = _SavedQRPosition.X
-                Y = _SavedQRPosition.Y
+            If _SavedQRBounds.X >= 0 AndAlso _SavedQRBounds.Y >= 0 Then
+                With _SavedQRBounds
+                    X = .X
+                    Y = .Y
+                    Width = .Width
+                    Height = .Height
+                End With
             Else
+                Height = CInt(.Height * 0.25)
+                Width = CInt(Height * 0.9)
+
                 X = CInt(.Width - Width - 1)
                 Y = CInt((.Height - Height) / 2 - 1)
             End If
@@ -658,13 +662,13 @@ Public Class EasyK
                         End Sub)
 
                 UpdateQRBounds()
-                AddHandler QRForm.OnPositionUpdate, AddressOf QRForm_OnPositionUpdate
+                AddHandler QRForm.OnBoundsUpdate, AddressOf QRForm_OnBoundsUpdate
             End If
         End With
     End Sub
 
-    Private Sub QRForm_OnPositionUpdate(Pos As Point)
-        _SavedQRPosition = Pos
+    Private Sub QRForm_OnBoundsUpdate(Bounds As Rectangle)
+        _SavedQRBounds = Bounds
     End Sub
 
     ''' <summary>
@@ -692,7 +696,7 @@ Public Class EasyK
         If QRForm Is Nothing Then Return
 
         If PlayerForm IsNot Nothing AndAlso Not PlayerForm.IsDisposed Then PlayerForm.Invoke(Sub() QRForm.Close())
-        RemoveHandler QRForm.OnPositionUpdate, AddressOf QRForm_OnPositionUpdate
+        RemoveHandler QRForm.OnBoundsUpdate, AddressOf QRForm_OnBoundsUpdate
         QRForm = Nothing
     End Sub
 

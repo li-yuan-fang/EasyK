@@ -18,10 +18,10 @@ Public Class FrmQRCode
     Friend Shadows Parent As Form = Nothing
 
     ''' <summary>
-    ''' 位置更新事件
+    ''' 尺寸参数更新事件
     ''' </summary>
-    ''' <param name="Pos">位置</param>
-    Public Event OnPositionUpdate(Pos As Point)
+    ''' <param name="Bounds">尺寸参数</param>
+    Public Event OnBoundsUpdate(Bounds As Rectangle)
 
     ''' <summary>
     ''' 获取或设置圆角状态
@@ -94,7 +94,7 @@ Public Class FrmQRCode
         Dragging = False
         Cursor = Cursors.Default
 
-        RaiseEvent OnPositionUpdate(New Point(Location.X - Parent.Bounds.X, Location.Y - Parent.Bounds.Y))
+        RaiseEvent OnBoundsUpdate(New Rectangle(Location.X - Parent.Bounds.X, Location.Y - Parent.Bounds.Y, Width, Height))
     End Sub
 
     Private Sub FrmQRCode_MouseMove(sender As Object, e As MouseEventArgs) Handles Me.MouseMove
@@ -152,6 +152,7 @@ Public Class FrmQRCode
         End If
 
         With Zoomed
+            RaiseEvent OnBoundsUpdate(New Rectangle(X, Y, .Width, .Height))
             SetBounds(X, Y, .Width, .Height)
         End With
         UpdateQR()
