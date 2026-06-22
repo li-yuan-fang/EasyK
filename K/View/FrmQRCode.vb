@@ -3,6 +3,8 @@ Imports System.Windows.Forms
 
 Public Class FrmQRCode
 
+    Private Const ZoomRate As Double = 1.1D
+
     Private Shared Transparent As Color = Color.FromArgb(255, 255, 254)
 
     Friend WithEvents QR As QRCodeBox
@@ -119,6 +121,40 @@ Public Class FrmQRCode
                 End If
             End If
         End If
+    End Sub
+
+    Private Function ManualResize(ZoomLarge As Boolean) As Size
+        Dim h As Integer
+        If ZoomLarge Then
+            h = Math.Round(Height * ZoomRate)
+            Return New Size(If(Parent Is Nothing, Math.Round(Width * ZoomRate), 0.9 * h), h)
+        Else
+            h = Math.Round(Height / ZoomRate)
+            Return New Size(If(Parent Is Nothing, Math.Round(Width / ZoomRate), 0.9 * h), h)
+        End If
+    End Function
+
+    Private Sub FrmQRCode_MouseWheel(sender As Object, e As MouseEventArgs) Handles Me.MouseWheel
+        If (Control.ModifierKeys And Keys.Control) = &H0 OrElse e.Delta = 0 Then Return
+
+        Dim Zoomed As Size = ManualResize(e.Delta > 0)
+        Dim X As Integer = Location.X
+        Dim Y As Integer = Location.Y
+
+        If Parent IsNot Nothing Then
+            With Parent.Bounds
+                X -= .X
+                Y -= .Y
+
+                X = Math.Max(Math.Min(X, .Width - Zoomed.Width), 0)
+                Y = Math.Max(Math.Min(Y, .Height - Zoomed.Height), 0)
+            End With
+        End If
+
+        With Zoomed
+            SetBounds(X, Y, .Width, .Height)
+        End With
+        UpdateQR()
     End Sub
 
     Private Sub QR_MouseDown(sender As Object, e As MouseEventArgs) Handles QR.MouseDown
