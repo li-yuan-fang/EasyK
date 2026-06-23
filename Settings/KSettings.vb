@@ -55,6 +55,14 @@ Public Class KSettings
     Public Property AllowRemoteQR As Boolean = True
 
     ''' <summary>
+    ''' 对随机点歌采用平衡随机算法
+    ''' </summary>
+    ''' <remarks>平衡随机算法可以避免同一点歌人的歌出现连续排序情况</remarks>
+    ''' <returns></returns>
+    <JsonProperty("banlanced_book_random")>
+    Public Property BalancedBookRandom As Boolean = True
+
+    ''' <summary>
     ''' 音频设置
     ''' </summary>
     ''' <returns></returns>

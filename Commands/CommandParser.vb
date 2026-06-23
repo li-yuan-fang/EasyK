@@ -1,16 +1,14 @@
-﻿Namespace Commands
+﻿Imports System.Reflection
+
+Namespace Commands
 
     Public Class CommandParser
-
-        Private ReadOnly K As EasyK
-
-        Private ReadOnly Web As KWebCore
-
-        Private ReadOnly Settings As SettingContainer
 
         Private ReadOnly Commands As New List(Of Command)
 
         Private ReadOnly ExitAction As New Action(Sub() RaiseEvent OnExit())
+
+        Private ReadOnly ProvidedParameters() As Object
 
         Private ExitFlag As Boolean
 
@@ -25,40 +23,86 @@
         ''' <param name="K"></param>
         ''' <param name="Web"></param>
         Public Sub New(K As EasyK, Web As KWebCore, Settings As SettingContainer)
-            Me.K = K
-            Me.Web = Web
-            Me.Settings = Settings
+            ProvidedParameters = {K, Web, Settings, Commands, ExitAction}
             ExitFlag = False
 
             LoadCommands()
         End Sub
 
         Private Sub LoadCommands()
-            With Commands
-                .Add(New CommandHelp(Commands))
+            Dim Commands As New Dictionary(Of CommandType, List(Of Command))
+            For Each t As CommandType In [Enum].GetValues(GetType(CommandType))
+                Commands.Add(t, New List(Of Command))
+            Next
 
-                .Add(New CommandPort(K, Web, Settings))
-                .Add(New CommandPass(K, Settings))
-                .Add(New CommandBili(K))
-                .Add(New CommandClean(K, Web, Settings))
-                .Add(New CommandRestore(K, Settings))
-                .Add(New CommandQR(K, Settings))
-                .Add(New CommandStrict(Settings))
-                .Add(New CommandPlugin())
-                .Add(New CommandPull(K))
-                .Add(New CommandReset(K))
-                .Add(New CommandExit(ExitAction))
+            '反射加载
+            Dim CommandNamespace As String = "EasyK.Commands"
+            For Each asm As Assembly In AppDomain.CurrentDomain.GetAssemblies()
+                Try
+                    For Each type As Type In asm.GetTypes()
+                        With type
+                            '检查类型
+                            If .Namespace <> CommandNamespace OrElse Not GetType(Command).IsAssignableFrom(type) Then Continue For
 
-                .Add(New CommandList(K))
-                .Add(New CommandBook(K))
-                .Add(New CommandTop(K))
-                .Add(New CommandPush(K))
-                .Add(New CommandPause(K))
-                .Add(New CommandSeek(K))
-                .Add(New CommandRemove(K))
-                .Add(New CommandOutdated(K))
-                .Add(New CommandReorder(K))
-            End With
+                            '遍历构造器
+                            For Each c In .GetConstructors()
+                                Dim Valid As Boolean = True
+                                Dim Params As New List(Of Object)
+
+                                For Each p In c.GetParameters()
+                                    '已选择的参数
+                                    Dim Selected As Object = Nothing
+
+                                    '遍历所有能提供的参数
+                                    For Each pp In ProvidedParameters
+                                        '检测所要求的参数是否为能提供的参数的父类
+                                        If Not p.ParameterType.IsAssignableFrom(pp.GetType()) Then Continue For
+
+                                        Selected = pp
+                                        Exit For
+                                    Next
+
+                                    '参数无效 提前退出
+                                    If Selected Is Nothing Then
+                                        Valid = False
+                                        Exit For
+                                    End If
+
+                                    Params.Add(Selected)
+                                Next
+
+                                '如果构造器无效 则尝试下一个
+                                If Not Valid Then Continue For
+
+                                '匹配构造函数成功 退出循环
+                                Try
+                                    Dim cmd As Command = c.Invoke(Params.ToArray())
+                                    Commands(cmd.Type).Add(cmd)
+                                Catch ex As Exception
+                                    Console.WriteLine("加载指令 {0} 时出错 - {1}",
+                                                      type.Name.Substring(Math.Min(type.Name.Length, 7)),
+                                                      ex.Message
+                                    )
+                                End Try
+
+                                Exit For
+                            Next
+                        End With
+                    Next
+                Catch ex As ReflectionTypeLoadException
+                    For Each e As Exception In ex.LoaderExceptions
+                        Console.WriteLine("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, e.Message)
+                    Next
+                Catch ex As Exception
+                    Console.WriteLine("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, ex.Message)
+                End Try
+            Next
+
+            For Each t As CommandType In Commands.Keys()
+                For Each c In Commands(t)
+                    Me.Commands.Add(c)
+                Next
+            Next
         End Sub
 
         ''' <summary>

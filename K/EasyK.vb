@@ -1,7 +1,6 @@
 ﻿Imports System.Drawing
 Imports System.Net.NetworkInformation
 Imports System.Threading
-Imports System.Web.UI.WebControls
 Imports CefSharp
 Imports EasyK.DLNA.Player
 Imports Microsoft.AspNetCore.Http
@@ -734,6 +733,129 @@ Public Class EasyK
 
         DLNAServer.Player.PullMusicLyrics()
     End Sub
+
+    ''' <summary>
+    ''' 已点列表随机排序
+    ''' </summary>
+    Public Sub Random()
+        Random(Settings.Settings.BalancedBookRandom)
+    End Sub
+
+    ''' <summary>
+    ''' 已点列表随机排序
+    ''' </summary>
+    ''' <param name="Banlanced">是否采用平衡排序算法</param>
+    Public Sub Random(Banlanced As Boolean)
+        If Banlanced Then
+            RandomBalanced()
+        Else
+            RandomCommon()
+        End If
+    End Sub
+
+    '随机排序
+    Private Sub RandomCommon()
+        Dim Rnd As New Random()
+
+        SyncLock Queue
+            Dim Saved As New List(Of EasyKBookRecord)(Queue)
+            '使用 Fisher-Yates 洗牌算法进行随机排序
+            For i As Integer = Saved.Count - 1 To 1 Step -1
+                Dim j As Integer = Rnd.Next(i + 1)
+                ' 交换元素
+                Dim temp As EasyKBookRecord = Saved(i)
+                Saved(i) = Saved(j)
+                Saved(j) = temp
+            Next
+
+            Queue.Clear()
+            For Each s In Saved
+                Queue.AddLast(s)
+            Next
+        End SyncLock
+    End Sub
+
+    '平衡随机排序
+    Private Sub RandomBalanced()
+        Dim First As String = If(Current IsNot Nothing, Current.Order, vbNullString)
+        Dim Pool As New Dictionary(Of String, List(Of EasyKBookRecord))
+
+        SyncLock Queue
+            '创建剩余池
+            For Each Record As EasyKBookRecord In Queue
+                With Record
+                    If Pool.ContainsKey(.Order) Then
+                        Pool(.Order).Add(Record)
+                    Else
+                        Pool.Add(.Order, New List(Of EasyKBookRecord)({Record}))
+                    End If
+                End With
+            Next
+
+            Queue.Clear()
+            For Each Record As EasyKBookRecord In RandomBalanced(Pool, First)
+                Queue.AddLast(Record)
+            Next
+        End SyncLock
+    End Sub
+
+    '平衡随机排序
+    Private Function RandomBalanced(Pool As Dictionary(Of String, List(Of EasyKBookRecord)),
+                                    AvoidFirst As String) As List(Of EasyKBookRecord)
+        Dim Rnd As New Random()
+        Dim Members As New List(Of String)(Pool.Keys)
+        Dim Result As New List(Of EasyKBookRecord)
+
+        '查找第一个元素
+        If Not String.IsNullOrEmpty(AvoidFirst) AndAlso Members.Contains(AvoidFirst) Then
+            Members.Remove(AvoidFirst)
+
+            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members)
+            If Record IsNot Nothing Then Result.Add(Record)
+
+            Members.Add(AvoidFirst)
+        End If
+
+        '常规遍历
+        While Members.Count > 0
+            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members)
+            If Record IsNot Nothing Then Result.Add(Record)
+        End While
+
+        '深度搜索
+        With Result
+            If .Count > 0 Then
+                .AddRange(RandomBalanced(Pool, .Last().Order))
+            End If
+        End With
+
+        Return Result
+    End Function
+
+    '随机提取一条记录
+    Private Function RandomBanlancedPick(Rnd As Random,
+                                         Pool As Dictionary(Of String, List(Of EasyKBookRecord)),
+                                         Members As List(Of String)) As EasyKBookRecord
+        '随机选出点歌人
+        If Members.Count <= 0 Then Return Nothing
+
+        Dim MemberIndex As Integer = Rnd.Next(Members.Count)
+        Dim Member As String = Members(MemberIndex)
+        Members.RemoveAt(MemberIndex)
+
+        '随机选歌
+        If Not Pool.ContainsKey(Member) Then Return Nothing
+
+        Dim Count As Integer = Pool(Member).Count
+        If Count <= 0 Then Return Nothing
+
+        Dim RecordIndex As Integer = Rnd.Next(Count)
+
+        Dim Record As EasyKBookRecord = Pool(Member)(RecordIndex)
+        Pool(Member).RemoveAt(RecordIndex)
+
+        Return Record
+    End Function
 
     ''' <summary>
     ''' 刷新记录

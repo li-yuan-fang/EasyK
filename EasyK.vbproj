@@ -477,6 +477,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Implements\CommandRandom.vb" />
     <Compile Include="DLNA\Player\DLNAPlayer.vb" />
     <Compile Include="DLNA\Player\StoredMusic.vb" />
     <Compile Include="K\Alert\AlertManager.vb" />

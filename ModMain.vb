@@ -1,5 +1,7 @@
-﻿Imports System.Text
+﻿Imports System.Reflection
+Imports System.Text
 Imports System.Windows.Forms
+Imports EasyK.Commands
 Imports EasyK.ConsoleUtils
 
 Module ModMain
