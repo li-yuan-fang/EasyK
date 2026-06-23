@@ -58,20 +58,6 @@ Public Class KAudioSetting
     Public Property AccompanimentVolumeGain As Single = 0.1F
 
     ''' <summary>
-    ''' 禁用伴奏异步计算
-    ''' </summary>
-    ''' <returns></returns>
-    <JsonProperty("disabled_async_process")>
-    Public Property DisableAsyncProcess As Boolean = False
-
-    ''' <summary>
-    ''' 伴奏计算并发模式
-    ''' </summary>
-    ''' <returns></returns>
-    <JsonProperty("async_mode")>
-    Public Property AsyncMode As AsyncUtils.ConcurrencyMode = AsyncUtils.ConcurrencyMode.NoLimit
-
-    ''' <summary>
     ''' 获取托管音频启用状态
     ''' </summary>
     ''' <returns></returns>

@@ -4,6 +4,8 @@ Namespace Commands
 
     Public Class CommandParser
 
+        Private ReadOnly Settings As SettingContainer
+
         Private ReadOnly Commands As New List(Of Command)
 
         Private ReadOnly ExitAction As New Action(Sub() RaiseEvent OnExit())
@@ -23,6 +25,7 @@ Namespace Commands
         ''' <param name="K"></param>
         ''' <param name="Web"></param>
         Public Sub New(K As EasyK, Web As KWebCore, Settings As SettingContainer)
+            Me.Settings = Settings
             ProvidedParameters = {K, Web, Settings, Commands, ExitAction}
             ExitFlag = False
 
@@ -39,13 +42,21 @@ Namespace Commands
             Dim CommandNamespace As String = "EasyK.Commands"
             For Each asm As Assembly In AppDomain.CurrentDomain.GetAssemblies()
                 Try
-                    For Each type As Type In asm.GetTypes()
-                        With type
-                            '检查类型
-                            If .Namespace <> CommandNamespace OrElse Not GetType(Command).IsAssignableFrom(type) Then Continue For
-
+                    AsyncUtils.Process(
+                        Settings.Settings.Async.CompletelySync,
+                        Settings.Settings.Async.AsyncMode,
+                        asm.GetTypes(),
+                        Sub(ByRef h As Boolean, type As Type)
+                            With type
+                                '检查类型
+                                If .Namespace <> CommandNamespace OrElse
+                                    .IsAbstract OrElse
+                                    Not GetType(Command).IsAssignableFrom(type) Then h = True
+                            End With
+                        End Sub,
+                        Sub(ByRef h As Boolean, type As Type)
                             '遍历构造器
-                            For Each c In .GetConstructors()
+                            For Each c In type.GetConstructors()
                                 Dim Valid As Boolean = True
                                 Dim Params As New List(Of Object)
 
@@ -87,8 +98,8 @@ Namespace Commands
 
                                 Exit For
                             Next
-                        End With
-                    Next
+                        End Sub
+                    )
                 Catch ex As ReflectionTypeLoadException
                     For Each e As Exception In ex.LoaderExceptions
                         Console.WriteLine("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, e.Message)

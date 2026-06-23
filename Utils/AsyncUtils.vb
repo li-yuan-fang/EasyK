@@ -7,13 +7,13 @@ Public Class AsyncUtils
     ''' 循环委托
     ''' </summary>
     ''' <param name="Index">索引</param>
-    Public Delegate Sub LoopInvoker(Index As Integer)
+    Public Delegate Sub LoopInvoker(ByRef Handled As Boolean, Index As Integer)
 
     ''' <summary>
     ''' 枚举循环委托
     ''' </summary>
     ''' <param name="e">枚举元素</param>
-    Public Delegate Sub LoopEnumerableInvoker(Of T)(e As T)
+    Public Delegate Sub LoopEnumerableInvoker(Of T)(ByRef Handled As Boolean, e As T)
 
     ''' <summary>
     ''' 并发模式
@@ -210,7 +210,7 @@ Public Class AsyncUtils
         '按物理核心数判断
         Dim Cores = GetPhysicalCores()
 
-        If Cores < 4 Then
+        If Settings.Settings.Async.AutoSyncThreshold >= 0 AndAlso Cores < Settings.Settings.Async.AutoSyncThreshold Then
             ProcessSync(Count, PreSync, Async, Start, [Step])
         Else
             ProcessAsync(
@@ -227,9 +227,14 @@ Public Class AsyncUtils
 
     Private Shared Sub ProcessSync(Count As Integer, PreSync As LoopInvoker, Async As LoopInvoker, Start As Integer, [Step] As Integer)
         For i = Start To Count - 1 Step [Step]
-            If PreSync IsNot Nothing Then PreSync.Invoke(i)
+            If PreSync IsNot Nothing Then
+                Dim Handled As Boolean = False
+                PreSync.Invoke(Handled, i)
 
-            Async.Invoke(i)
+                If Handled Then Continue For
+            End If
+
+            Async.Invoke(False, i)
         Next
     End Sub
 
@@ -248,10 +253,15 @@ Public Class AsyncUtils
                 Dim Tasks As New List(Of Task)
 
                 For i = Start To Count - 1 Step [Step]
-                    Dim Index As Integer = i
-                    If PreSync IsNot Nothing Then PreSync.Invoke(Index)
+                    If PreSync IsNot Nothing Then
+                        Dim Handled As Boolean = False
+                        PreSync.Invoke(Handled, i)
 
-                    Tasks.Add(Task.Run(Sub() Async.Invoke(Index)))
+                        If Handled Then Continue For
+                    End If
+
+                    Dim Index As Integer = i
+                    Tasks.Add(Task.Run(Sub() Async.Invoke(False, Index)))
                 Next
 
                 Await Task.WhenAll(Tasks)
@@ -265,10 +275,15 @@ Public Class AsyncUtils
             Dim Tasks As New List(Of Task)
 
             For i = Start To Count - 1 Step [Step]
-                Dim Index As Integer = i
-                If PreSync IsNot Nothing Then PreSync.Invoke(Index)
+                If PreSync IsNot Nothing Then
+                    Dim Handled As Boolean = False
+                    PreSync.Invoke(Handled, i)
 
-                Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(Index))))
+                    If Handled Then Continue For
+                End If
+
+                Dim Index As Integer = i
+                Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(False, Index))))
             Next
 
             Await Task.WhenAll(Tasks)
@@ -298,8 +313,8 @@ Public Class AsyncUtils
         '按物理核心数判断
         Dim Cores = GetPhysicalCores()
 
-        If Cores < 4 Then
-            '物理核心少于4个 同步执行 减小异步带来的开销
+        If Settings.Settings.Async.AutoSyncThreshold >= 0 AndAlso Cores < Settings.Settings.Async.AutoSyncThreshold Then
+            '物理核心过少 同步执行 减小异步带来的开销
             ProcessEnumerableSync(Source, PreSync, Async)
         Else
             ProcessEnumerableAsync(
@@ -317,9 +332,14 @@ Public Class AsyncUtils
                                                    Async As LoopEnumerableInvoker(Of T))
 
         For Each e In Source
-            If PreSync IsNot Nothing Then PreSync.Invoke(e)
+            If PreSync IsNot Nothing Then
+                Dim Handled As Boolean = False
+                PreSync.Invoke(Handled, e)
 
-            Async.Invoke(e)
+                If Handled Then Continue For
+            End If
+
+            Async.Invoke(False, e)
         Next
     End Sub
 
@@ -332,9 +352,14 @@ Public Class AsyncUtils
             Dim Tasks As New List(Of Task)
 
             For Each e In Source
-                If PreSync IsNot Nothing Then PreSync.Invoke(e)
+                If PreSync IsNot Nothing Then
+                    Dim Handled As Boolean = False
+                    PreSync.Invoke(Handled, e)
 
-                Tasks.Add(Task.Run(Sub() Async.Invoke(e)))
+                    If Handled Then Continue For
+                End If
+
+                Tasks.Add(Task.Run(Sub() Async.Invoke(False, e)))
             Next
 
             Await Task.WhenAll(Tasks)
@@ -343,9 +368,14 @@ Public Class AsyncUtils
                 Dim Tasks As New List(Of Task)
 
                 For Each e In Source
-                    If PreSync IsNot Nothing Then PreSync.Invoke(e)
+                    If PreSync IsNot Nothing Then
+                        Dim Handled As Boolean = False
+                        PreSync.Invoke(Handled, e)
 
-                    Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(e))))
+                        If Handled Then Continue For
+                    End If
+
+                    Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(False, e))))
                 Next
 
                 Await Task.WhenAll(Tasks)

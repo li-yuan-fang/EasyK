@@ -141,11 +141,11 @@ Namespace Accompaniment
 
             '前处理
             AsyncUtils.Process(
-                Settings.Settings.Audio.DisableAsyncProcess,
-                Settings.Settings.Audio.AsyncMode,
+                Settings.Settings.Async.CompletelySync,
+                Settings.Settings.Async.AsyncMode,
                 Channels,
-                Sub(i) fft.Add(New Complex(FFT_Size - 1) {}),
-                Sub(ch)
+                Sub(ByRef h, i) fft.Add(New Complex(FFT_Size - 1) {}),
+                Sub(ByRef h, ch)
                     Dim f As Complex() = fft(ch)
                     Dim j As Integer = 0
 
@@ -166,11 +166,11 @@ Namespace Accompaniment
 
             '后处理
             AsyncUtils.Process(
-                Settings.Settings.Audio.DisableAsyncProcess,
-                Settings.Settings.Audio.AsyncMode,
+                Settings.Settings.Async.CompletelySync,
+                Settings.Settings.Async.AsyncMode,
                 Channels,
                 Nothing,
-                Sub(ch)
+                Sub(ByRef h, ch)
                     Dim f As Complex() = fft(ch)
 
                     FastFourierTransform.FFT(False, FFT_Pow, f)
@@ -237,7 +237,7 @@ Namespace Accompaniment
             '暂且不封装异步和同步方法
             Dim Cores As Integer = AsyncUtils.GetPhysicalCores()
 
-            If Settings.Settings.Audio.DisableAsyncProcess OrElse Cores < 4 Then
+            If Settings.Settings.Async.CompletelySync OrElse Cores < 4 Then
                 '同步执行
                 For Each Side In SideChannelPairs
                     ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))

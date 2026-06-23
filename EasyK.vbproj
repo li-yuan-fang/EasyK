@@ -584,6 +584,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Settings\AsyncSettings.vb" />
     <Compile Include="Settings\DLNASettings.vb" />
     <Compile Include="Settings\KAudioSetting.vb" />
     <Compile Include="Settings\KSettings.vb" />

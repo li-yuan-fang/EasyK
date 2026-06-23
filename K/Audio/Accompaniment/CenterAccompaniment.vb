@@ -45,11 +45,11 @@
             Dim actualBytes = framesToProcess * PCMFrameSize
 
             AsyncUtils.Process(
-                Settings.Settings.Audio.DisableAsyncProcess,
-                Settings.Settings.Audio.AsyncMode,
+                Settings.Settings.Async.CompletelySync,
+                Settings.Settings.Async.AsyncMode,
                 framesToProcess,
                 Nothing,
-                Sub(i)
+                Sub(ByRef h, i)
                     Dim frameOffset = i * PCMFrameSize
 
                     ' 步骤1: 解析所有声道样本到浮点数组
@@ -60,7 +60,7 @@
 
                         '以乘代除
                         'samples(ch) = rawValue / 32768.0F
-                        samples(ch) = rawValue * 3.05175781E-05
+                        samples(ch) = rawValue * 0.0000305175781
                     Next
 
                     ' 步骤2: 计算各对侧面声道的差分信号（去除中置内容）
@@ -87,11 +87,11 @@
         ''' <param name="SamplesRead">长度</param>
         Public Sub Progress(Buffer As Single(), Offset As Integer, SamplesRead As Integer)
             AsyncUtils.Process(
-                Settings.Settings.Audio.DisableAsyncProcess,
-                Settings.Settings.Audio.AsyncMode,
+                Settings.Settings.Async.CompletelySync,
+                Settings.Settings.Async.AsyncMode,
                 Offset + SamplesRead,
                 Nothing,
-                Sub(i)
+                Sub(ByRef h, i)
                     Dim Frame = ProcessFrame(Buffer.Skip(i).Take(Channels).ToArray())
                     System.Buffer.BlockCopy(Frame, 0, Buffer, i << 2, Channels << 2)
                 End Sub,

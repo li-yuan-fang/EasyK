@@ -63,6 +63,13 @@ Public Class KSettings
     Public Property BalancedBookRandom As Boolean = True
 
     ''' <summary>
+    ''' 异步计算设置
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("async")>
+    Public Property Async As AsyncSettings = New AsyncSettings()
+
+    ''' <summary>
     ''' 音频设置
     ''' </summary>
     ''' <returns></returns>
