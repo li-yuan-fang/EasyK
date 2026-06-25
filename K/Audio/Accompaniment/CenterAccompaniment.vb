@@ -49,7 +49,7 @@
                 Settings.Settings.Async.AsyncMode,
                 framesToProcess,
                 Nothing,
-                Sub(ByRef h, i)
+                Sub(i)
                     Dim frameOffset = i * PCMFrameSize
 
                     ' 步骤1: 解析所有声道样本到浮点数组
@@ -91,7 +91,7 @@
                 Settings.Settings.Async.AsyncMode,
                 Offset + SamplesRead,
                 Nothing,
-                Sub(ByRef h, i)
+                Sub(i)
                     Dim Frame = ProcessFrame(Buffer.Skip(i).Take(Channels).ToArray())
                     System.Buffer.BlockCopy(Frame, 0, Buffer, i << 2, Channels << 2)
                 End Sub,

@@ -7,13 +7,27 @@ Public Class AsyncUtils
     ''' 循环委托
     ''' </summary>
     ''' <param name="Index">索引</param>
-    Public Delegate Sub LoopInvoker(ByRef Handled As Boolean, Index As Integer)
+    Public Delegate Sub LoopInvoker(Index As Integer)
+
+    ''' <summary>
+    ''' 循环前置委托
+    ''' </summary>
+    ''' <param name="Handled">跳出本循环</param>
+    ''' <param name="Index">索引</param>
+    Public Delegate Sub PreLoopInvoker(ByRef Handled As Boolean, Index As Integer)
 
     ''' <summary>
     ''' 枚举循环委托
     ''' </summary>
     ''' <param name="e">枚举元素</param>
-    Public Delegate Sub LoopEnumerableInvoker(Of T)(ByRef Handled As Boolean, e As T)
+    Public Delegate Sub LoopEnumerableInvoker(Of T)(e As T)
+
+    ''' <summary>
+    ''' 枚举循环前置委托
+    ''' </summary>
+    ''' <param name="Handled">跳出本循环</param>
+    ''' <param name="e">枚举元素</param>
+    Public Delegate Sub PreLoopEnumerableInvoker(Of T)(ByRef Handled As Boolean, e As T)
 
     ''' <summary>
     ''' 并发模式
@@ -161,7 +175,7 @@ Public Class AsyncUtils
     Public Shared Sub Process(DisableAsync As Boolean,
                               ConcurrencyMode As ConcurrencyMode,
                               Count As Integer,
-                              PreSync As LoopInvoker,
+                              PreSync As PreLoopInvoker,
                               Async As LoopInvoker)
         Process(DisableAsync, ConcurrencyMode, Count, PreSync, Async, 0, 1)
     End Sub
@@ -178,7 +192,7 @@ Public Class AsyncUtils
     Public Shared Sub Process(DisableAsync As Boolean,
                               ConcurrencyMode As ConcurrencyMode,
                               Count As Integer,
-                              PreSync As LoopInvoker,
+                              PreSync As PreLoopInvoker,
                               Async As LoopInvoker,
                               Start As Integer)
         Process(DisableAsync, ConcurrencyMode, Count, PreSync, Async, Start, 1)
@@ -197,7 +211,7 @@ Public Class AsyncUtils
     Public Shared Sub Process(DisableAsync As Boolean,
                               ConcurrencyMode As ConcurrencyMode,
                               Count As Integer,
-                              PreSync As LoopInvoker,
+                              PreSync As PreLoopInvoker,
                               Async As LoopInvoker,
                               Start As Integer,
                               [Step] As Integer)
@@ -225,7 +239,11 @@ Public Class AsyncUtils
         End If
     End Sub
 
-    Private Shared Sub ProcessSync(Count As Integer, PreSync As LoopInvoker, Async As LoopInvoker, Start As Integer, [Step] As Integer)
+    Private Shared Sub ProcessSync(Count As Integer,
+                                   PreSync As PreLoopInvoker,
+                                   Async As LoopInvoker,
+                                   Start As Integer,
+                                   [Step] As Integer)
         For i = Start To Count - 1 Step [Step]
             If PreSync IsNot Nothing Then
                 Dim Handled As Boolean = False
@@ -234,14 +252,14 @@ Public Class AsyncUtils
                 If Handled Then Continue For
             End If
 
-            Async.Invoke(False, i)
+            Async.Invoke(i)
         Next
     End Sub
 
     Private Shared Async Function ProcessAsync(Cores As Integer,
                                                ConcurrencyMode As ConcurrencyMode,
                                                Count As Integer,
-                                               PreSync As LoopInvoker,
+                                               PreSync As PreLoopInvoker,
                                                Async As LoopInvoker,
                                                Start As Integer,
                                                [Step] As Integer) As Task
@@ -261,7 +279,7 @@ Public Class AsyncUtils
                     End If
 
                     Dim Index As Integer = i
-                    Tasks.Add(Task.Run(Sub() Async.Invoke(False, Index)))
+                    Tasks.Add(Task.Run(Sub() Async.Invoke(Index)))
                 Next
 
                 Await Task.WhenAll(Tasks)
@@ -283,7 +301,7 @@ Public Class AsyncUtils
                 End If
 
                 Dim Index As Integer = i
-                Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(False, Index))))
+                Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(Index))))
             Next
 
             Await Task.WhenAll(Tasks)
@@ -301,7 +319,7 @@ Public Class AsyncUtils
     Public Shared Sub Process(Of T)(DisableAsync As Boolean,
                                     ConcurrencyMode As ConcurrencyMode,
                                     Source As IEnumerable(Of T),
-                                    PreSync As LoopEnumerableInvoker(Of T),
+                                    PreSync As PreLoopEnumerableInvoker(Of T),
                                     Async As LoopEnumerableInvoker(Of T))
 
         '如果禁用异步执行 则直接转跳
@@ -328,7 +346,7 @@ Public Class AsyncUtils
     End Sub
 
     Private Shared Sub ProcessEnumerableSync(Of T)(Source As IEnumerable(Of T),
-                                                   PreSync As LoopEnumerableInvoker(Of T),
+                                                   PreSync As PreLoopEnumerableInvoker(Of T),
                                                    Async As LoopEnumerableInvoker(Of T))
 
         For Each e In Source
@@ -339,32 +357,21 @@ Public Class AsyncUtils
                 If Handled Then Continue For
             End If
 
-            Async.Invoke(False, e)
+            Async.Invoke(e)
         Next
     End Sub
 
     Private Shared Async Function ProcessEnumerableAsync(Of T)(Cores As Integer,
                                                                ConcurrencyMode As ConcurrencyMode,
                                                                Source As IEnumerable(Of T),
-                                                               PreSync As LoopEnumerableInvoker(Of T),
+                                                               PreSync As PreLoopEnumerableInvoker(Of T),
                                                                Async As LoopEnumerableInvoker(Of T)) As Task
         If ConcurrencyMode = ConcurrencyMode.NoLimit Then
-            Dim Tasks As New List(Of Task)
+            Dim CurrentContext = SynchronizationContext.Current
 
-            For Each e In Source
-                If PreSync IsNot Nothing Then
-                    Dim Handled As Boolean = False
-                    PreSync.Invoke(Handled, e)
+            Try
+                SynchronizationContext.SetSynchronizationContext(Nothing)
 
-                    If Handled Then Continue For
-                End If
-
-                Tasks.Add(Task.Run(Sub() Async.Invoke(False, e)))
-            Next
-
-            Await Task.WhenAll(Tasks)
-        Else
-            Using Scheduler As New ConcurrencyLimiter(Cores)
                 Dim Tasks As New List(Of Task)
 
                 For Each e In Source
@@ -375,11 +382,54 @@ Public Class AsyncUtils
                         If Handled Then Continue For
                     End If
 
-                    Tasks.Add(Scheduler.ExecuteAsync(Task.Run(Sub() Async.Invoke(False, e))))
+                    Tasks.Add(
+                        Task.Factory.StartNew(
+                            Sub() Async.Invoke(e),
+                            CancellationToken.None,
+                            TaskCreationOptions.None,
+                            TaskScheduler.Default
+                        )
+                    )
                 Next
 
                 Await Task.WhenAll(Tasks)
-            End Using
+            Finally
+                SynchronizationContext.SetSynchronizationContext(CurrentContext)
+            End Try
+        Else
+            Dim CurrentContext = SynchronizationContext.Current
+
+            Try
+                SynchronizationContext.SetSynchronizationContext(Nothing)
+
+                Using Scheduler As New ConcurrencyLimiter(Cores)
+                    Dim Tasks As New List(Of Task)
+
+                    For Each e In Source
+                        If PreSync IsNot Nothing Then
+                            Dim Handled As Boolean = False
+                            PreSync.Invoke(Handled, e)
+
+                            If Handled Then Continue For
+                        End If
+
+                        Tasks.Add(
+                            Scheduler.ExecuteAsync(
+                                Task.Factory.StartNew(
+                                    Sub() Async.Invoke(e),
+                                    CancellationToken.None,
+                                    TaskCreationOptions.None,
+                                    TaskScheduler.Default
+                                )
+                            )
+                        )
+                    Next
+
+                    Await Task.WhenAll(Tasks)
+                End Using
+            Finally
+                SynchronizationContext.SetSynchronizationContext(CurrentContext)
+            End Try
         End If
     End Function
 

@@ -145,7 +145,7 @@ Namespace Accompaniment
                 Settings.Settings.Async.AsyncMode,
                 Channels,
                 Sub(ByRef h, i) fft.Add(New Complex(FFT_Size - 1) {}),
-                Sub(ByRef h, ch)
+                Sub(ch)
                     Dim f As Complex() = fft(ch)
                     Dim j As Integer = 0
 
@@ -170,7 +170,7 @@ Namespace Accompaniment
                 Settings.Settings.Async.AsyncMode,
                 Channels,
                 Nothing,
-                Sub(ByRef h, ch)
+                Sub(ch)
                     Dim f As Complex() = fft(ch)
 
                     FastFourierTransform.FFT(False, FFT_Pow, f)

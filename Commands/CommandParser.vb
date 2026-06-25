@@ -46,7 +46,7 @@ Namespace Commands
                         Settings.Settings.Async.CompletelySync,
                         Settings.Settings.Async.AsyncMode,
                         asm.GetTypes(),
-                        Sub(ByRef h As Boolean, type As Type)
+                        Sub(ByRef h, type)
                             With type
                                 '检查类型
                                 If .Namespace <> CommandNamespace OrElse
@@ -54,7 +54,7 @@ Namespace Commands
                                     Not GetType(Command).IsAssignableFrom(type) Then h = True
                             End With
                         End Sub,
-                        Sub(ByRef h As Boolean, type As Type)
+                        Sub(type)
                             '遍历构造器
                             For Each c In type.GetConstructors()
                                 Dim Valid As Boolean = True
@@ -88,7 +88,9 @@ Namespace Commands
                                 '匹配构造函数成功 退出循环
                                 Try
                                     Dim cmd As Command = c.Invoke(Params.ToArray())
-                                    Commands(cmd.Type).Add(cmd)
+                                    SyncLock Commands
+                                        Commands(cmd.Type).Add(cmd)
+                                    End SyncLock
                                 Catch ex As Exception
                                     Console.WriteLine("加载指令 {0} 时出错 - {1}",
                                                       type.Name.Substring(Math.Min(type.Name.Length, 7)),
@@ -110,6 +112,9 @@ Namespace Commands
             Next
 
             For Each t As CommandType In Commands.Keys()
+                '指令排序
+                Commands(t).Sort(Function(a, b) a.Prefix.CompareTo(b.Prefix))
+
                 For Each c In Commands(t)
                     Me.Commands.Add(c)
                 Next
