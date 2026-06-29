@@ -62,6 +62,22 @@ Public Class KSettings
     <JsonProperty("banlanced_book_random")>
     Public Property BalancedBookRandom As Boolean = True
 
+
+    ''' <summary>
+    ''' 允许通过点歌界面开关公平模式
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("allow_remote_fairness")>
+    Public Property AllowRemoteFairness As Boolean = True
+
+    ''' <summary>
+    ''' 公平模式
+    ''' </summary>
+    ''' <remarks>保证每个人都有机会上麦</remarks>
+    ''' <returns></returns>
+    <JsonProperty("fairness_mode")>
+    Public Property FairnessMode As Boolean = False
+
     ''' <summary>
     ''' 异步计算设置
     ''' </summary>

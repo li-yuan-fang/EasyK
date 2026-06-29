@@ -15,13 +15,13 @@ Public Class KWebCore
 
     Private Const APIPrefix As String = "/api"
 
+    Private Shared ReadOnly ContentRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d]+(?:\?p=\d+)?$")
+
     Private ReadOnly K As EasyK
 
     Private WithEvents Server As WebServer
 
     Private ReadOnly Uploader As UploadManager
-
-    Private Shared ContentRegex As New Text.RegularExpressions.Regex("^[A-Za-z\d]+(?:\?p=\d+)?$")
 
     Private ReadOnly Settings As SettingContainer
 
@@ -294,6 +294,7 @@ Public Class KWebCore
             .Add("contrast", K.DLNALyricContrast)
 
             If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
+            If Settings.Settings.AllowRemoteFairness Then .Add("fairness", Settings.Settings.FairnessMode)
         End With
 
         Return JsonConvert.SerializeObject(PanelResult)
@@ -361,6 +362,20 @@ Public Class KWebCore
                                 Console.WriteLine("错误的二维码状态 - {0}", p.Value)
                             End Try
                         End If
+                    Case "fairness"
+                        '更改公平模式开关
+                        With Settings.Settings
+                            If .AllowRemoteFairness Then
+                                Try
+                                    .FairnessMode = Boolean.Parse(p.Value)
+
+                                    '如果开启公平模式 立刻重排序一次
+                                    If .FairnessMode Then K.ReRankFair()
+                                Catch
+                                    Console.WriteLine("错误的公平模式状态 - {0}", p.Value)
+                                End Try
+                            End If
+                        End With
                     Case Else
                         If Settings.Settings.PluginCommon.ContainsKey(p.Id) Then
                             '更新插件配置
