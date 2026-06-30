@@ -60,14 +60,14 @@ Public Class KWebCore
                     HandleServerSocketError()
                     Return
                 Else
-                    Console.WriteLine("服务器错误自动除错已关闭 无法自动除错")
+                    Logger.Warn("服务器错误自动除错已关闭 无法自动除错")
                 End If
             End If
 
-            Console.WriteLine("服务器错误 #{0}: {1}(0x{2})", e.GetType().FullName, e.Message, e.HResult.ToString("x2"))
+            Logger.Error("服务器错误 #{0}: {1}(0x{2})", e.GetType().FullName, e.Message, e.HResult.ToString("x2"))
         Next
 
-        Console.WriteLine("检测到无法处理的服务器错误 需要人工介入处理")
+        Logger.Error("检测到无法处理的服务器错误 需要人工介入处理")
         RaiseEvent OnUncaughtError()
     End Sub
 
@@ -87,22 +87,22 @@ Public Class KWebCore
 
         Select Case Handler
             Case ServerErrorHandler.None
-                Console.WriteLine("HTTP服务器端口被占用")
-                Console.WriteLine("正在尝试调整Hyper-V端口占用...")
+                Logger.Warn("HTTP服务器端口被占用")
+                Logger.Info("正在尝试调整Hyper-V端口占用...")
 
                 '调整Hyper-V端口占用
                 Shell("netsh int ipv4 set dynamic tcp start=49152 num=16384", AppWinStyle.Hide, True)
                 Shell("netsh int ipv4 set dynamic tcp start=49152 num=16384", AppWinStyle.Hide, True)
 
-                Console.WriteLine("Hyper-V端口占用调整完成")
-                Console.WriteLine("正在尝试重启WinNAT服务...")
+                Logger.Info("Hyper-V端口占用调整完成")
+                Logger.Info("正在尝试重启WinNAT服务...")
 
                 '重启WinNAT服务
                 Shell("net stop winnat", AppWinStyle.Hide, True)
                 Shell("net start winnat", AppWinStyle.Hide, True)
 
-                Console.WriteLine("重启WinNAT服务完成")
-                Console.WriteLine("正在尝试重启HTTP服务端...")
+                Logger.Info("重启WinNAT服务完成")
+                Logger.Info("正在尝试重启HTTP服务端...")
 
                 '更新进度
                 Handler = ServerErrorHandler.BannedHyperV
@@ -110,8 +110,8 @@ Public Class KWebCore
                 '重启服务器
                 RestartServer()
             Case ServerErrorHandler.BannedHyperV
-                Console.WriteLine("HTTP服务器端口仍被占用")
-                Console.WriteLine("正在尝试自动查找可用端口...")
+                Logger.Warn("HTTP服务器端口仍被占用")
+                Logger.Info("正在尝试自动查找可用端口...")
 
                 Dim Used = NetUtils.GetUsedTcpPorts()
                 With Settings.Settings.Web
@@ -123,8 +123,8 @@ Public Class KWebCore
                             '更新进度
                             Handler = ServerErrorHandler.SearchPort
 
-                            Console.WriteLine("HTTP服务器端口更改为 {0}", i)
-                            Console.WriteLine("正在尝试重启HTTP服务端...")
+                            Logger.Info("HTTP服务器端口更改为 {0}", i)
+                            Logger.Info("正在尝试重启HTTP服务端...")
 
                             '重启服务器
                             RestartServer()
@@ -134,11 +134,11 @@ Public Class KWebCore
                     Next
                 End With
 
-                Console.WriteLine("未在配置的范围内找到可用端口")
-                Console.WriteLine("无法处理服务器错误 需要人工介入处理")
+                Logger.Error("未在配置的范围内找到可用端口")
+                Logger.Error("无法处理服务器错误 需要人工介入处理")
                 RaiseEvent OnUncaughtError()
             Case Else
-                Console.WriteLine("无法处理服务器错误 需要人工介入处理")
+                Logger.Error("无法处理服务器错误 需要人工介入处理")
                 RaiseEvent OnUncaughtError()
         End Select
     End Sub
@@ -192,9 +192,9 @@ Public Class KWebCore
             Dim Result As EasyKBookRecord = K.RankBook(.Id, .Rank)
             If Result IsNot Nothing Then
                 If .Rank <= 0 Then
-                    Console.WriteLine("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
+                    Logger.Info("{0}> 对 {1} 执行顶歌", User, $"{Result.Title}(来自:{Result.Order})")
                 Else
-                    Console.WriteLine("{0}> 将 {1} 的播放次序调整为 #{2}", User, $"{Result.Title}(来自:{Result.Order})", .Rank + 1)
+                    Logger.Info("{0}> 将 {1} 的播放次序调整为 #{2}", User, $"{Result.Title}(来自:{Result.Order})", .Rank + 1)
                 End If
 
                 Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
@@ -227,6 +227,12 @@ Public Class KWebCore
         Return WebStartup.RespondStatusOnly(ctx, If(K.Remove(Id.Id),
                                                     StatusCodes.Status204NoContent,
                                                     StatusCodes.Status422UnprocessableEntity))
+    End Function
+
+    <WebApi("/random", HttpMethod.Get)>
+    Private Function Random(ctx As HttpContext) As Task
+        K.Random()
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 
     <WebApi("/outdated", HttpMethod.Get)>
@@ -317,35 +323,35 @@ Public Class KWebCore
                         Try
                             K.Volume = Double.Parse(p.Value)
                         Catch
-                            Console.WriteLine("错误的音量 - {0}", p.Value)
+                            Logger.Debug("HTTP服务端收到错误的音量 - {0}", p.Value)
                         End Try
                     Case "accompaniment"
                         '更改伴唱状态
                         Try
                             K.Accompaniment = Boolean.Parse(p.Value)
                         Catch
-                            Console.WriteLine("错误的伴唱状态 - {0}", p.Value)
+                            Logger.Debug("HTTP服务端收到错误的伴唱状态 - {0}", p.Value)
                         End Try
                     Case "offset"
                         '更改歌词偏移
                         Try
                             K.DLNALyricOffset = Double.Parse(p.Value)
                         Catch
-                            Console.WriteLine("错误的歌词偏移 - {0}", p.Value)
+                            Logger.Debug("HTTP服务端收到错误的歌词偏移 - {0}", p.Value)
                         End Try
                     Case "contrast"
                         '更改歌词对比度
                         Try
                             K.DLNALyricContrast = Double.Parse(p.Value)
                         Catch
-                            Console.WriteLine("错误的歌词对比度 - {0}", p.Value)
+                            Logger.Debug("HTTP服务端收到错误的歌词对比度 - {0}", p.Value)
                         End Try
                     Case "intersect"
                         '更改歌词交错
                         Try
                             K.DLNALyricIntersect = Boolean.Parse(p.Value)
                         Catch
-                            Console.WriteLine("错误的歌词交错 - {0}", p.Value)
+                            Logger.Debug("HTTP服务端收到错误的歌词交错 - {0}", p.Value)
                         End Try
                     Case "qrcode"
                         '更改二维码显示状态
@@ -359,7 +365,7 @@ Public Class KWebCore
                                     End If
                                 End With
                             Catch
-                                Console.WriteLine("错误的二维码状态 - {0}", p.Value)
+                                Logger.Debug("HTTP服务端收到错误的二维码状态 - {0}", p.Value)
                             End Try
                         End If
                     Case "fairness"
@@ -372,7 +378,7 @@ Public Class KWebCore
                                     '如果开启公平模式 立刻重排序一次
                                     If .FairnessMode Then K.ReRankFair()
                                 Catch
-                                    Console.WriteLine("错误的公平模式状态 - {0}", p.Value)
+                                    Console.WriteLine("HTTP服务端收到错误的公平模式状态 - {0}", p.Value)
                                 End Try
                             End If
                         End With

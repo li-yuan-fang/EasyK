@@ -45,11 +45,9 @@ Public Class CefSetting
         End With
 
         '日志
-        If Settings.Settings.DebugMode Then
-            Console.WriteLine("CEFSharp 初始化完成")
-        Else
-            LogSeverity = LogSeverity.Disable
-        End If
+        If Not Settings.Settings.DebugMode Then LogSeverity = LogSeverity.Disable
+
+        Logger.Debug("CEFSharp 配置完成")
     End Sub
 
 End Class

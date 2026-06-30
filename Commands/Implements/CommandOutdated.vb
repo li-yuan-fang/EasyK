@@ -13,21 +13,27 @@
         Protected Overrides Sub Process(Args() As String)
             Dim List As List(Of EasyKBookRecord) = K.GetOutdatedList()
             If List.Count = 0 Then
-                Console.WriteLine("已点列表为空")
+                Console.WriteLine("已唱列表为空")
                 Return
             End If
 
-            Console.WriteLine("=====已唱歌曲=====")
+
+            Dim Result As New List(Of String) From {
+                "=====已唱歌曲====="
+            }
+
             Dim i As Integer = 1
             For Each Record As EasyKBookRecord In List
                 With Record
-                    Console.WriteLine("#{0}  {1} (ID:{2} Content:{3})", i, .Title, .Id, .Content)
-                    Console.WriteLine("来源: {0} 播放方式: {1}", .Order, If(.Type = EasyKType.Bilibili, "bilibili", "本地"))
+                    Result.Add($"#{i}  { .Title} (ID:{ .Id} Content:{ .Content})")
+                    Result.Add($"来源: { .Order} 播放方式: {If(.Type = EasyKType.Bilibili, "bilibili", "VLC")}")
                 End With
 
                 i += 1
             Next
-            Console.WriteLine("共 {0} 首已播放", List.Count)
+            Result.Add($"共 {List.Count} 首已播放")
+
+            Logger.PrintOriginalLines(Result.ToArray())
         End Sub
 
     End Class

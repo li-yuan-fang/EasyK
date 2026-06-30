@@ -77,9 +77,7 @@ Namespace DLNA.Protocol
         Private Sub Commit(Updated As Byte(), Seq As UInteger)
             Task.Run(Sub()
                          For Each Url As String In Deliver
-                             If Protocol.Settings.Settings.DebugMode Then
-                                 Console.WriteLine("开始投递订阅: {0}({1})", Url, Seq)
-                             End If
+                             Logger.Debug("开始投递订阅: {0}({1})", Url, Seq)
 
                              Dim Request As HttpWebRequest = DirectCast(WebRequest.Create(Url), HttpWebRequest)
                              With Request
@@ -112,9 +110,7 @@ Namespace DLNA.Protocol
                                          End If
                                      End With
                                  Catch ex As Exception
-                                     If Protocol.Settings.Settings.DebugMode Then
-                                         Console.WriteLine("订阅投递失败: {0}({1}) - {2}", Url, Seq, ex.Message)
-                                     End If
+                                     Logger.Debug("订阅投递失败: {0}({1}) - {2}", Url, Seq, ex.Message)
                                  End Try
                              End With
                          Next

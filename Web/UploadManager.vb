@@ -276,7 +276,7 @@ Public Class UploadManager
         Dim Session As UploadSession = Nothing
         If Sessions.TryGetValue(Name, Session) Then
             '返回当前会话状态
-            If Settings.Settings.DebugMode Then Console.WriteLine("{0}> 完成状态: {1}", Name, Session.IsCompleted().ToString().ToLower())
+            Logger.Debug("{0}> 完成状态: {1}", Name, Session.IsCompleted().ToString().ToLower())
 
             If Session.IsCompleted() Then
                 '上传完成
@@ -336,9 +336,7 @@ Public Class UploadManager
                         End If
                     Catch ex As Exception
                         Invalid.Add(s)
-                        If Settings.Settings.DebugMode Then
-                            Console.WriteLine("获取缓存文件大小失败 - {0}", ex.Message)
-                        End If
+                        Logger.Debug("获取缓存文件大小失败 - {0}", ex.Message)
                     End Try
                 Next
 
@@ -369,7 +367,7 @@ Public Class UploadManager
 
         '创建新会话
         Session = New UploadSession(Request.Size, Settings)
-        If Settings.Settings.DebugMode Then Console.WriteLine("{0}> 新会话 {1}", Name, Session.Id)
+        Logger.Debug("{0}> 新会话 {1}", Name, Session.Id)
 
         If Sessions.TryAdd(Name, Session) Then
             Return WebStartup.RespondJson(ctx, $"{{""id"":""{Session.Id}"",""chunk"":{Settings.Settings.Web.Upload.ChunkSize},""bypass"":false}}")
@@ -408,8 +406,7 @@ Public Class UploadManager
 
         Dim LocalHash As String = HashUtils.ComputeSHA256(Buffer)
         If LocalHash <> Hash.ToLower() Then
-            If Settings.Settings.DebugMode Then _
-                Console.WriteLine("{0}> #{1} {2} {3} - {4}", Name, Index, Buffer.Length, Hash, LocalHash)
+            Logger.Debug("{0}> #{1} {2} {3} - {4}", Name, Index, Buffer.Length, Hash, LocalHash)
 
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
         End If

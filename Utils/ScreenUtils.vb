@@ -31,7 +31,7 @@ Public Class ScreenUtils
             AttachEdidInfo(monitors)
 
         Catch ex As Exception
-            If Settings.Settings.DebugMode Then Console.WriteLine($"获取显示器信息失败: {ex.Message}")
+            Logger.Debug($"获取显示器信息失败 - {ex.Message}")
         End Try
 
         Return monitors
@@ -85,7 +85,7 @@ Public Class ScreenUtils
             End Using
 
         Catch ex As Exception
-            If Settings.Settings.DebugMode Then Console.WriteLine($"获取 EDID 信息失败: {ex.Message}")
+            Logger.Debug($"获取 EDID 信息失败 - {ex.Message}")
         End Try
     End Sub
 

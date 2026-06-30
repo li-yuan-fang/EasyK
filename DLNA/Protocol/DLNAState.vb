@@ -48,9 +48,7 @@ Namespace DLNA.Protocol
                         End SyncLock
                     End If
                 Catch ex As Exception
-                    If _Service.Protocol.Settings.Settings.DebugMode Then
-                        Console.WriteLine("DLNA状态值赋值失败({0} <= {1}) - {2}", Name, value, ex.Message)
-                    End If
+                    Logger.Debug("DLNA状态值赋值失败({0} <= {1}) - {2}", Name, value, ex.Message)
                 End Try
             End Set
         End Property

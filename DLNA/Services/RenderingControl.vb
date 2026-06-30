@@ -98,9 +98,7 @@
                             End If
                         End With
                     Catch ex As Exception
-                        If .Settings.Settings.DebugMode Then
-                            Console.WriteLine("无法解析的静音请求 - {0}", ex.Message)
-                        End If
+                        Logger.Debug("无法解析的静音请求 - {0}", ex.Message)
                     End Try
                 End With
             End If

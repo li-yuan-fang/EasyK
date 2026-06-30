@@ -141,7 +141,7 @@ Public Class KSettings
             Try
                 Return JsonConvert.DeserializeObject(Of KSettings)(IO.File.ReadAllText(Path, Text.Encoding.UTF8))
             Catch ex As Exception
-                Console.WriteLine("读取配置文件失败 - {0}", ex.Message)
+                Logger.Error("读取配置文件失败 - {0}", ex.Message)
             End Try
         End If
 
@@ -157,7 +157,7 @@ Public Class KSettings
         Try
             IO.File.WriteAllText(Path, Json, Text.Encoding.UTF8)
         Catch ex As Exception
-            Console.WriteLine("保存配置文件失败 - {0}", ex.Message)
+            Logger.Error("保存配置文件失败 - {0}", ex.Message)
         End Try
     End Sub
 

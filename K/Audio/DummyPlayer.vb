@@ -116,9 +116,7 @@ Public Class DummyPlayer
         Dim Trigger As Boolean = Not String.IsNullOrEmpty(DeviceId)
 
         If Trigger Then
-            If Settings.Settings.DebugMode Then
-                Console.WriteLine("更新播放设备事件> {0}", DeviceId)
-            End If
+            Logger.Debug("更新播放设备事件> {0}", DeviceId)
 
             If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
 
@@ -135,9 +133,7 @@ Public Class DummyPlayer
                     Direct.Stop()
                     Direct.Dispose()
                 Catch ex As Exception
-                    If Settings.Settings.DebugMode Then
-                        Console.WriteLine("卸载音频设备时出错 - {0}", ex.Message)
-                    End If
+                    Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
                 Direct = Nothing
@@ -262,9 +258,7 @@ Public Class DummyPlayer
                     Direct.Stop()
                     Direct.Dispose()
                 Catch ex As Exception
-                    If Settings.Settings.DebugMode Then
-                        Console.WriteLine("卸载音频设备时出错 - {0}", ex.Message)
-                    End If
+                    Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
                 Direct = Nothing

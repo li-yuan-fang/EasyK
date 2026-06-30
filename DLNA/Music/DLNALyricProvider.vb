@@ -150,7 +150,7 @@ Namespace DLNA.MusicProvider
         ''' <returns></returns>
         Public Overridable Function GetLyricColor(Attribute As DLNAMusicAttribute, Highlight As Boolean) As ColorUtils.ColorSchema
             If String.IsNullOrEmpty(Attribute.Album) Then
-                Console.WriteLine("无法获取专辑图片")
+                Logger.Warn("无法获取专辑图片: {0}", Attribute.Title)
                 Return Nothing
             End If
 
@@ -166,7 +166,7 @@ Namespace DLNA.MusicProvider
                     Try
                         Buffer = .DownloadData(Attribute.Album)
                     Catch ex As Exception
-                        Console.WriteLine("获取专辑图片失败 - {0}", ex.Message)
+                        Logger.Warn("获取专辑图片失败: {0} - {1}", Attribute.Title, ex.Message)
                         Return Nothing
                     End Try
                 End With
@@ -181,7 +181,7 @@ Namespace DLNA.MusicProvider
                     End Using
                 End Using
             Catch ex As Exception
-                Console.WriteLine("解析专辑图片失败 - {0}", ex.Message)
+                Logger.Warn("解析专辑图片失败:{0} - {1}", Attribute.Title, ex.Message)
             End Try
 
             Return Nothing

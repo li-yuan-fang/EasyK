@@ -92,7 +92,7 @@ Namespace Commands
                                         Commands(cmd.Type).Add(cmd)
                                     End SyncLock
                                 Catch ex As Exception
-                                    Console.WriteLine("加载指令 {0} 时出错 - {1}",
+                                    Logger.Error("加载指令 {0} 时出错 - {1}",
                                                       type.Name.Substring(Math.Min(type.Name.Length, 7)),
                                                       ex.Message
                                     )
@@ -104,10 +104,10 @@ Namespace Commands
                     )
                 Catch ex As ReflectionTypeLoadException
                     For Each e As Exception In ex.LoaderExceptions
-                        Console.WriteLine("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, e.Message)
+                        Logger.Error("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, e.Message)
                     Next
                 Catch ex As Exception
-                    Console.WriteLine("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, ex.Message)
+                    Logger.Error("从程序集 {0} 加载指令时出错 - {1}", asm.FullName, ex.Message)
                 End Try
             Next
 

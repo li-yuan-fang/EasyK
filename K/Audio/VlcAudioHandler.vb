@@ -38,9 +38,11 @@ Public Class VlcAudioHandler
         Played = False
 
         If Settings.Settings.DebugMode Then
-            Console.WriteLine("LibVlcSharp 托管音频播放")
-            Console.WriteLine("采样率 {0}", rate)
-            Console.WriteLine("声道数 {0}", channels)
+            Logger.PrintOriginalLines(
+                "LibVlcSharp 托管音频播放",
+                $"采样率 {rate}",
+                $"声道数 {channels}"
+            )
         End If
 
         Return 0

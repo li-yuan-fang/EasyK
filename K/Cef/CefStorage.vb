@@ -44,7 +44,7 @@ Public Class CefStorage
                                                        End Try
                                                    End Sub)
         Catch ex As Exception
-            Console.WriteLine("清理CefSharp缓存时出错: {0}", ex.Message)
+            Logger.Warn("清理CefSharp缓存时出错: {0}", ex.Message)
         End Try
     End Sub
 

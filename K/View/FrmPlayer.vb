@@ -232,7 +232,7 @@ Public Class FrmPlayer
 
         '全屏
         Dim FullResult As Boolean = FormUtils.SetPropW(Me.Handle, "MarkFullscreenWindow", 1)
-        If Settings.Settings.DebugMode Then Console.WriteLine("全屏窗口配置: {0}", FullResult)
+        Logger.Debug("全屏窗口配置: {0}", FullResult)
 
         '初始化字体
         Dim TitleSize As Single = 50.0F * Height / 1080.0F
@@ -433,13 +433,13 @@ Public Class FrmPlayer
                                                 Content.Substring(1),
                                                 IO.Path.Combine(Application.StartupPath, Settings.Settings.TempFolder, Content))
                 If Not IO.File.Exists(VideoPath) Then
-                    Console.WriteLine("加载本地视频失败 - {0}", Content)
+                    Logger.Error("加载本地视频失败 - {0}", Content)
                     K.Push()
 
                     Return
                 End If
 
-                Console.WriteLine("加载本地视频 - {0}"， VideoPath)
+                Logger.Info("加载本地视频 - {0}"， VideoPath)
 
                 Invoke(Sub()
                            With VLCPlayer
@@ -457,7 +457,7 @@ Public Class FrmPlayer
                 Browser_Bili = True
                 Browser_Loaded.Reset()
 
-                Console.WriteLine("加载 bilibili - {0}", Content)
+                Logger.Info("加载 bilibili - {0}", Content)
 
                 Invoke(Sub()
                            With Browser

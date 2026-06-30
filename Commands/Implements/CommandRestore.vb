@@ -8,12 +8,14 @@
         Private ReadOnly Settings As SettingContainer
 
         Private Sub PrintMonitor(monitor As ScreenUtils.MonitorInfo)
+            Dim Result As New List(Of String)
+
             With monitor
-                Console.WriteLine("设备名称: {0}", If(.Name, "未知"))
-                Console.WriteLine("制造商: {0}", If(.ManufacturerName, "未知"))
-                Console.WriteLine("产品ID: {0}", If(.ProductCodeID, "未知"))
-                Console.WriteLine("序列号: {0}", If(.SerialNumber, "未知"))
-                Console.WriteLine("生产时间: {0}", If(.ManufactureDate, "未知"))
+                Result.Add($"设备名称: {If(.Name, "未知")}")
+                Result.Add($"制造商: {If(.ManufacturerName, "未知")}")
+                Result.Add($"产品ID: {If(.ProductCodeID, "未知")}")
+                Result.Add($"序列号: {If(.SerialNumber, "未知")}")
+                Result.Add($"生产时间: {If(.ManufactureDate, "未知")}")
             End With
         End Sub
 

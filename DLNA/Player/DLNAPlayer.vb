@@ -231,9 +231,7 @@ Namespace DLNA.Player
             Try
                 LoadingCountdown.Signal(LoadingCountdown.CurrentCount)
             Catch ex As Exception
-                If K.Settings.Settings.DebugMode Then
-                    Console.WriteLine("中断DLNA播放时出错 - {0}", ex.Message)
-                End If
+                Logger.Debug("中断DLNA播放时出错 - {0}", ex.Message)
             End Try
         End Sub
 
@@ -269,9 +267,9 @@ Namespace DLNA.Player
         '尝试先下载VLC无法直接解析的远程资源
         Private Sub TryDownloadFirst(Url As String)
             If Not NetUtils.IsURL(Url) Then
-                Console.WriteLine("远程资源地址无效")
+                Logger.Error("远程资源地址无效 - {0}")
                 With CurrentRecord
-                    Console.WriteLine("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
+                    Logger.Info("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
                 End With
 
                 '切歌
@@ -287,9 +285,9 @@ Namespace DLNA.Player
             Download(Url).ContinueWith(Sub(t)
                                            Dim ex As AggregateException = t.Exception
                                            If ex IsNot Nothing Then
-                                               Console.WriteLine("远程资源下载失败 - {0}", ex.InnerException.Message)
+                                               Logger.Error("远程资源下载失败 - {0}", ex.InnerException.Message)
                                                With CurrentRecord
-                                                   Console.WriteLine("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
+                                                   Logger.Info("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
                                                End With
 
                                                '切歌
@@ -328,9 +326,9 @@ Namespace DLNA.Player
 
                                                If ex IsNot Nothing Then
                                                    '已下载资源出错
-                                                   Console.WriteLine("远程资源无效 - {0}", ex.Message)
+                                                   Logger.Error("远程资源无效 - {0}", ex.Message)
                                                    With CurrentRecord
-                                                       Console.WriteLine("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
+                                                       Logger.Info("已自动切歌 - {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
                                                    End With
 
                                                    '切歌
@@ -352,9 +350,7 @@ Namespace DLNA.Player
                                            Try
                                                If Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
                                            Catch excp As Exception
-                                               If K.Settings.Settings.DebugMode Then
-                                                   Console.WriteLine("触发DLNA加载时出错 - {0}", excp.Message)
-                                               End If
+                                               Logger.Debug("触发DLNA加载时出错 - {0}", excp.Message)
                                            End Try
                                            ResourceParsed.Set()
                                        End Sub)
@@ -384,7 +380,7 @@ Namespace DLNA.Player
                                                    '缓存无效
                                                    '尝试转入正常投屏模式
 
-                                                   Console.WriteLine("缓存资源无效 切换到常规投屏模式...")
+                                                   Logger.Warn("缓存资源无效 切换到常规投屏模式...")
 
                                                    '取消加载
                                                    Cancel()
@@ -411,9 +407,7 @@ Namespace DLNA.Player
                                                    Try
                                                        If Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
                                                    Catch ex As Exception
-                                                       If K.Settings.Settings.DebugMode Then
-                                                           Console.WriteLine("触发DLNA加载时出错 - {0}", ex.Message)
-                                                       End If
+                                                       Logger.Debug("触发DLNA加载时出错 - {0}", ex.Message)
                                                    End Try
                                                    ResourceParsed.Set()
 
@@ -438,9 +432,7 @@ Namespace DLNA.Player
                                                Try
                                                    If Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
                                                Catch e As Exception
-                                                   If K.Settings.Settings.DebugMode Then
-                                                       Console.WriteLine("触发DLNA加载时出错 - {0}", e.Message)
-                                                   End If
+                                                   Logger.Debug("触发DLNA加载时出错 - {0}", e.Message)
                                                End Try
                                                ResourceParsed.Set()
 
@@ -450,9 +442,9 @@ Namespace DLNA.Player
                                                Dim TaskDownload = Download(URI)
                                                Dim ex As AggregateException = TaskDownload.Exception
                                                If ex IsNot Nothing Then
-                                                   Console.WriteLine("资源缓存失败 - {0}", ex.InnerException.Message)
+                                                   Logger.Error("资源缓存失败 - {0}", ex.InnerException.Message)
                                                    With CurrentRecord
-                                                       Console.WriteLine("将不会缓存 {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
+                                                       Logger.Warn("点歌系统将不会缓存 {0}(点歌人: {1} ID:{2})", .Title, .Order, .Id)
                                                    End With
                                                End If
                                            End If
@@ -473,9 +465,7 @@ Namespace DLNA.Player
                          Try
                              Player.RunScript(DLNAMusicProviders.GenerateUpdateStateScript(Playing, Rate, Position))
                          Catch ex As Exception
-                             If K.Settings.Settings.DebugMode Then
-                                 Console.WriteLine("DLNA音乐模式更新播放状态出错 - {0}", ex.Message)
-                             End If
+                             Logger.Debug("DLNA音乐模式更新播放状态出错 - {0}", ex.Message)
                          End Try
                      End Sub)
         End Sub
@@ -493,9 +483,7 @@ Namespace DLNA.Player
                          Try
                              Player.RunScript(DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNALyricOffset))
                          Catch ex As Exception
-                             If K.Settings.Settings.DebugMode Then
-                                 Console.WriteLine("DLNA音乐模式更新歌词偏移出错 - {0}", ex.Message)
-                             End If
+                             Logger.Debug("DLNA音乐模式更新歌词偏移出错 - {0}", ex.Message)
                          End Try
                      End Sub)
         End Sub
@@ -531,9 +519,7 @@ Namespace DLNA.Player
                                  Player.RunScript(Intersect, Contrast)
                              End If
                          Catch ex As Exception
-                             If K.Settings.Settings.DebugMode Then
-                                 Console.WriteLine("DLNA音乐模式更新歌词交错模式出错 - {0}", ex.Message)
-                             End If
+                             Logger.Debug("DLNA音乐模式更新歌词交错模式出错 - {0}", ex.Message)
                          End Try
                      End Sub)
         End Sub
@@ -547,7 +533,7 @@ Namespace DLNA.Player
             Task.Run(Sub()
                          Dim Lyric As String = DLNAMusicProviders.GenerateUpdateLyricScript(MusicBuffer.Meta)
                          If String.IsNullOrEmpty(Lyric) Then
-                             If K.Settings.Settings.DebugMode Then Console.WriteLine("DLNA音乐模式无法获取歌词")
+                             Logger.Debug("DLNA音乐模式无法获取歌词")
 
                              '触发
                              If LoadingCountdown IsNot Nothing AndAlso Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
@@ -563,9 +549,7 @@ Namespace DLNA.Player
                          Try
                              Player.RunScript(Lyric)
                          Catch ex As Exception
-                             If K.Settings.Settings.DebugMode Then
-                                 Console.WriteLine("DLNA音乐模式获取歌词出错 - {0}", ex.Message)
-                             End If
+                             Logger.Debug("DLNA音乐模式获取歌词出错 - {0}", ex.Message)
                          End Try
 
                          '触发
@@ -600,9 +584,7 @@ Namespace DLNA.Player
                     Try
                         If Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
                     Catch ex As Exception
-                        If K.Settings.Settings.DebugMode Then
-                            Console.WriteLine("触发DLNA加载时出错 - {0}", ex.Message)
-                        End If
+                        Logger.Debug("触发DLNA加载时出错 - {0}", ex.Message)
                     End Try
 
                     Return
@@ -650,18 +632,14 @@ Namespace DLNA.Player
                         Player.RunScript(Base, Intersect, Offset, LyricColor)
                     End If
                 Catch ex As Exception
-                    If K.Settings.Settings.DebugMode Then
-                        Console.WriteLine("DLNA音乐模式更新信息出错 - {0}", ex.Message)
-                    End If
+                    Logger.Debug("DLNA音乐模式更新信息出错 - {0}", ex.Message)
                 End Try
 
                 '触发加载
                 Try
                     If Not LoadingCountdown.IsSet Then LoadingCountdown.Signal()
                 Catch ex As Exception
-                    If K.Settings.Settings.DebugMode Then
-                        Console.WriteLine("触发DLNA加载时出错 - {0}", ex.Message)
-                    End If
+                    Logger.Debug("触发DLNA加载时出错 - {0}", ex.Message)
                 End Try
             End With
         End Sub

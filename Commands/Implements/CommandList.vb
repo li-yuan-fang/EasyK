@@ -17,17 +17,22 @@
                 Return
             End If
 
-            Console.WriteLine("=====已点歌曲=====")
+            Dim Result As New List(Of String) From {
+                "=====已点歌曲====="
+            }
+
             Dim i As Integer = 1
             For Each Record As EasyKBookRecord In List
                 With Record
-                    Console.WriteLine("#{0}  {1} (ID:{2} Content:{3})", i, .Title, .Id, .Content)
-                    Console.WriteLine("来源: {0} 播放方式: {1}", .Order, If(.Type = EasyKType.Bilibili, "bilibili", "本地"))
+                    Result.Add($"#{i}  { .Title} (ID:{ .Id} Content:{ .Content})")
+                    Result.Add($"来源: { .Order} 播放方式: {If(.Type = EasyKType.Bilibili, "bilibili", "VLC")}")
                 End With
 
                 i += 1
             Next
-            Console.WriteLine("共 {0} 首待播放", List.Count)
+            Result.Add($"共 {List.Count} 首待播放")
+
+            Logger.PrintOriginalLines(Result.ToArray())
         End Sub
 
     End Class

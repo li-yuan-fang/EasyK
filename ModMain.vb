@@ -12,6 +12,8 @@ Module ModMain
 
     Public WebServer As KWebCore
 
+    Public Logger As KLogger
+
     <STAThread>
     Sub Main()
         Console.Title = "EasyK"
@@ -21,6 +23,9 @@ Module ModMain
 
         '加载配置
         Settings = New SettingContainer()
+
+        '初始化日志系统
+        Logger = New KLogger(Settings)
 
         '运行点歌主服务
         KCore = New EasyK(Settings)
@@ -42,12 +47,13 @@ Module ModMain
         '显示播放器窗口
         KCore.Show()
 
-        Console.WriteLine("===== EasyK =====")
-        Console.WriteLine($"Ver: {Application.ProductVersion}")
-        Console.WriteLine("启动完成")
-        If Settings.Settings.DebugMode Then Console.WriteLine("#Debug模式#")
-        Console.WriteLine("=================")
-        Console.WriteLine("可输入 help 以查看帮助")
+        Logger.PrintOriginalLines(
+            "===== EasyK =====",
+            $"Ver: {Application.ProductVersion}{If(Settings.Settings.DebugMode, " (Debug模式)", vbNullString)}",
+            "启动完成",
+            "=================",
+            "可输入 help 以查看帮助"
+        )
 
         '尝试自动部署
         KCore.TryAutoSetup()
@@ -56,7 +62,7 @@ Module ModMain
     End Sub
 
     Private Sub ExitApplication() Handles Commands.OnExit
-        Console.WriteLine("正在关闭点歌系统...")
+        Logger.Info("正在关闭点歌系统...")
 
         '解除事件关联
         Try
@@ -86,7 +92,7 @@ Module ModMain
                 Try
                     IO.File.Delete(File)
                 Catch ex As Exception
-                    Console.WriteLine("清理文件 {0} 时失败 - {1}", File, ex.Message)
+                    Logger.Debug($"清理文件 {File} 时失败 - {ex.Message}")
                 End Try
             Next
         End If

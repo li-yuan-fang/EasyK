@@ -77,9 +77,7 @@ Public Class AsyncUtils
             Try
                 Await t
             Catch ex As Exception
-                If Settings.Settings.DebugMode Then
-                    Console.WriteLine("异步执行框架出错 - {0}", ex.Message)
-                End If
+                Logger.Debug("异步执行框架出错 - {0}", ex.Message)
             Finally
                 Semaphore.Release()
             End Try

@@ -483,16 +483,10 @@ Namespace DLNA.Protocol
                     Try
                         Returns = Caller.Invoke(Me, {Handled, Args})
                     Catch ex As TargetInvocationException
-                        If Protocol.Settings.Settings.DebugMode Then
-                            Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
-                        End If
-
+                        Logger.Debug("DLNA远程调用中断 - {0}", ex.InnerException.Message)
                         Return vbNullString
                     Catch ex As Exception
-                        If Protocol.Settings.Settings.DebugMode Then
-                            Console.WriteLine("DLNA远程调用中断 - {0}", ex.InnerException.Message)
-                        End If
-
+                        Logger.Debug("DLNA远程调用中断 - {0}", ex.InnerException.Message)
                         Return vbNullString
                     End Try
                 End If
@@ -510,10 +504,12 @@ Namespace DLNA.Protocol
             End If
 
             If Protocol.Settings.Settings.DebugMode Then
-                Console.WriteLine("远程调用 - {0}:{1}", ServiceName, Action.Name)
-                Console.WriteLine(String.Join(vbCrLf, Args.Select(Function(kvp) $"{kvp.Key}: {kvp.Value}")))
-                Console.WriteLine("返回值:")
-                Console.WriteLine(String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {If(Not String.IsNullOrEmpty(kvp.Value) AndAlso kvp.Value.Length > 100, $"{kvp.Value.Substring(0, 100)}...", kvp.Value)}")))
+                Logger.PrintOriginalLines(
+                    $"远程调用 - {ServiceName}:{Action.Name}",
+                    String.Join(vbCrLf, Args.Select(Function(kvp) $"{kvp.Key}: {kvp.Value}")),
+                    "返回值:",
+                    String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {If(Not String.IsNullOrEmpty(kvp.Value) AndAlso kvp.Value.Length > 100, $"{kvp.Value.Substring(0, 100)}...", kvp.Value)}"))
+                )
             End If
 
             Return Action.GetXmlReturns(Returns)

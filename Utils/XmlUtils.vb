@@ -62,9 +62,7 @@ Public Class XmlUtils
                 '补充命名空间标志
                 Xml = Xml.Replace($" {[Namespace]}=", $" xmlns:{[Namespace]}=")
             Catch ex As Exception
-                If Settings.Settings.DebugMode Then
-                    Console.WriteLine("解析XML时出错 - {0}", ex.Message)
-                End If
+                Logger.Debug("解析XML时出错 - {0}", ex.Message)
 
                 Return Nothing
             End Try

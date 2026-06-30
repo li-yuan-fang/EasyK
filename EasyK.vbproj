@@ -528,6 +528,7 @@
     <Compile Include="K\Cef\CefStorage.vb" />
     <Compile Include="K\EasyKBookRecord.vb" />
     <Compile Include="K\EasyKType.vb" />
+    <Compile Include="K\KLogger.vb" />
     <Compile Include="K\View\FrmAlert.Designer.vb">
       <DependentUpon>FrmAlert.vb</DependentUpon>
     </Compile>

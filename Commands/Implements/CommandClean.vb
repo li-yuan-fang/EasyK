@@ -27,7 +27,7 @@ Namespace Commands
                     Try
                         IO.File.Delete(File)
                     Catch ex As Exception
-                        Console.WriteLine("清理文件 {0} 时失败 - {1}", File, ex.Message)
+                        Logger.Error("清理文件 {0} 时失败 - {1}", File, ex.Message)
                     End Try
                 Next
             Else
@@ -46,7 +46,7 @@ Namespace Commands
                     Try
                         IO.File.Delete(File)
                     Catch ex As Exception
-                        Console.WriteLine("清理文件 {0} 时失败 - {1}", File, ex.Message)
+                        Logger.Error("清理文件 {0} 时失败 - {1}", File, ex.Message)
                     End Try
                 Next
             End If

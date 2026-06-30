@@ -25,12 +25,15 @@ Namespace Commands
                 Return
             End If
 
-            Console.WriteLine("发现了以下网卡:")
+            Dim Result As New List(Of String) From {
+                "发现了以下网卡:"
+            }
+
             For Each v In Valid
                 With v
-                    Console.WriteLine("# {0}", .Name)
-                    Console.WriteLine("GUID: {0}", .Id)
-                    Console.WriteLine("MAC: {0}", NetUtils.GetMAC(v))
+                    Result.Add($"# { .Name}")
+                    Result.Add($"GUID: { .Id}")
+                    Result.Add($"MAC: {NetUtils.GetMAC(v)}")
                     With .GetIPProperties()
                         Dim IPv4 As New List(Of String)
                         Dim IPv6 As New List(Of String)
@@ -44,16 +47,18 @@ Namespace Commands
                         Next
 
                         If IPv4.Count > 0 Then
-                            Console.WriteLine("IPv4: {0}", String.Join(" ", IPv4))
+                            Result.Add($"IPv4: {String.Join(" ", IPv4)}")
                         End If
                         If IPv6.Count > 0 Then
-                            Console.WriteLine("IPv6: {0}", String.Join(" ", IPv6))
+                            Result.Add($"IPv6: {String.Join(" ", IPv6)}")
                         End If
                     End With
                 End With
 
-                Console.WriteLine()
+                Result.Add("")
             Next
+
+            Logger.PrintOriginalLines(Result.ToArray())
         End Sub
 
         Protected Overrides Sub Process(Args() As String)

@@ -39,10 +39,12 @@ Public Class CefAudioHandler
         Dummy.Setup(WaveFormat.CreateIeeeFloatWaveFormat(parameters.SampleRate, channels), True)
 
         If Settings.Settings.DebugMode Then
-            Console.WriteLine("CefSharp 托管音频播放")
-            Console.WriteLine("采样率 {0}", parameters.SampleRate)
-            Console.WriteLine("声道数 {0}", channels)
-            Console.WriteLine("声道 {0} - {1}", [Enum].GetName(GetType(Enums.ChannelLayout), parameters.ChannelLayout), parameters.ChannelLayout)
+            Logger.PrintOriginalLines(
+                "CefSharp 托管音频播放",
+                $"采样率 {parameters.SampleRate}",
+                $"声道数 {channels}",
+                $"声道 {[Enum].GetName(GetType(Enums.ChannelLayout), parameters.ChannelLayout)} - {parameters.ChannelLayout}"
+            )
         End If
     End Sub
 
@@ -76,9 +78,9 @@ Public Class CefAudioHandler
                 End If
             End With
         Catch ex As AccessViolationException
-            Console.WriteLine("CefSharp 托管音频访存出错 - {0}", ex.Message)
+            Logger.Error("CefSharp 托管音频访存出错 - {0}", ex.Message)
         Catch ex As Exception
-            Console.WriteLine("CefSharp 托管音频出错 - {0}", ex.Message)
+            Logger.Error("CefSharp 托管音频出错 - {0}", ex.Message)
         End Try
     End Sub
 

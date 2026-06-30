@@ -32,7 +32,7 @@ Namespace DLNA.MusicProvider
                 Try
                     IO.Directory.CreateDirectory(Folder)
                 Catch ex As Exception
-                    Console.WriteLine("加载DLNA插件时出错 - {0}", ex.Message)
+                    Logger.Error("加载DLNA插件时出错 - {0}", ex.Message)
                 End Try
 
                 Return
@@ -52,7 +52,7 @@ Namespace DLNA.MusicProvider
                         End With
                     Next
                 Catch ex As Exception
-                    Console.WriteLine("加载DLNA插件时出错 - {0}", ex.Message)
+                    Logger.Error("加载DLNA插件时出错 - {0}", ex.Message)
                     Console.WriteLine(File)
                 End Try
             Next
@@ -67,7 +67,7 @@ Namespace DLNA.MusicProvider
                         Provider.LoadSettings(Setting)
                         Provider.TryUpdateSetting(Settings.Settings.PluginCommon)
                     Catch ex As Exception
-                        Console.WriteLine("加载DLNA插件配置信息时出错 - {0}: {1}", Id, ex.Message)
+                        Logger.Warn("加载DLNA插件配置信息时出错 - {0}: {1}", Id, ex.Message)
                     End Try
                 Next
             End With

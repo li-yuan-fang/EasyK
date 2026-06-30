@@ -238,9 +238,7 @@ Public Class EasyK
                 Next
             End With
 
-            If .DebugMode Then
-                Console.WriteLine("自动部署失败 - 找不到对应的屏幕")
-            End If
+            Logger.Warn("自动部署失败 - 找不到对应的屏幕")
         End With
     End Sub
 
@@ -319,7 +317,7 @@ Public Class EasyK
                  End Sub)
 
         With Temp
-            Console.WriteLine("开始播放 {0} - {1} (来自 {2})",
+            Logger.Info("开始播放 {0} - {1} (来自 {2})",
                               .Title,
                               If(.Content.Length > 20, $"{ .Content.Substring(0, 20)}..", .Content),
                               .Order)
@@ -615,7 +613,7 @@ Public Class EasyK
     Public Sub ShowQRCode(Adapter As NetworkInterface, Outside As Boolean)
         Dim LocalIP As String = NetUtils.GetLocalIP(Adapter)
         If String.IsNullOrEmpty(LocalIP) Then
-            Console.WriteLine("显示二维码失败 - 获取本机IP失败")
+            Logger.Error("显示二维码失败 - 获取本机IP失败")
             Return
         End If
 
@@ -685,7 +683,7 @@ Public Class EasyK
             ShowQRCode(Adapter, Outside)
             Return True
         Else
-            Console.WriteLine("自动显示二维码失败 - 无法获取默认网卡")
+            Logger.Error("自动显示二维码失败 - 无法获取默认网卡")
             Return False
         End If
     End Function
@@ -962,9 +960,7 @@ Public Class EasyK
                             .Close()
                         End Sub)
             Catch ex As Exception
-                If Settings.Settings.DebugMode Then
-                    Console.WriteLine("释放主窗体出错 - {0}", ex.Message)
-                End If
+                Logger.Debug("释放主窗体出错 - {0}", ex.Message)
             End Try
 
             .Dispose()
