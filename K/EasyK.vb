@@ -20,8 +20,6 @@ Public Class EasyK
 
     Private LastValidAdapter As NetworkInterface = Nothing
 
-    Private LastValidLocalIP As String = vbNullString
-
     Private NetworkChangeCommit As Date = Date.MinValue
 
     Friend ReadOnly DLNAServer As DLNA.DLNA
@@ -640,9 +638,8 @@ Public Class EasyK
             Return
         End If
 
-        '缓存有效信息
+        '缓存有效网卡
         LastValidAdapter = Adapter
-        LastValidLocalIP = LocalIP
 
         Dim Key As String = Settings.Settings.Web.PassKey
         Dim Port As Integer = Settings.Settings.Web.Port
