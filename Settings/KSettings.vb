@@ -45,7 +45,7 @@ Public Class KSettings
     ''' <remarks>设置为0可关闭</remarks>
     ''' <returns></returns>
     <JsonProperty("alert_duration")>
-    Public Property AlertDuration As Double = 2D
+    Public Property AlertDuration As Double = 2.5D
 
     ''' <summary>
     ''' 允许通过点歌界面显示/隐藏二维码

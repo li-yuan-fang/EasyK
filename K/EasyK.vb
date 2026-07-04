@@ -20,6 +20,10 @@ Public Class EasyK
 
     Private LastValidAdapter As NetworkInterface = Nothing
 
+    Private LastValidLocalIP As String = vbNullString
+
+    Private NetworkChangeCommit As Date = Date.MinValue
+
     Friend ReadOnly DLNAServer As DLNA.DLNA
 
     Friend ReadOnly Settings As SettingContainer
@@ -183,6 +187,9 @@ Public Class EasyK
 
         '启动播放器窗口
         PlayerForm = New FrmPlayer(Me, Settings)
+
+        '绑定网络变化事件
+        AddHandler NetworkChange.NetworkAddressChanged, AddressOf OnNetworkAddressChange
     End Sub
 
     ''' <summary>
@@ -524,6 +531,22 @@ Public Class EasyK
         End With
     End Sub
 
+    ''' <summary>
+    ''' 重唱
+    ''' </summary>
+    Public Sub Replay()
+        If Current Is Nothing OrElse DLNAServer.Player Is Nothing Then Return
+
+        If Current.Type = EasyKType.Bilibili Then
+            '调用B站复位脚本
+            PlayerForm.BiliReplay()
+        Else
+            'VLC播放器模式
+            If Not PlayerForm.Playing Then Return
+            DLNAServer.Player.Position = 0
+        End If
+    End Sub
+
     Private Shared Function GetOccupied(Record As EasyKBookRecord) As String
         With Record
             Select Case .Type
@@ -617,8 +640,9 @@ Public Class EasyK
             Return
         End If
 
-        '保存有效网卡
+        '缓存有效信息
         LastValidAdapter = Adapter
+        LastValidLocalIP = LocalIP
 
         Dim Key As String = Settings.Settings.Web.PassKey
         Dim Port As Integer = Settings.Settings.Web.Port
@@ -697,6 +721,29 @@ Public Class EasyK
         If PlayerForm IsNot Nothing AndAlso Not PlayerForm.IsDisposed Then PlayerForm.Invoke(Sub() QRForm.Close())
         RemoveHandler QRForm.OnBoundsUpdate, AddressOf QRForm_OnBoundsUpdate
         QRForm = Nothing
+    End Sub
+
+    '网络变化
+    Private Sub OnNetworkAddressChange(sender As Object, e As EventArgs)
+        If NetworkChangeCommit = Date.MinValue Then
+            '新触发
+            NetworkChangeCommit = Now.AddSeconds(3)
+
+            Task.Run(Sub()
+                         While Now < NetworkChangeCommit
+                             Thread.Sleep(100)
+                         End While
+
+                         '复位
+                         NetworkChangeCommit = Date.MinValue
+
+                         '提交二维码更新
+                         RefreshQRCode()
+                     End Sub)
+        Else
+            '更新时间
+            NetworkChangeCommit = Now.AddSeconds(3)
+        End If
     End Sub
 
     ''' <summary>
@@ -947,6 +994,8 @@ Public Class EasyK
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
+        RemoveHandler NetworkChange.NetworkAddressChanged, AddressOf OnNetworkAddressChange
+
         Dummy.Dispose()
         DLNAServer.Dispose()
 

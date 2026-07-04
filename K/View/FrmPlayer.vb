@@ -353,6 +353,11 @@ Public Class FrmPlayer
                End Sub)
     End Sub
 
+    'B站重新播放
+    Friend Sub BiliReplay()
+        BeginInvoke(Sub() Browser.EvaluateScriptAsync("var interval5=setInterval(()=>{let ele=document.getElementsByClassName('bpx-player-progress-wrap');if(ele.length==0)return;ele=ele[0];if(ele==undefined)return;let args={bubbles:true,cancelable:true,view:window,button:0,buttons:0,clientX:ele.clientLeft,clientY:ele.clientTop,screenX:ele.clientLeft,screenY:ele.clientTop,offsetX:0,offsetY:0,ctrlKey:false,altKey:false,shiftKey:false,metaKey:false,detail:1};ele.dispatchEvent(new MouseEvent('mousedown',args));setTimeout(()=>ele.dispatchEvent(new MouseEvent('mouseup',args)),100);clearInterval(interval5);interval5=undefined},100);"))
+    End Sub
+
     '运行B站自动脚本
     Private Sub RunBiliScript(Browser As IBrowser)
         With Browser
@@ -476,7 +481,7 @@ Public Class FrmPlayer
         Invoke(Sub()
                    With Browser
                        If Browser_Bili Then
-                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); window.location.href = 'about:blank';")
+                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); clearInterval(interval5); window.location.href = 'about:blank';")
                            Browser_Bili = False
                        End If
 

@@ -1,5 +1,4 @@
-﻿Imports System.Threading
-Imports System.Windows.Forms
+﻿Imports System.Windows.Forms
 Imports Microsoft.AspNetCore.Http
 Imports Newtonsoft.Json
 Imports HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod
@@ -232,6 +231,12 @@ Public Class KWebCore
     <WebApi("/random", HttpMethod.Get)>
     Private Function Random(ctx As HttpContext) As Task
         K.Random()
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+    End Function
+
+    <WebApi("/replay", HttpMethod.Get)>
+    Private Function Replay(ctx As HttpContext) As Task
+        K.Replay()
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 

@@ -479,6 +479,7 @@
   <ItemGroup>
     <Compile Include="Commands\Implements\CommandFair.vb" />
     <Compile Include="Commands\Implements\CommandRandom.vb" />
+    <Compile Include="Commands\Implements\CommandReplay.vb" />
     <Compile Include="DLNA\Player\DLNAPlayer.vb" />
     <Compile Include="DLNA\Player\StoredMusic.vb" />
     <Compile Include="K\Alert\AlertManager.vb" />
