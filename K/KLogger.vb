@@ -1,4 +1,5 @@
 ﻿Imports System.Windows.Forms
+Imports CefSharp.DevTools.CSS
 
 ''' <summary>
 ''' 日志类型
@@ -29,9 +30,37 @@ Friend Class KFileLogger
     Inherits IO.TextWriter
     Implements IDisposable
 
+    Private Class RedirectInput
+        Inherits IO.TextReader
+
+        Private ReadOnly Inner As IO.TextReader
+
+        Public Event OnReadLine(Content As String)
+
+        Public Overrides Function ReadLine() As String
+            Dim Line = Inner.ReadLine()
+            Task.Run(Sub() RaiseEvent OnReadLine(Line))
+
+            Return Line
+        End Function
+
+        ''' <summary>
+        ''' 初始化
+        ''' </summary>
+        Public Sub New()
+            Inner = Console.In
+            Console.SetIn(Me)
+        End Sub
+
+    End Class
+
+    '重定向输入流
+    Private WithEvents Input As New RedirectInput
+
     '控制台输出流
     Private ReadOnly Inner As IO.TextWriter
 
+    '日志文件输出流
     Private ReadOnly LoggerFileStream As IO.FileStream
 
     Private ReadOnly LoggerWriter As IO.StreamWriter
@@ -91,6 +120,13 @@ Friend Class KFileLogger
 
         LoggerWriter.Dispose()
         LoggerFileStream.Dispose()
+    End Sub
+
+    Private Sub OnInputReadLine(Content As String) Handles Input.OnReadLine
+        Try
+            If LoggerWriter IsNot Nothing Then LoggerWriter.WriteLine(Content)
+        Catch
+        End Try
     End Sub
 
 End Class
