@@ -1,4 +1,6 @@
-﻿''' <summary>
+﻿Imports System.Windows.Forms
+
+''' <summary>
 ''' 日志类型
 ''' </summary>
 Public Enum Logging
@@ -23,14 +25,87 @@ Public Enum Logging
     Debug = 9
 End Enum
 
+Friend Class KFileLogger
+    Inherits IO.TextWriter
+    Implements IDisposable
+
+    '控制台输出流
+    Private ReadOnly Inner As IO.TextWriter
+
+    Private ReadOnly LoggerFileStream As IO.FileStream
+
+    Private ReadOnly LoggerWriter As IO.StreamWriter
+
+    Public Overrides ReadOnly Property Encoding As Text.Encoding
+        Get
+            Return Inner.Encoding
+        End Get
+    End Property
+
+    Public Overrides Sub Write(value As Char)
+        Inner.Write(value)
+
+        Try
+            If LoggerWriter IsNot Nothing Then LoggerWriter.Write(value)
+        Catch
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' 初始化日志系统
+    ''' </summary>
+    ''' <param name="Parent">日志层输出流</param>
+    Public Sub New(Parent As KLogger)
+        Inner = Console.Out
+        Console.SetOut(Me)
+
+        Try
+            LoggerFileStream = New IO.FileStream(
+                        IO.Path.Combine(Application.StartupPath, "debug.log"),
+                        IO.FileMode.Create,
+                        IO.FileAccess.Write,
+                        IO.FileShare.Read
+                    )
+
+            LoggerWriter = New IO.StreamWriter(LoggerFileStream, Text.Encoding.UTF8, 4096) With {
+                .AutoFlush = False
+            }
+        Catch ex As Exception
+            LoggerFileStream = Nothing
+            LoggerWriter = Nothing
+
+            Parent.Debug("创建日志文件失败 - {0}", ex.Message)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' 销毁资源
+    ''' </summary>
+    Public Shadows Sub Dispose() Implements IDisposable.Dispose
+        MyBase.Dispose()
+
+        If LoggerFileStream Is Nothing OrElse LoggerWriter Is Nothing Then Return
+
+        LoggerWriter.Flush()
+        LoggerFileStream.Flush()
+
+        LoggerWriter.Dispose()
+        LoggerFileStream.Dispose()
+    End Sub
+
+End Class
+
 ''' <summary>
 ''' 日志系统
 ''' </summary>
 Public Class KLogger
     Inherits IO.TextWriter
+    Implements IDisposable
 
+    '下一级输出流
     Private ReadOnly Inner As IO.TextWriter
 
+    '配置容器
     Private ReadOnly Settings As SettingContainer
 
     Public Overrides ReadOnly Property Encoding As Text.Encoding
@@ -216,8 +291,23 @@ Public Class KLogger
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
 
-        Inner = Console.Out
-        Console.SetOut(Me)
+        If Settings.Settings.DebugMode Then
+            '启用日志文件流作为下一级输出流
+            Inner = New KFileLogger(Me)
+        Else
+            '直接采用控制台作为下一级输出流
+            Inner = Console.Out
+            Console.SetOut(Me)
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' 销毁资源
+    ''' </summary>
+    Public Shadows Sub Dispose() Implements IDisposable.Dispose
+        MyBase.Dispose()
+
+        If Settings.Settings.DebugMode Then DirectCast(Inner,KFileLogger).Dispose()
     End Sub
 
 End Class

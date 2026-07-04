@@ -167,6 +167,8 @@ Public Class FrmPlayer
         Dim Args As New List(Of String)
         With Args
             .Add("--no-spu")
+            .Add("--vout=direct3d11")
+            .Add("--avcodec-hw=d3d11va")
             If Not Settings.Settings.DebugMode Then .Add("--quiet")
 
             VLCLib = New LibVLC(.ToArray())

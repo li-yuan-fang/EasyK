@@ -1,4 +1,5 @@
-﻿Imports System.Text
+﻿Imports System.Runtime.InteropServices
+Imports System.Text
 Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
 
@@ -96,6 +97,9 @@ Module ModMain
                 End Try
             Next
         End If
+
+        '保存日志
+        Logger.Dispose()
 
         End
     End Sub

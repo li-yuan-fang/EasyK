@@ -46,6 +46,7 @@ Public Class CefSetting
 
         '日志
         If Not Settings.Settings.DebugMode Then LogSeverity = LogSeverity.Disable
+        LogFile = IO.Path.Combine(Application.StartupPath, "cefsharp.log")
 
         Logger.Debug("CEFSharp 配置完成")
     End Sub

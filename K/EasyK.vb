@@ -956,7 +956,7 @@ Public Class EasyK
         With PlayerForm
             Try
                 .Invoke(Sub()
-                            Cef.ShutdownWithoutChecks()
+                            Cef.Shutdown()
                             .Close()
                         End Sub)
             Catch ex As Exception
