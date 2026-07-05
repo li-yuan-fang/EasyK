@@ -898,6 +898,7 @@ Namespace DLNA.Player
             Rate = 1.0
 
             '检查是否需要缓存
+            Logger.Debug("DLNA缓存: {0} {1} {2} {3} {4}", MusicMode, MusicBuffer IsNot Nothing, K.Settings.Settings.DLNA.MusicBufferMode, Downloaded, MusicBuffer IsNot Nothing AndAlso MusicBuffer.Attribute IsNot Nothing)
             If MusicMode AndAlso MusicBuffer IsNot Nothing AndAlso K.Settings.Settings.DLNA.MusicBufferMode AndAlso
                 Downloaded AndAlso MusicBuffer.Attribute IsNot Nothing Then
 

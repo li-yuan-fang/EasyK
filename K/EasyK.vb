@@ -270,6 +270,15 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
+    ''' 强制切歌
+    ''' </summary>
+    ''' <remarks>仅供控制台使用</remarks>
+    Public Sub ForcePush()
+        Interlocked.Exchange(PushLock, 0)
+        Push(True)
+    End Sub
+
+    ''' <summary>
     ''' 推进播放进度/切歌
     ''' </summary>
     ''' <param name="Manual">手动切歌</param>
@@ -435,10 +444,14 @@ Public Class EasyK
         Dim Record As New EasyKBookRecord(Title, Order, Type, Content)
 
         SyncLock Queue
-            Queue.AddLast(Record)
+            If Settings.Settings.FairnessMode Then
+                '公平插入点歌
+                BookFair(Record, Queue.First)
+            Else
+                '常规点歌
+                Queue.AddLast(Record)
+            End If
         End SyncLock
-
-        If Settings.Settings.FairnessMode Then ReRankFair()
 
         If Current Is Nothing Then Push()
 
@@ -790,6 +803,9 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Banlanced">是否采用平衡排序算法</param>
     Public Sub Random(Banlanced As Boolean)
+        Settings.Settings.FairnessMode = False
+        Logger.Info("公平模式已自动关闭 - 随机排序被触发")
+
         If Banlanced Then
             RandomBalanced()
         Else
@@ -904,15 +920,49 @@ Public Class EasyK
         Return Record
     End Function
 
+    '检测顺序是否公平
+    Private Shared Function IsRankFair([Next] As LinkedListNode(Of EasyKBookRecord)) As Boolean
+        If [Next] Is Nothing Then Return True
+
+        Dim Counter As Integer = 0
+        Dim Members As New HashSet(Of String)
+        While [Next] IsNot Nothing
+            Dim Order = [Next].Value.Order
+
+            If Members.Contains(Order) Then
+                '出现重复 可能完成了一轮
+                If Members.Count = Counter Then
+                    '当前轮公平 继续下一轮
+                    Return IsRankFair([Next])
+                Else
+                    '当前轮不公平
+                    Return False
+                End If
+            Else
+                '未出现重复
+                Members.Add(Order)
+            End If
+
+            Counter += 1
+            [Next] = [Next].Next
+        End While
+
+        Return Members.Count = Counter
+    End Function
+
     ''' <summary>
     ''' 公平重排序
     ''' </summary>
     Public Sub ReRankFair()
-        Dim First As String = If(Current IsNot Nothing, Current.Order, vbNullString)
-        Dim Pool As New Dictionary(Of String, List(Of EasyKBookRecord))
-
         SyncLock Queue
+            '检测是否需要重排序
+            If IsRankFair(Queue.First) Then Return
+
+            '锁定首位点歌人
+            Dim First As String = If(Current IsNot Nothing, Current.Order, vbNullString)
+
             '创建剩余池
+            Dim Pool As New Dictionary(Of String, List(Of EasyKBookRecord))
             For Each Record As EasyKBookRecord In Queue
                 With Record
                     If Pool.ContainsKey(.Order) Then
@@ -923,11 +973,41 @@ Public Class EasyK
                 End With
             Next
 
+            '运行完全重排序
             Queue.Clear()
             For Each Record As EasyKBookRecord In RandomBalanced(Pool, First, True)
                 Queue.AddLast(Record)
             Next
         End SyncLock
+    End Sub
+
+    '公平点歌(增量算法)
+    Private Sub BookFair(Record As EasyKBookRecord, Node As LinkedListNode(Of EasyKBookRecord))
+        Dim Members As New HashSet(Of String)
+        While Node IsNot Nothing
+            Dim Order = Node.Value.Order
+
+            If Members.Contains(Order) Then
+                '出现重复 可能完成了一轮
+                If Members.Contains(Record.Order) Then
+                    '本轮已插入 继续查找
+                    BookFair(Record, Node)
+                Else
+                    '本轮未插入 则插入本轮最后一位
+                    Queue.AddBefore(Node, Record)
+                End If
+
+                Return
+            Else
+                '未出现重复
+                Members.Add(Order)
+            End If
+
+            Node = Node.Next
+        End While
+
+        '查找结束但是未找到插入点 直接放到最后
+        Queue.AddLast(Record)
     End Sub
 
     ''' <summary>

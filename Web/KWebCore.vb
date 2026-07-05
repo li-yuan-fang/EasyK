@@ -230,6 +230,11 @@ Public Class KWebCore
 
     <WebApi("/random", HttpMethod.Get)>
     Private Function Random(ctx As HttpContext) As Task
+        Dim Order As String = ctx.Request.Cookies.Item("name")
+        UpdateUserName(Order, ctx)
+
+        Logger.Info("{0} 执行了随机排序", Order)
+
         K.Random()
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
