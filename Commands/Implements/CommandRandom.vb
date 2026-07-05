@@ -6,7 +6,7 @@
         Private ReadOnly K As EasyK
 
         Public Sub New(K As EasyK)
-            MyBase.New("random", "random [banlanced/common] - 随机排序已点歌曲(如不指定算法则按默认配置处理)", CommandType.User)
+            MyBase.New("random", "random [balanced/common] - 随机排序已点歌曲(如不指定算法则按默认配置处理)", CommandType.User)
             Me.K = K
         End Sub
 
@@ -17,7 +17,7 @@
                 K.Random()
             Else
                 Select Case Args(1).ToLower()
-                    Case "banlanced"
+                    Case "balanced"
                         K.Random(True)
                     Case "common"
                         K.Random(False)

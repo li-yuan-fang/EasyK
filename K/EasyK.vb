@@ -803,12 +803,14 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Banlanced">是否采用平衡排序算法</param>
     Public Sub Random(Banlanced As Boolean)
-        Settings.Settings.FairnessMode = False
-        Logger.Info("公平模式已自动关闭 - 随机排序被触发")
-
         If Banlanced Then
             RandomBalanced()
         Else
+            If Settings.Settings.FairnessMode Then
+                Settings.Settings.FairnessMode = False
+                Logger.Warn("公平模式已自动关闭 - 非平衡随机排序被触发")
+            End If
+
             RandomCommon()
         End If
     End Sub

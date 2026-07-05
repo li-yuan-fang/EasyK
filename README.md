@@ -2,7 +2,7 @@
 
 **轻松随地大小K**
 
-## 🌟当前版本🌟 ➡️ [✌v1.1.3🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.1.3)
+## 🌟当前版本🌟 ➡️ [✌v1.1.4🐯](https://github.com/li-yuan-fang/EasyK/releases/tag/v1.1.4)
 
 ![播放窗口1](./docs/assets/r1.png)
 
@@ -24,9 +24,15 @@
 
 ✅支持DLNA投屏（纯K那种）
 
-✅DLNA投屏纯音频时自动生成界面
+✅DLNA音乐模式（DLNA投屏纯音频时自动生成界面）
+
+✅DLNA音乐模式支持双层歌词（日语歌预读加成）
 
 ✅实时生成伴奏（音源有人声可以自动消除）
+
+✅平衡随机排序算法（确保随机排序后每个人都有机会轮麦）
+
+✅公平模式（确保每个人都有机会轮麦）
 
 ✅投屏不会切歌
 
@@ -36,11 +42,23 @@
 
 ## 要怎么用
 
+保存图片发给你的朋友看➡️[**✅使用说明✅**](#%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E)
+
 小白请看➡️[**❓使用手册❓**](https://github.com/li-yuan-fang/EasyK/blob/master/docs/EasyK%20%E4%BD%BF%E7%94%A8%E6%89%8B%E5%86%8C.pdf)
 
 高手请看Wiki➡️[**⭐用户指南⭐**](https://github.com/li-yuan-fang/EasyK/wiki/EasyK-%E7%94%A8%E6%88%B7%E6%8C%87%E5%8D%97)
 
 ![指令界面](./docs/assets/r3.png)
+
+## 使用说明
+
+![使用说明1](./docs/assets/u1.png)
+
+![使用说明2](./docs/assets/u2.png)
+
+![使用说明3](./docs/assets/u3.png)
+
+![使用说明4](./docs/assets/u4.png)
 
 ## TODO
 
@@ -76,7 +94,7 @@
 
 3. 编译EasyK主程序
 
-4. 复制支持H264的CefSharp库到输出目录并替换（可参考[cefsharp.H264.x64.109（88、84、79）可播放视频包免费编译版](https://www.cnblogs.com/wintertone/p/18416085)和[编译带H.264的cef(windows)](https://zhuanlan.zhihu.com/p/694014974)）
+4. 复制支持H264的CefSharp库到输出目录并替换（可参考[编译带H.264的cef(windows)](https://zhuanlan.zhihu.com/p/694014974)）
 
 > 主分支CefSharp版本已升级到126.2，Win7特供版仍然使用109.1.110
 
