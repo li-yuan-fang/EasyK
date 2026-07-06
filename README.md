@@ -84,7 +84,7 @@
 
 - 点歌界面使用[Vue 3](https://cn.vuejs.org/)和[Vant组件库](https://vant-ui.github.io/)实现
 
-- 理论上支持Windows 7及以上版本系统
+- 理论上支持Windows 10及以上版本系统
 
 ## 如何编译
 

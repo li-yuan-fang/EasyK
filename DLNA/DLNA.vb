@@ -190,7 +190,9 @@ Namespace DLNA
         <WebApi(ConnectionManager & ActionPrefix, HttpMethod.Post)>
         Private Function ConnectionManagerAction(ctx As HttpContext) As Task
             AddHeaders(ctx)
-            Return Protocol.ConnectionManagerService.Act(ctx, CheckAccess(ctx))
+
+            '为了适配某些软件的特性 允许ConnectionManager无条件访问
+            Return Protocol.ConnectionManagerService.Act(ctx, True)
         End Function
 
         <WebApi(ConnectionManager & EventPrefix)>

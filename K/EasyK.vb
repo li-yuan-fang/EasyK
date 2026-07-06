@@ -206,7 +206,12 @@ Public Class EasyK
         '检测访问者
         If Settings.Settings.DLNA.StrictPermission AndAlso Not String.IsNullOrEmpty(Current.Content) AndAlso
             Current.Content <> ctx.Connection.RemoteIpAddress.ToString() AndAlso
-            Not NetUtils.LocalAddresses.Contains(Current.Content) Then Return False
+            Not NetUtils.LocalAddresses.Contains(Current.Content) Then
+
+            Logger.Debug("{0} 试图越权访问DLNA服务被拒", ctx.Connection.RemoteIpAddress.ToString())
+
+            Return False
+        End If
 
         Return True
     End Function
