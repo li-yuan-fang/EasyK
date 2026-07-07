@@ -4,7 +4,7 @@ Imports System.Threading
 Imports CefSharp
 Imports EasyK.DLNA.Player
 Imports Microsoft.AspNetCore.Http
-'1
+
 Public Class EasyK
     Implements IDisposable
 
