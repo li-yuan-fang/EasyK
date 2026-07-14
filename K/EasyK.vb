@@ -1,6 +1,7 @@
 ﻿Imports System.Drawing
 Imports System.Net.NetworkInformation
 Imports System.Threading
+Imports Newtonsoft.Json
 Imports CefSharp
 Imports EasyK.DLNA.Player
 Imports Microsoft.AspNetCore.Http
@@ -184,6 +185,9 @@ Public Class EasyK
         DLNAServer = New DLNA.DLNA(Me, Settings) With {
             .CheckAccess = New DLNA.DLNAAccessCheck(AddressOf DLNAAccessCheck)
         }
+
+        '尝试恢复点歌记录
+        Load()
 
         '启动播放器窗口
         PlayerForm = New FrmPlayer(Me, Settings)
@@ -1125,6 +1129,67 @@ Public Class EasyK
                 Node = Node.Next
             End While
         End SyncLock
+    End Sub
+
+    ''' <summary>
+    ''' 保存点歌记录
+    ''' </summary>
+    Public Sub Save()
+        Dim Saved As New SavedKRecords()
+
+        With Saved
+            With .Queue
+                SyncLock Queue
+                    For Each Record In Queue
+                        .Add(New SavedKRecords.Record(Record))
+                    Next
+                End SyncLock
+            End With
+
+            With .Outdated
+                SyncLock OutdatedQueue
+                    For Each Record In OutdatedQueue
+                        .Add(New SavedKRecords.Record(Record))
+                    Next
+                End SyncLock
+            End With
+        End With
+
+        Settings.Settings.SavedList = JsonConvert.SerializeObject(Saved)
+    End Sub
+
+    '加载点歌记录
+    Private Sub Load()
+        If String.IsNullOrEmpty(Settings.Settings.SavedList) Then Return
+
+        Dim Saved As SavedKRecords = JsonUtils.SafeDeserializeObject(Of SavedKRecords)(Settings.Settings.SavedList)
+        SyncLock Queue
+            For Each Record In Saved.Queue
+                Dim r = Record.Recover()
+                If r Is Nothing Then
+                    Logger.Error("恢复点歌记录时出错 - {0}", Record.ToString())
+                    Continue For
+                End If
+
+                Queue.AddLast(r)
+            Next
+        End SyncLock
+        SyncLock OutdatedQueue
+            For Each Record In Saved.Outdated
+                Dim r = Record.Recover()
+                If r Is Nothing Then
+                    Logger.Error("恢复点歌记录时出错 - {0}", Record.ToString())
+                    Continue For
+                End If
+
+                OutdatedQueue.AddLast(r)
+            Next
+        End SyncLock
+
+        '清除缓存
+        Settings.Settings.SavedList = vbNullString
+
+        Logger.Info("恢复点歌记录完成")
     End Sub
 
     '重启主窗体

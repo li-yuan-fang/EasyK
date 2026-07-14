@@ -86,7 +86,7 @@ Module ModMain
         Settings.Dispose()
 
         '清理
-        If Settings.Settings.CleanOnExit Then
+        If Settings.Settings.CleanOnExit AndAlso String.IsNullOrEmpty(Settings.Settings.SavedList) Then
             Dim Folder As String = IO.Path.Combine(Application.StartupPath, Settings.Settings.TempFolder)
             For Each File As String In IO.Directory.GetFiles(Folder)
                 Try
