@@ -128,7 +128,7 @@ Public Class KSettings
     ''' 点歌缓存
     ''' </summary>
     ''' <returns></returns>
-    <JsonProperty("saved_list")>
+    <JsonProperty("saved_list", NullValueHandling:=NullValueHandling.Ignore)>
     Public Property SavedList As String = vbNullString
 
     ''' <summary>
