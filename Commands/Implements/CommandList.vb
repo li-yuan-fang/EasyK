@@ -17,10 +17,18 @@
                 Return
             End If
 
-            Dim Result As New List(Of String) From {
-                "=====已点歌曲====="
-            }
+            Dim Result As New List(Of String)
 
+            Dim Current As EasyKBookRecord = K.GetCurrent()
+            If Current IsNot Nothing Then
+                With Result
+                    .Add("=====正在播放=====")
+                    .Add($"{Current.Title} (ID:{Current.Id} Content:{Current.Content})")
+                    .Add($"来源: {Current.Order} 播放方式: {If(Current.Type = EasyKType.Bilibili, "bilibili", "VLC")}")
+                End With
+            End If
+
+            Result.Add("=====已点歌曲=====")
             Dim i As Integer = 1
             For Each Record As EasyKBookRecord In List
                 With Record

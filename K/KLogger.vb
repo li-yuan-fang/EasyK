@@ -304,6 +304,8 @@ Public Class KLogger
     ''' <param name="Content">内容</param>
     ''' <param name="Params">参数</param>
     Public Sub Debug(Content As String, ParamArray Params() As String)
+        If Not Settings.Settings.DebugMode Then Return
+
         Print(Logging.Debug, String.Format(Content, Params))
     End Sub
 

@@ -34,6 +34,8 @@ Public Class EasyK
 
     Private _SavedQRBounds As Rectangle
 
+    Private Blocked As String = vbNullString
+
     Private PushLock As Integer = 0
 
     ''' <summary>
@@ -279,6 +281,8 @@ Public Class EasyK
     ''' </summary>
     ''' <remarks>仅供控制台使用</remarks>
     Public Sub ForcePush()
+        If Current IsNot Nothing AndAlso Current.Id = Blocked Then Blocked = vbNullString
+
         Interlocked.Exchange(PushLock, 0)
         Push(True)
     End Sub
@@ -291,6 +295,20 @@ Public Class EasyK
         '原子操作 阻止短时多次切歌
         Dim value As Integer = Interlocked.Exchange(PushLock, 1)
         If value <> 0 Then Return
+
+        '检查并处理顶歌锁定状态
+        If Current IsNot Nothing AndAlso Current.Id = Blocked Then
+            If Manual Then
+                '阻止切歌
+                Logger.Warn("已拦截非法切歌请求")
+
+                Interlocked.Exchange(PushLock, 0)
+                Return
+            End If
+
+            '解锁
+            Blocked = vbNullString
+        End If
 
         Dim Temp As EasyKBookRecord
 
@@ -374,6 +392,13 @@ Public Class EasyK
         Return RankBook(Id, 0)
     End Function
 
+    '检查顶歌权限
+    Private Function CheckRankPermission(Id As String, Rank As Integer) As Boolean
+        If String.IsNullOrEmpty(Blocked) Then Return True
+
+        Return If(Blocked = Id, Rank = 0, Rank <> 0)
+    End Function
+
     ''' <summary>
     ''' 已点歌曲重排序
     ''' </summary>
@@ -381,6 +406,11 @@ Public Class EasyK
     ''' <param name="Rank">序号</param>
     ''' <returns></returns>
     Public Function RankBook(Id As String, Rank As Integer) As EasyKBookRecord
+        If Not CheckRankPermission(Id, Rank) Then
+            Logger.Warn("已拦截非法顶歌请求")
+            Return Nothing
+        End If
+
         SyncLock Queue
             Dim Node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
             While Node IsNot Nothing
@@ -417,6 +447,47 @@ Public Class EasyK
         End SyncLock
 
         Return Nothing
+    End Function
+
+    ''' <summary>
+    ''' 锁定顶歌
+    ''' </summary>
+    ''' <returns></returns>
+    Public Function Block() As Boolean
+        If Not String.IsNullOrEmpty(Blocked) Then
+            Logger.Info("锁定顶歌已解除(ID: {0})", Blocked)
+
+            Blocked = vbNullString
+            Return True
+        End If
+
+        Dim Id As String = vbNullString
+        SyncLock Queue
+            If Queue.Count > 0 Then Id = Queue.First.Value.Id
+        End SyncLock
+
+        If String.IsNullOrEmpty(Id) Then
+            If Current Is Nothing Then Return False
+
+            Return Block(Current.Id)
+        End If
+
+        Return Block(Id)
+    End Function
+
+    ''' <summary>
+    ''' 锁定顶歌
+    ''' </summary>
+    ''' <param name="Id">ID</param>
+    ''' <returns></returns>
+    Public Function Block(Id As String) As Boolean
+        Blocked = Id
+        If RankBook(Id, 0) IsNot Nothing Then Return True
+        If Current IsNot Nothing AndAlso Current.Id = Id Then Return True
+
+        '撤销锁定
+        Blocked = vbNullString
+        Return False
     End Function
 
     ''' <summary>
@@ -469,6 +540,8 @@ Public Class EasyK
     ''' <param name="Id">ID</param>
     ''' <returns></returns>
     Public Function Remove(Id As String) As Boolean
+        If Id = Blocked Then Return False
+
         SyncLock Queue
             Dim node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
             While node IsNot Nothing
