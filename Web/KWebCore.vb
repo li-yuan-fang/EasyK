@@ -178,6 +178,8 @@ Public Class KWebCore
 
     <WebApi("/rank", HttpMethod.Post)>
     Private Function Rank(ctx As HttpContext) As Task
+        If Settings.Settings.FairnessMode Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status403Forbidden)
+
         Dim Request As String = WebStartup.GetRequestBody(ctx)
 
         Dim Req As RequestRank = JsonUtils.SafeDeserializeObject(Of RequestRank)(Request)
