@@ -20,7 +20,7 @@
 
         Private Running As Boolean
 
-        Private BroadcastTask As Task
+        Private ReadOnly BroadcastTask As Task
 
         Friend Settings As SettingContainer
 

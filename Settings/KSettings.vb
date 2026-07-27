@@ -125,6 +125,13 @@ Public Class KSettings
     }
 
     ''' <summary>
+    ''' 点歌缓存
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("saved_list", NullValueHandling:=NullValueHandling.Ignore)>
+    Public Property SavedList As String = vbNullString
+
+    ''' <summary>
     ''' 退出时自动清理缓存
     ''' </summary>
     ''' <returns></returns>

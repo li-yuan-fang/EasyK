@@ -477,6 +477,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Commands\Implements\CommandBlock.vb" />
     <Compile Include="Commands\Implements\CommandFair.vb" />
     <Compile Include="Commands\Implements\CommandRandom.vb" />
     <Compile Include="Commands\Implements\CommandReplay.vb" />
@@ -530,6 +531,7 @@
     <Compile Include="K\EasyKBookRecord.vb" />
     <Compile Include="K\EasyKType.vb" />
     <Compile Include="K\KLogger.vb" />
+    <Compile Include="K\SavedKRecords.vb" />
     <Compile Include="K\View\FrmAlert.Designer.vb">
       <DependentUpon>FrmAlert.vb</DependentUpon>
     </Compile>
