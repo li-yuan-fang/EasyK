@@ -660,7 +660,6 @@
   <ItemGroup />
   <ItemGroup>
     <Content Include="logo.ico" />
-    <Content Include="plugins\LyricKaraoke.dll" />
     <Content Include="plugins\LyricKernel.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -360,7 +360,7 @@ Public Class EasyK
         With Temp
             Logger.Info("开始播放 {0} - {1} (来自 {2})",
                               .Title,
-                              If(.Content.Length > 20, $"{ .Content.Substring(0, 20)}..", .Content),
+                              .Content.Debug(),
                               .Order)
         End With
     End Sub
