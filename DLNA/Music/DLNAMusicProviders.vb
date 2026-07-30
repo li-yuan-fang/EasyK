@@ -243,13 +243,7 @@ Namespace DLNA.MusicProvider
         ''' <param name="Position">播放进度</param>
         ''' <returns></returns>
         Public Shared Function GenerateUpdateStateScript(Playing As Boolean, Rate As Single, Position As Single) As String
-            Dim Builder As New StringBuilder()
-            With Builder
-                .Append($"window.setPlaying({Playing.ToString().ToLower()});")
-                .Append($"window.setCurrent({Math.Max(Position, 0)});")
-                .Append($"window.setRate({Rate});")
-            End With
-            Return Builder.ToString()
+            Return $"window.setPlayState({Playing.ToString().ToLower()},{Math.Max(Position, 0)},{Rate});"
         End Function
 
         ''' <summary>
