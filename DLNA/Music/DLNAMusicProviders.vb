@@ -221,17 +221,18 @@ Namespace DLNA.MusicProvider
                                                          DefaultDuration As Long) As String
             Dim Builder As New StringBuilder()
             With Builder
+                .Append("{")
                 Dim Title As String = If(String.IsNullOrEmpty(Attribute.Title), DefaultTitle, Attribute.Title)
-                .Append($"window.setTitle(""{Title.Replace("""", "\""")}"");")
-                .Append($"window.setArtist(""{Attribute.Artist.Replace("""", "\""")}"");")
+                .Append($"title:""{Title.Replace("""", "\""")}"",")
+                .Append($"artist:""{Attribute.Artist.Replace("""", "\""")}"",")
 
                 If Not String.IsNullOrEmpty(Attribute.Album) Then
-                    .Append($"window.setAlbum(""{Attribute.Album.Replace("""", "\""")}"");")
+                    .Append($"album:""{Attribute.Album.Replace("""", "\""")}"",")
                 End If
 
-                .Append($"window.setTotal({If(Attribute.Duration > 0, Attribute.Duration, DefaultDuration)});")
+                .Append($"total:{If(Attribute.Duration > 0, Attribute.Duration, DefaultDuration)}}}")
             End With
-            Return Builder.ToString()
+            Return $"window.setAttribute({Builder.ToString()});"
         End Function
 
         ''' <summary>
@@ -318,7 +319,7 @@ Namespace DLNA.MusicProvider
         ''' <param name="Intersect">交错模式</param>
         ''' <returns></returns>
         Public Shared Function GenerateUpdateLyricIntersectScript(Intersect As Boolean) As String
-            Return $"window.setLyricKMode({Intersect.ToString().ToLower()});"
+            Return $"window.setLyricIntersectMode({Intersect.ToString().ToLower()});"
         End Function
 
     End Class

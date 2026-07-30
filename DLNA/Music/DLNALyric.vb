@@ -1,4 +1,5 @@
-﻿Imports Newtonsoft.Json
+﻿Imports System.Windows.Documents
+Imports Newtonsoft.Json
 
 Namespace DLNA.MusicProvider
 
@@ -44,48 +45,106 @@ Namespace DLNA.MusicProvider
     End Class
 
     ''' <summary>
-    ''' DLNA逐字歌词字
+    ''' DLNA逐字歌词注音体
     ''' </summary>
     <Serializable>
-    Public Class DLNALyricVerbatim
-        Inherits DLNALyricVerbatimBase
+    Public Class DLNALyricVerbatimBody
+
+        ''' <summary>
+        ''' 获取开始时间
+        ''' </summary>
+        ''' <returns></returns>
+        <JsonIgnore>
+        Public ReadOnly Property Start As Double
+            Get
+                Return If(Text.Count > 0, Text.First.Start, 0D)
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' 获取结束时间
+        ''' </summary>
+        ''' <returns></returns>
+        <JsonIgnore>
+        Public ReadOnly Property [End] As Double
+            Get
+                Return If(Text.Count > 0, Text.Last.End, 0D)
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' 获取文字内容
+        ''' </summary>
+        ''' <returns></returns>
+        <JsonProperty("text")>
+        Public ReadOnly Property Text As List(Of DLNALyricVerbatimBase)
 
         ''' <summary>
         ''' 获取假名
         ''' </summary>
         ''' <returns></returns>
         <JsonProperty("kana", NullValueHandling:=NullValueHandling.Ignore)>
-        Public ReadOnly Property Kana As List(Of DLNALyricVerbatimBase)
+        Public Property Kana As List(Of DLNALyricVerbatimBase)
 
         ''' <summary>
-        ''' 初始化(带假名)
+        ''' 初始化逐字歌词注音体
         ''' </summary>
-        ''' <param name="Start">开始时间</param>
-        ''' <param name="[End]">结束时间</param>
-        ''' <param name="Content">文字内容</param>
-        ''' <param name="Kana">假名</param>
-        Public Sub New(Start As Double, [End] As Double, Content As String, Kana As List(Of DLNALyricVerbatimBase))
-            MyBase.New(Start, [End], Content)
-            Me.Kana = Kana
+        ''' <param name="Text">文字内容</param>
+        Public Sub New(Text As List(Of DLNALyricVerbatimBase))
+            Me.Text = Text
+            Me.Kana = Nothing
         End Sub
 
         ''' <summary>
         ''' 从逐字歌词单元构建
         ''' </summary>
-        ''' <param name="Base"></param>
+        ''' <param name="Base">逐字歌词单元</param>
         ''' <returns></returns>
-        Public Shared Function FromBase(Base As DLNALyricVerbatimBase) As DLNALyricVerbatim
-            With Base
-                Return New DLNALyricVerbatim(.Start, .End, .Content, New List(Of DLNALyricVerbatimBase))
-            End With
+        Public Shared Function FromBase(Base As List(Of DLNALyricVerbatimBase)) As List(Of DLNALyricVerbatimBody)
+            Dim Result As New List(Of DLNALyricVerbatimBody)
+            For Each b In Base
+                Result.Add(FromBase(b))
+            Next
+            Return Result
         End Function
 
         ''' <summary>
-        ''' 生成逐字歌词单元(无假名)
+        ''' 从逐字歌词单元构建
+        ''' </summary>
+        ''' <param name="Base">逐字歌词单元</param>
+        ''' <returns></returns>
+        Public Shared Function FromBase(ParamArray Base() As DLNALyricVerbatimBase) As List(Of DLNALyricVerbatimBody)
+            Dim Result As New List(Of DLNALyricVerbatimBody)
+            For Each b In Base
+                Result.Add(FromBase(b))
+            Next
+            Return Result
+        End Function
+
+        ''' <summary>
+        ''' 从逐字歌词单元构建
+        ''' </summary>
+        ''' <param name="Base">逐字歌词单元</param>
+        ''' <returns></returns>
+        Public Shared Function FromBase(Base As DLNALyricVerbatimBase) As DLNALyricVerbatimBody
+            Return New DLNALyricVerbatimBody(New List(Of DLNALyricVerbatimBase) From {Base})
+        End Function
+
+        ''' <summary>
+        ''' 合并逐字歌词单元为注音体
+        ''' </summary>
+        ''' <param name="Base">逐字歌词单元</param>
+        ''' <returns></returns>
+        Public Shared Function Combine(ParamArray Base() As DLNALyricVerbatimBase) As DLNALyricVerbatimBody
+            Return New DLNALyricVerbatimBody(Base.ToList)
+        End Function
+
+        ''' <summary>
+        ''' 去除假名
         ''' </summary>
         ''' <returns></returns>
-        Public Function ToBase() As DLNALyricVerbatimBase
-            Return New DLNALyricVerbatimBase(Start, [End], Content)
+        Public Function RemoveKana() As DLNALyricVerbatimBody
+            Return New DLNALyricVerbatimBody(Text)
         End Function
 
     End Class
@@ -115,7 +174,7 @@ Namespace DLNA.MusicProvider
         ''' </summary>
         ''' <returns></returns>
         <JsonProperty("verbatimK", NullValueHandling:=NullValueHandling.Ignore)>
-        Public ReadOnly Property VerbatimK As List(Of DLNALyricVerbatim)
+        Public ReadOnly Property VerbatimK As List(Of DLNALyricVerbatimBody)
 
         ''' <summary>
         ''' 获取逐字歌词行
@@ -134,10 +193,10 @@ Namespace DLNA.MusicProvider
         ''' </summary>
         ''' <param name="Time">行开始时间</param>
         ''' <param name="Plain">简易歌词集合</param>
-        ''' <param name="VerbatimK">带假名逐字歌词集合</param>
+        ''' <param name="VerbatimK">带假名逐字歌词歌词单元集合</param>
         ''' <param name="Verbatim">逐字歌词集合</param>
-        ''' <remarks>歌词从上到下显示顺序为 带假名逐字 -> 逐字 -> 简易</remarks>
-        Public Sub New(Time As Double, Plain As List(Of String), VerbatimK As List(Of DLNALyricVerbatim), Verbatim As List(Of DLNALyricVerbatimBase))
+        ''' <remarks>歌词从上到下显示顺序为 带假名逐字(正文) -> 逐字(罗马音/拼音) -> 简易(翻译/无逐字时正文)</remarks>
+        Public Sub New(Time As Double, Plain As List(Of String), VerbatimK As List(Of DLNALyricVerbatimBody), Verbatim As List(Of DLNALyricVerbatimBase))
             Me.New(Time, Plain)
             Me.VerbatimK = VerbatimK
             Me.Verbatim = Verbatim

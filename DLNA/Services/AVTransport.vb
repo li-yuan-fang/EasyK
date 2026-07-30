@@ -194,7 +194,8 @@ Namespace DLNA.Protocol
                 End With
             End With
 
-            SetState("TransportState", "PAUSED_PLAYBACK")
+            '只在播放状态更新状态
+            If GetState("TransportState") = "PLAYING" Then SetState("TransportState", "PAUSED_PLAYBACK")
 
             Return Nothing
         End Function
@@ -204,7 +205,8 @@ Namespace DLNA.Protocol
                 If .Player IsNot Nothing AndAlso Not .Player.Buffered Then .Player.Stop()
             End With
 
-            SetState("TransportState", "STOPPED")
+            '收到Stop命令后结束投屏 恢复无资源状态
+            SetState("TransportState", "NO_MEDIA_PRESENT")
 
             Return Nothing
         End Function

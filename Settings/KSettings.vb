@@ -68,7 +68,7 @@ Public Class KSettings
     ''' </summary>
     ''' <returns></returns>
     <JsonProperty("allow_remote_fairness")>
-    Public Property AllowRemoteFairness As Boolean = True
+    Public Property AllowRemoteFairness As Boolean = False
 
     ''' <summary>
     ''' 公平模式

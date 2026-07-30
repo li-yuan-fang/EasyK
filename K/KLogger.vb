@@ -1,5 +1,5 @@
-﻿Imports System.Windows.Forms
-Imports CefSharp.DevTools.CSS
+﻿Imports System.Runtime.CompilerServices
+Imports System.Windows.Forms
 
 ''' <summary>
 ''' 日志类型
@@ -86,7 +86,6 @@ Friend Class KFileLogger
     ''' <param name="Parent">日志层输出流</param>
     Public Sub New(Parent As KLogger)
         Inner = Console.Out
-        Console.SetOut(Me)
 
         Try
             LoggerFileStream = New IO.FileStream(
@@ -335,8 +334,10 @@ Public Class KLogger
         Else
             '直接采用控制台作为下一级输出流
             Inner = Console.Out
-            Console.SetOut(Me)
         End If
+
+        '无论如何 输出流必须由KLogger接管
+        Console.SetOut(Me)
     End Sub
 
     ''' <summary>
@@ -345,7 +346,55 @@ Public Class KLogger
     Public Shadows Sub Dispose() Implements IDisposable.Dispose
         MyBase.Dispose()
 
-        If Settings.Settings.DebugMode Then DirectCast(Inner,KFileLogger).Dispose()
+        If Settings.Settings.DebugMode Then DirectCast(Inner, KFileLogger).Dispose()
     End Sub
 
 End Class
+
+''' <summary>
+''' 日志扩展方法
+''' </summary>
+Module KLoggerExtension
+
+    '非Debug模式下字符串限长
+    Private Const DefaultDebugLengthLimit As Integer = 20
+
+    ''' <summary>
+    ''' 转换为日志格式
+    ''' </summary>
+    ''' <param name="str"></param>
+    ''' <remarks>根据打印日志需要折叠字符串</remarks>
+    ''' <returns></returns>
+    <Extension()>
+    Public Function Debug(ByVal str As String) As String
+        Return Debug(str, DefaultDebugLengthLimit)
+    End Function
+
+    ''' <summary>
+    ''' 转换为日志格式
+    ''' </summary>
+    ''' <param name="str"></param>
+    ''' <param name="Limitation">限制长度</param>
+    ''' <remarks>根据打印日志需要折叠字符串</remarks>
+    ''' <returns></returns>
+    <Extension()>
+    Public Function Debug(ByVal str As String, ByVal Limitation As Integer) As String
+        If Settings.Settings.DebugMode Then Return str
+
+        Return Limit(str, Limitation)
+    End Function
+
+    ''' <summary>
+    ''' 限制长度
+    ''' </summary>
+    ''' <param name="str"></param>
+    ''' <param name="Limitation">限制长度</param>
+    ''' <returns></returns>
+    <Extension()>
+    Public Function Limit(ByVal str As String, ByVal Limitation As Integer) As String
+        If String.IsNullOrEmpty(str) OrElse str.Length < Limitation Then Return str
+
+        Return $"{str.Substring(0, Limitation)}.."
+    End Function
+
+End Module

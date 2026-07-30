@@ -508,7 +508,7 @@ Namespace DLNA.Protocol
                     $"远程调用 - {ServiceName}:{Action.Name}",
                     String.Join(vbCrLf, Args.Select(Function(kvp) $"{kvp.Key}: {kvp.Value}")),
                     "返回值:",
-                    String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {If(Not String.IsNullOrEmpty(kvp.Value) AndAlso kvp.Value.Length > 100, $"{kvp.Value.Substring(0, 100)}...", kvp.Value)}"))
+                    String.Join(vbCrLf, Returns.Select(Function(kvp) $"{kvp.Key}: {kvp.Value.Limit(100)}"))
                 )
             End If
 

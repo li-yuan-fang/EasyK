@@ -360,7 +360,7 @@ Public Class EasyK
         With Temp
             Logger.Info("开始播放 {0} - {1} (来自 {2})",
                               .Title,
-                              If(.Content.Length > 20, $"{ .Content.Substring(0, 20)}..", .Content),
+                              .Content.Debug(),
                               .Order)
         End With
     End Sub
@@ -538,6 +538,34 @@ Public Class EasyK
         Return Record.Id
     End Function
 
+    '公平移除
+    Private Sub RemoveFair(ToRemove As LinkedListNode(Of EasyKBookRecord))
+        Dim Order As String = ToRemove.Value.Order
+
+        Dim ValidCandidates As New List(Of LinkedListNode(Of EasyKBookRecord)) From {ToRemove}
+        Dim Node = ToRemove.Next()
+        While Node IsNot Nothing
+            With Node.Value
+                If .Order = Order Then
+                    '成功找到一个候选节点
+                    ValidCandidates.Add(Node)
+                End If
+            End With
+
+            Node = Node.Next()
+        End While
+
+        If ValidCandidates.Count > 1 Then
+            '移动节点内容
+            For i = 0 To ValidCandidates.Count - 2
+                ValidCandidates(i).Value = ValidCandidates(i + 1).Value
+            Next
+        End If
+
+        '删除末尾节点
+        Queue.Remove(ValidCandidates.Last())
+    End Sub
+
     ''' <summary>
     ''' 移除歌曲
     ''' </summary>
@@ -550,7 +578,13 @@ Public Class EasyK
             Dim node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
             While node IsNot Nothing
                 If node.Value.Id.Equals(Id) Then
-                    Queue.Remove(node)
+                    If Settings.Settings.FairnessMode Then
+                        '公平移除
+                        RemoveFair(node)
+                    Else
+                        '常规移除
+                        Queue.Remove(node)
+                    End If
 
                     Return True
                 End If
@@ -945,8 +979,7 @@ Public Class EasyK
 
     '平衡随机排序
     Private Function RandomBalanced(Pool As Dictionary(Of String, List(Of EasyKBookRecord)),
-                                    AvoidFirst As String,
-                                    Optional OnlyMemberRandom As Boolean = False) As List(Of EasyKBookRecord)
+                                    AvoidFirst As String) As List(Of EasyKBookRecord)
         Dim Rnd As New Random()
         Dim Members As New List(Of String)(Pool.Keys)
         Dim Result As New List(Of EasyKBookRecord)
@@ -955,7 +988,7 @@ Public Class EasyK
         If Not String.IsNullOrEmpty(AvoidFirst) AndAlso Members.Contains(AvoidFirst) Then
             Members.Remove(AvoidFirst)
 
-            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members, OnlyMemberRandom)
+            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members)
             If Record IsNot Nothing Then Result.Add(Record)
 
             Members.Add(AvoidFirst)
@@ -963,7 +996,7 @@ Public Class EasyK
 
         '常规遍历
         While Members.Count > 0
-            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members, OnlyMemberRandom)
+            Dim Record As EasyKBookRecord = RandomBanlancedPick(Rnd, Pool, Members)
             If Record IsNot Nothing Then Result.Add(Record)
         End While
 
@@ -980,8 +1013,7 @@ Public Class EasyK
     '随机提取一条记录
     Private Function RandomBanlancedPick(Rnd As Random,
                                          Pool As Dictionary(Of String, List(Of EasyKBookRecord)),
-                                         Members As List(Of String),
-                                         OnlyMemberRandom As Boolean) As EasyKBookRecord
+                                         Members As List(Of String)) As EasyKBookRecord
         '随机选出点歌人
         If Members.Count <= 0 Then Return Nothing
 
@@ -996,7 +1028,7 @@ Public Class EasyK
         If Count <= 0 Then Return Nothing
 
         '检查是否需要随机选取指定成员的歌曲
-        Dim RecordIndex As Integer = If(OnlyMemberRandom, 0, Rnd.Next(Count))
+        Dim RecordIndex As Integer = Rnd.Next(Count)
 
         Dim Record As EasyKBookRecord = Pool(Member)(RecordIndex)
         Pool(Member).RemoveAt(RecordIndex)
@@ -1039,16 +1071,12 @@ Public Class EasyK
     ''' </summary>
     Public Sub ReRankFair()
         SyncLock Queue
-            '检测是否需要重排序
-            If IsRankFair(Queue.First) Then Return
-
-            '锁定首位点歌人
-            Dim First As String = If(Current IsNot Nothing, Current.Order, vbNullString)
-
-            '创建剩余池
+            '创建剩余池和点歌顺序
             Dim Pool As New Dictionary(Of String, List(Of EasyKBookRecord))
+            Dim Members As New SortedSet(Of String)
             For Each Record As EasyKBookRecord In Queue
                 With Record
+                    Members.Add(.Order)
                     If Pool.ContainsKey(.Order) Then
                         Pool(.Order).Add(Record)
                     Else
@@ -1057,11 +1085,25 @@ Public Class EasyK
                 End With
             Next
 
+            If Current IsNot Nothing Then
+                With Current
+                    Members.Remove(.Order)
+                    Members.Add(.Order)
+                End With
+            End If
+
             '运行完全重排序
+            Dim Total As Integer = Queue.Count
             Queue.Clear()
-            For Each Record As EasyKBookRecord In RandomBalanced(Pool, First, True)
-                Queue.AddLast(Record)
-            Next
+            While Total > 0
+                For Each m In Members
+                    Dim r As List(Of EasyKBookRecord) = Pool(m)
+                    If r.Count = 0 Then Continue For
+
+                    Queue.AddLast(r(0))
+                    Total -= 1
+                Next
+            End While
         End SyncLock
     End Sub
 
