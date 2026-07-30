@@ -34,6 +34,9 @@ Module ModMain
         WebServer = New KWebCore(KCore, Settings)
         AddHandler WebServer.OnUncaughtError, AddressOf ExitApplication
 
+        '注册意外退出事件
+        AddHandler AppDomain.CurrentDomain.UnhandledException, AddressOf OnUnhandledException
+
         '运行指令系统
         Commands = New Commands.CommandParser(KCore, WebServer, Settings)
         With Commands
@@ -42,7 +45,7 @@ Module ModMain
         End With
 
         '注册控制台回调
-        SetConsoleCtrlHandler(AddressOf UnexpectedExit, True)
+        SetConsoleCtrlHandler(AddressOf ConsoleExit, True)
 
         '显示播放器窗口
         KCore.Show()
@@ -68,11 +71,13 @@ Module ModMain
         Try
             RemoveHandler Commands.OnExit, AddressOf ExitApplication
             RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
+
+            RemoveHandler AppDomain.CurrentDomain.UnhandledException, AddressOf OnUnhandledException
         Catch
         End Try
 
         '注销控制台回调
-        SetConsoleCtrlHandler(AddressOf UnexpectedExit, False)
+        SetConsoleCtrlHandler(AddressOf ConsoleExit, False)
 
         '关闭指令系统
         Commands.Close()
@@ -106,7 +111,7 @@ Module ModMain
     '可能被非托管代码调用
     '必须尽量简单快速
     '重要:不能引入面向对象等高级特性
-    Private Function UnexpectedExit(ctrlType As CtrlType) As Boolean
+    Private Function ConsoleExit(ctrlType As CtrlType) As Boolean
         Select Case ctrlType
             Case CtrlType.CTRL_CLOSE_EVENT, CtrlType.CTRL_LOGOFF_EVENT, CtrlType.CTRL_SHUTDOWN_EVENT
                 ExitApplication()
@@ -117,5 +122,29 @@ Module ModMain
 
         Return False
     End Function
+
+    '遭遇无法处理的异常
+    Private Sub OnUnhandledException(sender As Object, e As UnhandledExceptionEventArgs)
+        Dim ex = CType(e.ExceptionObject, Exception)
+        Logger.Error("遭遇无法处理的错误")
+        Logger.PrintOriginalLines(
+            $"{ex.Message}",
+            $"Caller: {ex.TargetSite}",
+            $"Stack:",
+            ex.StackTrace,
+            ""
+        )
+
+        Logger.Info("正在保存点歌信息...")
+        Try
+            KCore.Save()
+            Logger.Info("点歌信息保存成功")
+        Catch excp As Exception
+            Logger.Error("保存点歌信息失败 - {0}", excp.Message)
+        End Try
+
+        '调用正常退出渠道
+        ExitApplication()
+    End Sub
 
 End Module

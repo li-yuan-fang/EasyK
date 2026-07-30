@@ -30,6 +30,11 @@ Friend Class KFileLogger
     Inherits IO.TextWriter
     Implements IDisposable
 
+    ''' <summary>
+    ''' 日志保存位置
+    ''' </summary>
+    Public Const LogFile As String = "easyk.log"
+
     Private Class RedirectInput
         Inherits IO.TextReader
 
@@ -89,7 +94,7 @@ Friend Class KFileLogger
 
         Try
             LoggerFileStream = New IO.FileStream(
-                        IO.Path.Combine(Application.StartupPath, "debug.log"),
+                        IO.Path.Combine(Application.StartupPath, LogFile),
                         IO.FileMode.Create,
                         IO.FileAccess.Write,
                         IO.FileShare.Read
@@ -328,7 +333,7 @@ Public Class KLogger
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
 
-        If Settings.Settings.DebugMode Then
+        If Settings.Settings.SaveLogs Then
             '启用日志文件流作为下一级输出流
             Inner = New KFileLogger(Me)
         Else

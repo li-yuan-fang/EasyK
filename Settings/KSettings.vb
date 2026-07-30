@@ -12,6 +12,13 @@ Public Class KSettings
     Public Property DebugMode As Boolean = False
 
     ''' <summary>
+    ''' 保存日志
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("save_logs")>
+    Public Property SaveLogs As Boolean = True
+
+    ''' <summary>
     ''' 视频缓存目录
     ''' </summary>
     ''' <returns></returns>
