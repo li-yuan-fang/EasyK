@@ -97,7 +97,8 @@ Public Class FrmAlert
                 If IsDisposed Then
                     Return
                 Else
-                    Exit While
+                    '出错直接关闭
+                    Close()
                 End If
             End Try
 
@@ -109,7 +110,7 @@ Public Class FrmAlert
 
         Lock.Wait()
 
-        If EndTime > Now.Ticks Then
+        If Not IsDisposed() AndAlso EndTime > Now.Ticks Then
             '重启等待
             Task.Run(AddressOf Alert)
             Lock.Release()
@@ -125,10 +126,14 @@ Public Class FrmAlert
     ''' </summary>
     Public Overloads Sub Close()
         Wait.Set()
-        Invoke(Sub()
-                   MyBase.Close()
-                   Dispose()
-               End Sub)
+        Try
+            Invoke(Sub()
+                       MyBase.Close()
+                       Dispose()
+                   End Sub)
+        Catch ex As Exception
+            Logger.Debug("关闭Alert出错 - {0}", ex.Message)
+        End Try
 
         RaiseEvent OnClose()
     End Sub

@@ -34,14 +34,29 @@ Namespace DLNA
 
         Private ReadOnly Settings As SettingContainer
 
-        Private ReadOnly SSDPContent As String
+        'SSDP描述文件
+        Private SSDPContent As String
 
         Private ReadOnly Protocol As Protocol.DLNAProtocol
 
         Friend ReadOnly K As EasyK
 
         ''' <summary>
-        ''' DLNA访问权限检查
+        ''' 获取或设置DLNA设备名称
+        ''' </summary>
+        ''' <returns></returns>
+        Public Property Name As String
+            Get
+                Return Settings.Settings.DLNA.Name
+            End Get
+            Set(value As String)
+                Settings.Settings.DLNA.Name = value
+                UpdateSSDPDescription()
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' 获取或设置DLNA访问权限检查函数指针
         ''' </summary>
         ''' <returns></returns>
         Public Property CheckAccess As DLNAAccessCheck = (Function() True)
@@ -82,7 +97,7 @@ Namespace DLNA
             Protocol = New Protocol.DLNAProtocol(Me, Settings)
 
             '更新SSDP描述文件
-            SSDPContent = GetSSDPDescription()
+            UpdateSSDPDescription()
 
             '启动SSDP服务器
             SSDPServer = New SSDP(Settings)
@@ -110,9 +125,9 @@ Namespace DLNA
         End Sub
 
         '生成SSDP描述文件
-        Private Function GetSSDPDescription() As String
-            Return $"<?xml version=""1.0"" encoding=""UTF-8""?><root xmlns:dlna=""urn:schemas-dlna-org:device-1-0"" xmlns=""urn:schemas-upnp-org:device-1-0""><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType><UDN>uuid:{Settings.Settings.DLNA.UUID}</UDN><friendlyName>EasyK</friendlyName><serialNumber>1024</serialNumber><dlna:X_DLNADOC xmlns:dlna=""urn:schemas-dlna-org:device-1-0"">DMR-1.50</dlna:X_DLNADOC><serviceList><service><serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType><serviceId>urn:upnp-org:serviceId:AVTransport</serviceId><controlURL>{APIPrefix}{AVTransport}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{AVTransport}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{AVTransport}.xml</SCPDURL></service><service><serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType><serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId><controlURL>{APIPrefix}{RenderingControl}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{RenderingControl}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{RenderingControl}.xml</SCPDURL></service><service><serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType><serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId><controlURL>{APIPrefix}{ConnectionManager}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{ConnectionManager}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{ConnectionManager}.xml</SCPDURL></service></serviceList></device></root>"
-        End Function
+        Private Sub UpdateSSDPDescription()
+            SSDPContent = $"<?xml version=""1.0"" encoding=""UTF-8""?><root xmlns:dlna=""urn:schemas-dlna-org:device-1-0"" xmlns=""urn:schemas-upnp-org:device-1-0""><specVersion><major>1</major><minor>0</minor></specVersion><device><deviceType>urn:schemas-upnp-org:device:MediaRenderer:1</deviceType><UDN>uuid:{Settings.Settings.DLNA.UUID}</UDN><friendlyName>{Name}</friendlyName><serialNumber>1024</serialNumber><dlna:X_DLNADOC xmlns:dlna=""urn:schemas-dlna-org:device-1-0"">DMR-1.50</dlna:X_DLNADOC><serviceList><service><serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType><serviceId>urn:upnp-org:serviceId:AVTransport</serviceId><controlURL>{APIPrefix}{AVTransport}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{AVTransport}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{AVTransport}.xml</SCPDURL></service><service><serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType><serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId><controlURL>{APIPrefix}{RenderingControl}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{RenderingControl}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{RenderingControl}.xml</SCPDURL></service><service><serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType><serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId><controlURL>{APIPrefix}{ConnectionManager}{ActionPrefix}</controlURL><eventSubURL>{APIPrefix}{ConnectionManager}{EventPrefix}</eventSubURL><SCPDURL>{APIPrefix}{ConnectionManager}.xml</SCPDURL></service></serviceList></device></root>"
+        End Sub
 
         ''' <summary>
         ''' 销毁资源

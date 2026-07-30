@@ -58,6 +58,19 @@ Public Class EasyK
     Public Event OnPlayerTerminated()
 
     ''' <summary>
+    ''' 获取或设置DLNA设备名称
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property DLNADevice As String
+        Get
+            Return DLNAServer.Name
+        End Get
+        Set(value As String)
+            DLNAServer.Name = value
+        End Set
+    End Property
+
+    ''' <summary>
     ''' 获取或设置音量
     ''' </summary>
     ''' <returns></returns>

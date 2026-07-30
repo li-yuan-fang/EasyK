@@ -478,6 +478,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Commands\Implements\CommandBlock.vb" />
+    <Compile Include="Commands\Implements\CommandDLNA.vb" />
     <Compile Include="Commands\Implements\CommandFair.vb" />
     <Compile Include="Commands\Implements\CommandRandom.vb" />
     <Compile Include="Commands\Implements\CommandReplay.vb" />

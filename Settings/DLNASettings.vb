@@ -11,6 +11,13 @@ Public Class DLNASettings
     Public Property UUID As String = Guid.NewGuid().ToString()
 
     ''' <summary>
+    ''' DLNA设备名称
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("name")>
+    Public Property Name As String = "EasyK"
+
+    ''' <summary>
     ''' SSDP设备广播间隔(单位:ms)
     ''' </summary>
     ''' <returns></returns>
