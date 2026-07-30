@@ -17,6 +17,9 @@ Public Class FrmAlert
     '等待信号量
     Private ReadOnly Wait As New ManualResetEvent(False)
 
+    '控制信号量
+    Private ReadOnly Lock As SemaphoreSlim
+
     Private ReadOnly BackgroundBrush As New SolidBrush(Color.FromArgb(50, 50, 50))
 
     ''' <summary>
@@ -27,16 +30,19 @@ Public Class FrmAlert
     ''' <summary>
     ''' 初始化消息提示窗口
     ''' </summary>
-    ''' <param name="Player"></param>
-    ''' <param name="Title"></param>
-    ''' <param name="Svg"></param>
-    ''' <param name="Time"></param>
-    Public Sub New(Player As FrmPlayer, Title As String, Svg As String, Time As Double)
+    ''' <param name="Player">播放器窗口</param>
+    ''' <param name="Lock">管理器控制锁</param>
+    ''' <param name="Title">标题</param>
+    ''' <param name="Svg">SVG</param>
+    ''' <param name="Time">持续时间</param>
+    Public Sub New(Player As FrmPlayer, Lock As SemaphoreSlim, Title As String, Svg As String, Time As Double)
 
         ' 此调用是设计器所必需的。
         InitializeComponent()
 
         ' 在 InitializeComponent() 调用之后添加任何初始化。
+
+        Me.Lock = Lock
 
         Me.Title = Title
         Me.Svg = Svg
@@ -64,6 +70,7 @@ Public Class FrmAlert
     ''' <param name="Svg">图标</param>
     ''' <param name="Time">时长(单位:s)</param>
     Public Overloads Sub Refresh(Title As String, Svg As String, Time As Double)
+        'AlertManager已在锁内调用 无需额外加锁
         If Title = Me.Title AndAlso Svg = Me.Svg Then
             EndTime += Now.AddSeconds(Time).Ticks
             Return
@@ -73,7 +80,11 @@ Public Class FrmAlert
         Me.Svg = Svg
         EndTime = Now.AddSeconds(Time).Ticks
 
-        Invoke(Sub() Refresh())
+        Try
+            Invoke(Sub() Refresh())
+        Catch ex As Exception
+            Logger.Debug("刷新Alert出错 - {0}", ex.Message)
+        End Try
     End Sub
 
     '执行等待
@@ -96,7 +107,17 @@ Public Class FrmAlert
             If Wait.WaitOne(SleepTime) Then Return
         End While
 
+        Lock.Wait()
+
+        If EndTime > Now.Ticks Then
+            '重启等待
+            Task.Run(AddressOf Alert)
+            Lock.Release()
+            Return
+        End If
+
         Close()
+        Lock.Release()
     End Sub
 
     ''' <summary>

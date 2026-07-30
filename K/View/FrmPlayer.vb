@@ -429,7 +429,13 @@ Public Class FrmPlayer
 
                     .Pause()
                 End With
-                If DPlayer IsNot Nothing Then DPlayer.UpdateMusicState()
+
+                Task.Run(Sub()
+                             '延迟使状态稳定 避免暂停后播放状态无法及时恢复问题
+                             Thread.Sleep(100)
+
+                             If DPlayer IsNot Nothing Then DPlayer.UpdateMusicState()
+                         End Sub)
         End Select
     End Sub
 

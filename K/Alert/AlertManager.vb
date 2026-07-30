@@ -1,4 +1,5 @@
 ﻿Imports System.Reflection
+Imports System.Threading
 
 Public Class AlertManager
     Implements IDisposable
@@ -11,6 +12,9 @@ Public Class AlertManager
 
     '配置容器
     Private ReadOnly Settings As SettingContainer
+
+    '控制信号量(涉及到Alert窗口操作必须上锁)
+    Private ReadOnly Control As New SemaphoreSlim(1, 1)
 
     ''' <summary>
     ''' 初始化消息提示管理器
@@ -33,26 +37,31 @@ Public Class AlertManager
     ''' </summary>
     ''' <param name="Title">标题</param>
     ''' <param name="Icon">图标</param>
-    Public Sub Show(Title As String, Icon As AlertIcon)
+    Public Async Sub Show(Title As String, Icon As AlertIcon)
         Dim Duration As Double = Settings.Settings.AlertDuration
         If Duration <= 0 Then Return
 
+        Await Control.WaitAsync()
+
         If Alert Is Nothing Then
-            If Player Is Nothing Then Return
+            If Player Is Nothing Then
+                Control.Release()
+                Return
+            End If
 
-            Task.Run(Sub()
-                         With Player
-                             .Invoke(Sub()
-                                         If .IsDisposed Then Return
+            With Player
+                .Invoke(Sub()
+                            If .IsDisposed Then Return
 
-                                         Alert = New FrmAlert(Player, Title, GetIcon(Icon), Duration)
-                                         AddHandler Alert.OnClose, AddressOf Alert_Closed
-                                     End Sub)
-                         End With
-                     End Sub)
+                            Alert = New FrmAlert(Player, Control, Title, GetIcon(Icon), Duration)
+                            AddHandler Alert.OnClose, AddressOf Alert_Closed
+                        End Sub)
+            End With
         Else
             Alert.Refresh(Title, GetIcon(Icon), Duration)
         End If
+
+        Control.Release()
     End Sub
 
     ''' <summary>
