@@ -86,6 +86,14 @@ Public Class KSettings
     Public Property FairnessMode As Boolean = False
 
     ''' <summary>
+    ''' 安全退出时间(单位:s)
+    ''' </summary>
+    ''' <remarks>如果退出时超出这个时限 则认为卡死</remarks>
+    ''' <returns></returns>
+    <JsonProperty("save_exit_time")>
+    Public Property SafeExitTime As Double = 30D
+
+    ''' <summary>
     ''' 异步计算设置
     ''' </summary>
     ''' <returns></returns>

@@ -1,4 +1,5 @@
 ﻿Imports System.Text
+Imports System.Threading
 Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
 
@@ -15,6 +16,8 @@ Module ModMain
     Public Logger As KLogger
 
     Private ReadOnly ConsoleExitHandler As HandlerRoutine = AddressOf ConsoleExit
+
+    Private ReadOnly SafeExitLock As New ManualResetEvent(False)
 
     <STAThread>
     Sub Main()
@@ -69,6 +72,10 @@ Module ModMain
     Private Sub ExitApplication() Handles Commands.OnExit
         Logger.Info("正在关闭点歌系统...")
 
+        '创建安全锁
+        SafeExitLock.Reset()
+        Task.Run(AddressOf SafeExit)
+
         '解除事件关联
         Try
             RemoveHandler Commands.OnExit, AddressOf ExitApplication
@@ -87,6 +94,11 @@ Module ModMain
         '关闭服务
         WebServer.Dispose()
         KCore.Dispose()
+
+        '解除安全锁
+        SafeExitLock.Set()
+
+        '卸载插件并保持配置
         DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
 
         '保存配置
@@ -105,6 +117,20 @@ Module ModMain
         End If
 
         '保存日志
+        Logger.Dispose()
+
+        End
+    End Sub
+
+    '安全退出机制
+    '只保存最关键的数据
+    '防死锁
+    Private Sub SafeExit()
+        Dim IsSafe As Boolean = SafeExitLock.WaitOne(Settings.Settings.SafeExitTime * 1000)
+        If IsSafe Then Return
+
+        DLNA.MusicProvider.DLNAMusicProviders.UnloadProviders(Settings)
+        Settings.Dispose()
         Logger.Dispose()
 
         End
