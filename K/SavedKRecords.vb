@@ -36,7 +36,7 @@ Public Class SavedKRecords
 
         Public Function Recover() As EasyKBookRecord
             Try
-                Return New EasyKBookRecord(Title, Order, [Enum].Parse(GetType(EasyKType), Type), Content)
+                Return New EasyKBookRecord(Me)
             Catch
                 Return Nothing
             End Try
