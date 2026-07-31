@@ -14,6 +14,8 @@ Module ModMain
 
     Public Logger As KLogger
 
+    Private ReadOnly ConsoleExitHandler As HandlerRoutine = AddressOf ConsoleExit
+
     <STAThread>
     Sub Main()
         Console.Title = "EasyK"
@@ -45,7 +47,7 @@ Module ModMain
         End With
 
         '注册控制台回调
-        SetConsoleCtrlHandler(AddressOf ConsoleExit, True)
+        SetConsoleCtrlHandler(ConsoleExitHandler, True)
 
         '显示播放器窗口
         KCore.Show()
@@ -77,7 +79,7 @@ Module ModMain
         End Try
 
         '注销控制台回调
-        SetConsoleCtrlHandler(AddressOf ConsoleExit, False)
+        SetConsoleCtrlHandler(ConsoleExitHandler, False)
 
         '关闭指令系统
         Commands.Close()
