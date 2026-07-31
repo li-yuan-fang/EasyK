@@ -351,7 +351,8 @@ Public Class KLogger
     Public Shadows Sub Dispose() Implements IDisposable.Dispose
         MyBase.Dispose()
 
-        If Settings.Settings.DebugMode Then DirectCast(Inner, KFileLogger).Dispose()
+        Dim FileLogger = TryCast(Inner, KFileLogger)
+        If FileLogger IsNot Nothing Then FileLogger.Dispose()
     End Sub
 
 End Class
