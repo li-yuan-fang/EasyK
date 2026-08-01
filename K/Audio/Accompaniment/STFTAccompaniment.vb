@@ -88,6 +88,9 @@ Namespace Accompaniment
             CenterChannelIndices = ChannelUtils.GetCenterChannelIndices(ChannelRoles)
             SideChannelPairs = ChannelUtils.GetSideChannelPairs(ChannelRoles)
 
+            '掩膜
+            _smoothedMasks = CreateHalfBinBuffers(SideChannelPairs.Count)
+
             ' 初始化缓冲区
             FFTStep = FFT_Size * Channels
             _inputBuffer = New Single(FFTStep - 1) {}
@@ -109,8 +112,12 @@ Namespace Accompaniment
             For i As Integer = 0 To size - 1
                 Select Case type
                     Case STFTWindowType.Hann
-                        ' Hann窗：0.5 * (1 - cos(2πn/(N-1)))
-                        window(i) = 0.5F * (1.0F - CSng(Math.Cos(2.0 * Math.PI * i / (size - 1))))
+                        ' Hann窗
+                        'Symmetric Hann
+                        'window(i) = 0.5F * (1.0F - CSng(Math.Cos(2.0 * Math.PI * i / (size - 1))))
+
+                        'Periodic Hann
+                        window(i) = 0.5F * (1.0F - CSng(Math.Cos(2.0 * Math.PI * i / size)))
 
                     Case STFTWindowType.Hamming
                         ' Hamming窗：0.54 - 0.46 * cos(2πn/(N-1))
@@ -222,6 +229,8 @@ Namespace Accompaniment
             Array.Clear(_inputBuffer, 0, _inputBuffer.Length)
             Array.Clear(_outputBuffer, 0, _outputBuffer.Length)
 
+            ClearJaggedBuffer(_smoothedMasks)
+
             For ch = 0 To Channels - 1
                 _overlapBuffer(ch) = New Single(FFT_Size - 1) {}
                 Array.Clear(_overlapBuffer(ch), 0, FFT_Size)
@@ -239,8 +248,10 @@ Namespace Accompaniment
 
             If Settings.Settings.Async.CompletelySync OrElse Cores < 4 Then
                 '同步执行
-                For Each Side In SideChannelPairs
-                    ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
+                For i = 0 To SideChannelPairs.Count - 1
+                    With SideChannelPairs(i)
+                        ProcessPairVocalRemoval(_smoothedMasks(i), fft(.Item1), fft(.Item2))
+                    End With
                 Next
 
                 For Each Central In CenterChannelIndices
@@ -250,9 +261,13 @@ Namespace Accompaniment
                 '异步执行
                 Dim Countdown As New CountdownEvent(SideChannelPairs.Count + CenterChannelIndices.Count)
 
-                For Each Side In SideChannelPairs
+                For i = 0 To SideChannelPairs.Count - 1
+                    Dim Index As Integer = i
                     Task.Run(Sub()
-                                 ProcessPairVocalRemoval(fft(Side.Item1), fft(Side.Item2))
+                                 With SideChannelPairs(Index)
+                                     ProcessPairVocalRemoval(_smoothedMasks(Index), fft(.Item1), fft(.Item2))
+                                 End With
+
                                  Countdown.Signal()
                              End Sub)
                 Next
@@ -268,12 +283,75 @@ Namespace Accompaniment
             End If
         End Sub
 
+        ' ==================== 状态缓冲区 ====================
+        ' 每个声道对（或声道）的平滑掩膜状态，维度：[channelPairCount][halfBins + 1]
+        Private ReadOnly _smoothedMasks As Single()()
+
+        ' 初始化调用
+        Private Shared Function CreateHalfBinBuffers(count As Integer) As Single()()
+            If count <= 0 Then Return New Single()() {}
+            Dim buffers(count - 1)() As Single
+            For i = 0 To count - 1
+                buffers(i) = New Single(FFT_Size \ 2) {}
+            Next
+            Return buffers
+        End Function
+
+        ' 重置调用
+        Private Shared Sub ClearJaggedBuffer(ByRef buffer As Single()())
+            For i = 0 To buffer.Length - 1
+                Array.Clear(buffer(i), 0, buffer(i).Length)
+            Next
+        End Sub
+
+        ' ==================== 软掩膜（Soft Knee） ====================
+        ''' <summary>
+        ''' 将检测分数平滑映射到 [0, 1] 掩膜值
+        ''' </summary>
+        ''' <param name="value">原始检测分数（如 coherence * centerDominance）</param>
+        ''' <param name="threshold">阈值中心，例如 0.62</param>
+        ''' <param name="knee">膝部宽度，例如 0.22；0 表示硬阈值</param>
+        Private Shared Function SmoothKnee(value As Double, threshold As Double, knee As Double) As Double
+            If knee <= 0.0 Then Return If(value >= threshold, 1.0, 0.0)
+
+            Dim startValue As Double = threshold - knee * 0.5
+            Dim endValue As Double = threshold + knee * 0.5
+            Dim x As Double = Clamp((value - startValue) / (endValue - startValue), 0.0, 1.0)
+
+            ' 三次平滑曲线（Smoothstep）
+            Return x * x * (3.0 - 2.0 * x)
+        End Function
+
+        ' ==================== 时域平滑（Temporal Smoothing） ====================
+        ''' <summary>
+        ''' 对掩膜值进行时域平滑，独立控制 Attack / Release
+        ''' </summary>
+        ''' <param name="Masks">指定对称声道的掩膜</param>
+        ''' <param name="bin">频点索引</param>
+        ''' <param name="target">目标掩膜值（经软膝处理后）</param>
+        ''' <param name="attack">上升系数 0~1，越大跟踪越快，例如 0.70</param>
+        ''' <param name="release">下降系数 0~1，越小释放越慢，例如 0.25</param>
+        Private Function SmoothMask(ByRef Masks As Single(), bin As Integer, target As Double, attack As Double, release As Double) As Double
+            Dim previous As Double = Masks(bin)
+            Dim alpha As Double = If(target > previous, attack, release)
+            Dim smoothed As Double = previous + (target - previous) * alpha
+
+            Masks(bin) = CSng(smoothed)
+            Return smoothed
+        End Function
+
+        Private Shared Function Clamp(value As Double, min As Double, max As Double) As Double
+            If value < min Then Return min
+            If value > max Then Return max
+            Return value
+        End Function
+
         ''' <summary>
         ''' 对称声道消音处理
         ''' </summary>
         ''' <param name="fft1">声道1</param>
         ''' <param name="fft2">声道2</param>
-        Protected Sub ProcessPairVocalRemoval(ByRef fft1 As Complex(), ByRef fft2 As Complex())
+        Protected Sub ProcessPairVocalRemoval(ByRef Masks As Single(), ByRef fft1 As Complex(), ByRef fft2 As Complex())
             For k As Integer = 0 To FFT_Size \ 2
                 '计算幅度和相位
                 Dim mag1 As Double = Magnitude(fft1(k))
@@ -306,17 +384,32 @@ Namespace Accompaniment
                 Dim dynamicThreshold = contrastFactor * GetFrequencyAdaptiveThreshold(freq)
 
                 If coherence > dynamicThreshold Then
+                    Dim midX As Double = (fft1(k).X + fft2(k).X) * 0.5
+                    Dim midY As Double = (fft1(k).Y + fft2(k).Y) * 0.5
+                    Dim sideX As Double = (fft1(k).X - fft2(k).X) * 0.5
+                    Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
+
+                    Dim midMagnitude = Magnitude(midX, midY)
+                    Dim sideMagnitude = Magnitude(sideX, sideY)
+                    Dim centerDominance = midMagnitude / (midMagnitude + sideMagnitude + 0.0000001)
+
+                    Dim rate As Double = coherence * centerDominance
+
+                    '软膝 将检测分数转为 0-1 的掩膜值
+                    Dim rawMask As Double = SmoothKnee(rate, 0.62, 0.25)
+
+                    '时域平滑 抑制抽吸感和闪烁
+                    Dim mask As Double = SmoothMask(Masks, k, rawMask, 0.7, 0.15)
+
                     Dim attenuation As Double = GetVocalFrequencyWeight(freq)
-                    attenuation *= coherence
+                    attenuation *= mask
 
                     '衰减中置（人声），保留侧向（伴奏）
                     Dim att As Double = Math.Max(1 - attenuation * _ReductionFactor, 0)
 
                     '中置/侧向分解
-                    Dim centerX As Double = (fft1(k).X + fft2(k).X) * 0.5 * att
-                    Dim centerY As Double = (fft1(k).Y + fft2(k).Y) * 0.5 * att
-                    Dim sideX As Double = (fft1(k).X - fft2(k).X) * 0.5
-                    Dim sideY As Double = (fft1(k).Y - fft2(k).Y) * 0.5
+                    Dim centerX As Double = midX * att
+                    Dim centerY As Double = midY * att
 
                     fft1(k).X = CSng(centerX + sideX)
                     fft1(k).Y = CSng(centerY + sideY)
@@ -471,6 +564,10 @@ Namespace Accompaniment
         ''' </summary>
         Protected Shared Function Magnitude(c As Complex) As Single
             Return Math.Sqrt(c.X * c.X + c.Y * c.Y)
+        End Function
+
+        Protected Shared Function Magnitude(x As Single, y As Single) As Single
+            Return Math.Sqrt(x * x + y * y)
         End Function
 
         ''' <summary>
