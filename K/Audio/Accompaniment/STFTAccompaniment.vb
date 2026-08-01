@@ -53,6 +53,22 @@ Namespace Accompaniment
         '衰减系数
         Protected _ReductionFactor As Single
 
+        '响度系数
+        Protected _MagnitudeRate As Double = 1D
+
+        ''' <summary>
+        ''' 获取或设置响度增益
+        ''' </summary>
+        ''' <returns></returns>
+        Public Property MagnitudeGain As Double
+            Get
+                Return _MagnitudeRate - 1D
+            End Get
+            Set(value As Double)
+                _MagnitudeRate = Math.Max(1 + value, 0)
+            End Set
+        End Property
+
         ''' <summary>
         ''' 获取或设置衰减系数
         ''' </summary>
@@ -417,28 +433,37 @@ Namespace Accompaniment
                     fft2(k).Y = CSng(centerY - sideY)
 
                     '二次振幅衰减
-                    mag1 = Magnitude(fft1(k)) * att
-                    mag2 = Magnitude(fft2(k)) * att
+                    mag1 = Magnitude(fft1(k)) * att * _MagnitudeRate
+                    mag2 = Magnitude(fft2(k)) * att * _MagnitudeRate
                     phase1 = Phase(fft1(k))
                     phase2 = Phase(fft2(k))
 
                     With fft1(k)
                         .X = mag1 * Math.Cos(phase1)
-                        .Y = mag1 * Math.Sin(phase1)
+                        .Y = mag2 * Math.Sin(phase1)
                     End With
                     With fft2(k)
-                        .X = mag2 * Math.Cos(phase2)
+                        .X = mag1 * Math.Cos(phase2)
                         .Y = mag2 * Math.Sin(phase2)
                     End With
+                Else
+                    With fft1(k)
+                        .X = mag1 * Math.Cos(phase1) * _MagnitudeRate
+                        .Y = mag1 * Math.Sin(phase1) * _MagnitudeRate
+                    End With
+                    With fft2(k)
+                        .X = mag2 * Math.Cos(phase2) * _MagnitudeRate
+                        .Y = mag2 * Math.Sin(phase2) * _MagnitudeRate
+                    End With
+                End If
 
-                    '共轭对称
-                    If k > 0 AndAlso k < FFT_Size \ 2 Then
-                        Dim mirror As Integer = FFT_Size - k
-                        fft1(mirror).X = fft1(k).X
-                        fft1(mirror).Y = -fft1(k).Y
-                        fft2(mirror).X = fft2(k).X
-                        fft2(mirror).Y = -fft2(k).Y
-                    End If
+                '共轭对称
+                If k > 0 AndAlso k < FFT_Size \ 2 Then
+                    Dim mirror As Integer = FFT_Size - k
+                    fft1(mirror).X = fft1(k).X
+                    fft1(mirror).Y = -fft1(k).Y
+                    fft2(mirror).X = fft2(k).X
+                    fft2(mirror).Y = -fft2(k).Y
                 End If
             Next
         End Sub
@@ -449,28 +474,32 @@ Namespace Accompaniment
         ''' <param name="fft">声道</param>
         Protected Sub AttenuateCenterChannel(ByRef fft As Complex())
             For k As Integer = 0 To FFT_Size \ 2
-                Dim freq As Double = FreqTable(k)
                 ' 中置声道通常包含清晰人声，进行轻度宽频衰减
+                Dim freq As Double = FreqTable(k)
+
+                Dim mag = Magnitude(fft(k)) * _MagnitudeRate
+                Dim p = Phase(fft(k))
+
                 If freq >= 1000 AndAlso freq <= 6000 Then
                     Dim attenuation As Single = Math.Max(1 - GetVocalFrequencyWeight(freq) * _ReductionFactor, 0)
-                    Dim mag = Magnitude(fft(k)) * attenuation
-                    Dim p = Phase(fft(k))
+                    mag *= attenuation
                     With fft(k)
                         .X = mag * Math.Cos(p)
                         .Y = mag * Math.Sin(p)
                     End With
+                Else
+                    With fft(k)
+                        .X = mag * Math.Cos(p)
+                        .Y = mag * Math.Sin(p)
+                    End With
+                End If
 
-                    If k > 0 AndAlso k < FFT_Size \ 2 Then
-                        Dim i = FFT_Size - k
-
-                        mag = Magnitude(fft(i)) * attenuation
-                        p = Phase(fft(i))
-
-                        With fft(i)
-                            .X = mag * Math.Cos(p)
-                            .Y = mag * Math.Sin(p)
-                        End With
-                    End If
+                If k > 0 AndAlso k < FFT_Size \ 2 Then
+                    Dim i = FFT_Size - k
+                    With fft(i)
+                        .X = mag * Math.Cos(p)
+                        .Y = mag * Math.Sin(p)
+                    End With
                 End If
             Next
         End Sub

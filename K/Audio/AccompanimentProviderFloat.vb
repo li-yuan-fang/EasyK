@@ -29,6 +29,7 @@ Public Class AccompanimentProviderFloat
         With Settings.Settings.Audio
             CenterAcc.ReductionFactor = .AccompanimentReductionFactor
             STFTAcc.ReductionFactor = .AccompanimentReductionFactor
+            STFTAcc.MagnitudeGain = .FourierMagnitudeGain
             UseFourierTransform = .UseFourierTransform
         End With
     End Sub

@@ -37,6 +37,7 @@ Public Class KAudioSetting
     ''' <summary>
     ''' 实时伴唱人声衰减系数
     ''' </summary>
+    ''' <remarks>数值越大衰减越多</remarks>
     ''' <returns></returns>
     <JsonProperty("accompaniment_reduction_factor")>
     Public Property AccompanimentReductionFactor As Single = 0.9F
@@ -50,12 +51,20 @@ Public Class KAudioSetting
     Public Property AutoResetAccompaniment As Boolean = True
 
     ''' <summary>
+    ''' 傅里叶变换响度增益
+    ''' </summary>
+    ''' <remarks>实时伴奏模式下使用傅里叶变换法时的响度增益</remarks>
+    ''' <returns></returns>
+    <JsonProperty("fourier_magnitude_gain")>
+    Public Property FourierMagnitudeGain As Double = 0.01D
+
+    ''' <summary>
     ''' 伴奏音量增益
     ''' </summary>
     ''' <remarks>实时伴奏模式下的音量增益</remarks>
     ''' <returns></returns>
     <JsonProperty("accompaniment_volume_gain")>
-    Public Property AccompanimentVolumeGain As Single = 0.1F
+    Public Property AccompanimentVolumeGain As Single = 0.05F
 
     ''' <summary>
     ''' 获取托管音频启用状态
