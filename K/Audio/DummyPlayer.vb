@@ -1,6 +1,5 @@
 ﻿Imports System.Text.RegularExpressions
 Imports System.Threading
-Imports NAudio.CoreAudioApi
 Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
@@ -15,9 +14,9 @@ Public Class DummyPlayer
 
     Private VolumeProvider As VolumeSampleProvider = Nothing
 
-    Private WasApi As WasapiOut = Nothing
+    Private Direct As DirectSoundOut = Nothing
 
-    Private StoredDevice As MMDevice = Nothing
+    Private StoredDevice As String = vbNullString
 
     '储存的音量(主要用于VolumeProvider未初始化时储存音量)
     Private StoredVolume As Single = 0.5
@@ -110,34 +109,16 @@ Public Class DummyPlayer
     ''' <summary>
     ''' 重载播放设备
     ''' </summary>
-    ''' <param name="Device">指定设备</param>
-    Public Sub ReloadDeviceAndPlay(Device As MMDevice)
-        ReloadDevice(Device)
-        Play(True)
-    End Sub
-
-    ''' <summary>
-    ''' 重载播放设备
-    ''' </summary>
-    ''' <param name="Device">指定设备</param>
-    Private Sub ReloadDevice(Device As MMDevice) Handles DeviceSensor.OnDeviceUpdate
-        '检测是否更新播放设备
-        Dim Trigger As Boolean = Device IsNot Nothing
-
-        Dim Latency As Integer = Settings.Settings.Audio.DeviceLatency
-        Dim Mode As AudioClientShareMode = If(Settings.Settings.Audio.DeviceExclusive,
-                                                AudioClientShareMode.Exclusive,
-                                                AudioClientShareMode.Shared)
-        Dim DeviceId As String = vbNullString
+    ''' <param name="DeviceId">指定设备ID</param>
+    ''' <remarks>指定设备ID说明重装请求来自事件</remarks>
+    Private Sub ReloadDevice(DeviceId As String) Handles DeviceSensor.OnDeviceUpdate
+        '检测访问来源
+        Dim Trigger As Boolean = Not String.IsNullOrEmpty(DeviceId)
 
         If Trigger Then
-            DeviceId = Device.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID).Value
-            Logger.Debug("播放设备更新> {0}", DeviceId)
+            Logger.Debug("更新播放设备事件> {0}", DeviceId)
 
-            If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then
-                StoredDevice = Device
-                Return
-            End If
+            If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
 
             '来自事件的请求需要先锁定访问
             With Loading
@@ -146,48 +127,40 @@ Public Class DummyPlayer
             End With
         End If
 
-        If WasApi IsNot Nothing Then
-            SyncLock WasApi
+        If Direct IsNot Nothing Then
+            SyncLock Direct
                 Try
-                    WasApi.Stop()
-                    WasApi.Dispose()
+                    Direct.Stop()
+                    Direct.Dispose()
                 Catch ex As Exception
                     Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
-                WasApi = Nothing
+                Direct = Nothing
             End SyncLock
         End If
 
-        If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
-
         If Trigger Then
-            StoredDevice = Device
-            WasApi = New WasapiOut(Device, Mode, True, Latency)
+            StoredDevice = DeviceId
+            Direct = New DirectSoundOut(Guid.Parse(DeviceId))
 
             '如果是来自事件的更新 需要执行播放
             Task.Run(Sub() Play(True))
         Else
-            '此处可能是来自首次初始化 此时不需要Play
-            If StoredDevice Is Nothing Then
-                WasApi = New WasapiOut(Mode, True, Latency)
+            If String.IsNullOrEmpty(StoredDevice) Then
+                Direct = New DirectSoundOut()
             Else
-                WasApi = New WasapiOut(StoredDevice, Mode, True, Latency)
+                Direct = New DirectSoundOut(Guid.Parse(StoredDevice))
             End If
         End If
-        SyncLock WasApi
-            WasApi.Init(VolumeProvider)
+        SyncLock Direct
+            Direct.Init(VolumeProvider)
         End SyncLock
 
         '允许播放
         Loading.Set()
     End Sub
 
-    ''' <summary>
-    ''' 初始化托管播放器
-    ''' </summary>
-    ''' <param name="WaveFormat">音频格式</param>
-    ''' <param name="Float">浮点音频</param>
     Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean)
         '释放所有托管播放器
         [Stop](False)
@@ -220,14 +193,14 @@ Public Class DummyPlayer
         UpdateRealVolume()
 
         '配置输出
-        ReloadDevice(Nothing)
+        ReloadDevice(vbNullString)
     End Sub
 
     Public Sub Append(Wave As Byte(), pts As Long)
         Loading.Wait()
-        If WasApi Is Nothing OrElse WaveProvider Is Nothing Then Return
+        If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
 
-        SyncLock WasApi
+        SyncLock Direct
             WaveProvider.AddSamples(Wave, 0, Wave.Length)
         End SyncLock
     End Sub
@@ -238,43 +211,40 @@ Public Class DummyPlayer
 
     Private Sub Play(Force As Boolean)
         Loading.Wait()
-        If WasApi Is Nothing Then Return
+        If Direct Is Nothing Then Return
 
-        SyncLock WasApi
-            If Force OrElse WasApi.PlaybackState <> PlaybackState.Playing Then WasApi.Play()
+        SyncLock Direct
+            If Force OrElse Direct.PlaybackState <> PlaybackState.Playing Then Direct.Play()
         End SyncLock
     End Sub
 
     Public Sub Pause()
         Loading.Wait()
-        If WasApi Is Nothing Then Return
+        If Direct Is Nothing Then Return
 
-        SyncLock WasApi
-            WasApi.Pause()
+        SyncLock Direct
+            Direct.Pause()
         End SyncLock
     End Sub
 
     Public Sub CleanBuffer()
         Loading.Wait()
-        If WasApi Is Nothing OrElse WaveProvider Is Nothing Then Return
+        If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
 
-        SyncLock WasApi
+        SyncLock Direct
             WaveProvider.ClearBuffer()
             If MusicProvider IsNot Nothing Then MusicProvider.Reset()
         End SyncLock
     End Sub
 
-    ''' <summary>
-    ''' 关闭托管播放器
-    ''' </summary>
     Public Sub [Stop]()
         [Stop](True)
     End Sub
 
     ''' <summary>
-    ''' 关闭托管播放器
+    ''' 
     ''' </summary>
-    ''' <param name="Free">释放播放锁</param>
+    ''' <param name="Free"></param>
     Private Sub [Stop](Free As Boolean)
         '访问Direct之前先上锁
         With Loading
@@ -282,16 +252,16 @@ Public Class DummyPlayer
             .Reset()
         End With
 
-        If WasApi IsNot Nothing Then
-            SyncLock WasApi
+        If Direct IsNot Nothing Then
+            SyncLock Direct
                 Try
-                    WasApi.Stop()
-                    WasApi.Dispose()
+                    Direct.Stop()
+                    Direct.Dispose()
                 Catch ex As Exception
                     Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
-                WasApi = Nothing
+                Direct = Nothing
             End SyncLock
         End If
 

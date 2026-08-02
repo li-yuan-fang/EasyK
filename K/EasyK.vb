@@ -5,7 +5,6 @@ Imports Newtonsoft.Json
 Imports CefSharp
 Imports EasyK.DLNA.Player
 Imports Microsoft.AspNetCore.Http
-Imports NAudio.CoreAudioApi
 
 Public Class EasyK
     Implements IDisposable
@@ -285,14 +284,6 @@ Public Class EasyK
         If Settings.Settings.AutoShowQR Then ShowQRCode(False)
 
         Push()
-    End Sub
-
-    ''' <summary>
-    ''' 设置托管音频设备
-    ''' </summary>
-    ''' <param name="Device">音频设备</param>
-    Public Sub SetDummyDevice(Device As MMDevice)
-        Dummy.ReloadDeviceAndPlay(Device)
     End Sub
 
     ''' <summary>

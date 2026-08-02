@@ -477,7 +477,6 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\Implements\CommandAudio.vb" />
     <Compile Include="Commands\Implements\CommandBlock.vb" />
     <Compile Include="Commands\Implements\CommandDLNA.vb" />
     <Compile Include="Commands\Implements\CommandFair.vb" />

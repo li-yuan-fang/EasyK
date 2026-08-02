@@ -2,7 +2,6 @@
 Imports System.Threading
 Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
-Imports NAudio.CoreAudioApi
 
 Module ModMain
 
@@ -32,8 +31,6 @@ Module ModMain
 
         '初始化日志系统
         Logger = New KLogger(Settings)
-
-        '务必保证Loger及之前的操作不能抛出错误
 
         '运行点歌主服务
         KCore = New EasyK(Settings)
@@ -81,8 +78,8 @@ Module ModMain
 
         '解除事件关联
         Try
-            If Commands IsNot Nothing Then RemoveHandler Commands.OnExit, AddressOf ExitApplication
-            If WebServer IsNot Nothing Then RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
+            RemoveHandler Commands.OnExit, AddressOf ExitApplication
+            RemoveHandler WebServer.OnUncaughtError, AddressOf ExitApplication
 
             RemoveHandler AppDomain.CurrentDomain.UnhandledException, AddressOf OnUnhandledException
         Catch
@@ -92,11 +89,11 @@ Module ModMain
         SetConsoleCtrlHandler(ConsoleExitHandler, False)
 
         '关闭指令系统
-        If Commands IsNot Nothing Then Commands.Close()
+        Commands.Close()
 
         '关闭服务
-        If WebServer IsNot Nothing Then WebServer.Dispose()
-        If KCore IsNot Nothing Then KCore.Dispose()
+        WebServer.Dispose()
+        KCore.Dispose()
 
         '解除安全锁
         SafeExitLock.Set()

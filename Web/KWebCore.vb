@@ -53,8 +53,7 @@ Public Class KWebCore
     '自动处理服务器错误
     Private Sub OnServerError(Exceptions As Exception())
         For Each e In Exceptions
-            If (e.GetType() = GetType(Net.Sockets.SocketException) AndAlso e.HResult = -2147467259) OrElse
-                (e.GetType() = GetType(IO.IOException) AndAlso e.HResult = -2146232800) Then
+            If e.GetType() = GetType(Net.Sockets.SocketException) AndAlso e.HResult = -2147467259 Then
                 '端口绑定错误
                 If Settings.Settings.Web.AutoDebug Then
                     HandleServerSocketError()

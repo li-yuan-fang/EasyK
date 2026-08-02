@@ -67,21 +67,6 @@ Public Class KAudioSetting
     Public Property AccompanimentVolumeGain As Single = 0.05F
 
     ''' <summary>
-    ''' 播放设备延迟(单位:ms)
-    ''' </summary>
-    ''' <remarks>低性能设备可以调高点</remarks>
-    ''' <returns></returns>
-    <JsonProperty("device_latency")>
-    Public Property DeviceLatency As Integer = 10
-
-    ''' <summary>
-    ''' 独占播放设备
-    ''' </summary>
-    ''' <returns></returns>
-    <JsonProperty("device_exclusive")>
-    Public Property DeviceExclusive As Boolean = False
-
-    ''' <summary>
     ''' 获取托管音频启用状态
     ''' </summary>
     ''' <returns></returns>
