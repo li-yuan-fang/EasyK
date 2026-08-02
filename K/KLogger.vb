@@ -59,6 +59,8 @@ Friend Class KFileLogger
 
     End Class
 
+    Private ReadOnly Parent As KLogger
+
     '重定向输入流
     Private WithEvents Input As New RedirectInput
 
@@ -90,6 +92,7 @@ Friend Class KFileLogger
     ''' </summary>
     ''' <param name="Parent">日志层输出流</param>
     Public Sub New(Parent As KLogger)
+        Me.Parent = Parent
         Inner = Console.Out
 
         Try
@@ -119,11 +122,15 @@ Friend Class KFileLogger
 
         If LoggerFileStream Is Nothing OrElse LoggerWriter Is Nothing Then Return
 
-        LoggerWriter.Flush()
-        LoggerFileStream.Flush()
+        Try
+            LoggerWriter.Flush()
+            LoggerFileStream.Flush()
 
-        LoggerWriter.Dispose()
-        LoggerFileStream.Dispose()
+            LoggerWriter.Dispose()
+            LoggerFileStream.Dispose()
+        Catch ex As Exception
+            Parent.Error("保存日志文件失败 - {0}", ex.Message)
+        End Try
     End Sub
 
     Private Sub OnInputReadLine(Content As String) Handles Input.OnReadLine
@@ -237,7 +244,6 @@ Public Class KLogger
                 Console.ForegroundColor = ConsoleColor.White
                 .WriteLine($"] {Content}")
             End With
-
         End SyncLock
     End Sub
 
@@ -342,17 +348,21 @@ Public Class KLogger
         End If
 
         '无论如何 输出流必须由KLogger接管
-        Console.SetOut(Me)
+        Try
+            Console.SetOut(Me)
+        Catch ex As Exception
+            [Error]("接管控制台输出流失败 - {0}", ex.Message)
+        End Try
     End Sub
 
     ''' <summary>
     ''' 销毁资源
     ''' </summary>
     Public Shadows Sub Dispose() Implements IDisposable.Dispose
-        MyBase.Dispose()
-
         Dim FileLogger = TryCast(Inner, KFileLogger)
         If FileLogger IsNot Nothing Then FileLogger.Dispose()
+
+        MyBase.Dispose()
     End Sub
 
 End Class

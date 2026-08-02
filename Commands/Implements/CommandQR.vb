@@ -1,6 +1,5 @@
 ﻿Imports System.Net.NetworkInformation
 Imports System.Net.Sockets
-Imports System.Web
 
 Namespace Commands
 
