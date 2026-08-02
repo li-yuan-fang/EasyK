@@ -175,8 +175,8 @@ Public Class KSettings
     ''' </summary>
     Public Sub Save()
         Dim Json As String = JsonConvert.SerializeObject(Me, Formatting.Indented)
-        Dim Path As String = IO.Path.Combine(Application.StartupPath, "configs.json")
         Try
+            Dim Path As String = IO.Path.Combine(Application.StartupPath, "configs.json")
             IO.File.WriteAllText(Path, Json, Text.Encoding.UTF8)
         Catch ex As Exception
             Logger.Error("保存配置文件失败 - {0}", ex.Message)
