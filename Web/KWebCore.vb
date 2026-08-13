@@ -217,7 +217,7 @@ Public Class KWebCore
             .Push(True)
 
             If Current Is Nothing Then
-                Logger.Info("{0}> 尝试执行切歌", User)
+                Logger.Warn("{0}> 尝试执行切歌 但当前无播放源", User)
             Else
                 With Current
                     Logger.Info("{0}> 对 {1} 执行切歌", User, $"{ .Title}(来自:{ .Order})")
@@ -242,9 +242,20 @@ Public Class KWebCore
         If Id Is Nothing OrElse String.IsNullOrEmpty(Id.Id) Then _
             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
-        Return WebStartup.RespondStatusOnly(ctx, If(K.Remove(Id.Id),
-                                                    StatusCodes.Status204NoContent,
-                                                    StatusCodes.Status422UnprocessableEntity))
+        Dim User As String = ctx.Request.Cookies.Item("name")
+        UpdateUserName(User, ctx)
+
+        Dim Result = K.Remove(Id.Id)
+
+        If Result IsNot Nothing Then
+            With Result
+                Logger.Info("{0}> 移除了歌曲 {1}(来自:{2})", User, .Title, .Order)
+            End With
+
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+        Else
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status422UnprocessableEntity)
+        End If
     End Function
 
     <WebApi("/random", HttpMethod.Get)>

@@ -589,8 +589,8 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Id">ID</param>
     ''' <returns></returns>
-    Public Function Remove(Id As String) As Boolean
-        If Id = Blocked Then Return False
+    Public Function Remove(Id As String) As EasyKBookRecord
+        If Id = Blocked Then Return Nothing
 
         SyncLock Queue
             Dim node As LinkedListNode(Of EasyKBookRecord) = Queue.First()
@@ -604,14 +604,14 @@ Public Class EasyK
                         Queue.Remove(node)
                     End If
 
-                    Return True
+                    Return node.Value
                 End If
 
                 node = node.Next
             End While
         End SyncLock
 
-        Return False
+        Return Nothing
     End Function
 
     ''' <summary>

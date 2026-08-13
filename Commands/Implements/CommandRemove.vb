@@ -16,8 +16,12 @@
                 Return
             End If
 
-            If (K.Remove(Args(1))) Then
-                Console.WriteLine("移除成功 - {0}", Args(1))
+            Dim Result = K.Remove(Args(1))
+
+            If (Result IsNot Nothing) Then
+                With Result
+                    Console.WriteLine("移除成功 - {0}(来自:{1})", .Title, .Order)
+                End With
             Else
                 Console.WriteLine("移除失败 ID不存在 - {0}", Args(1))
             End If
