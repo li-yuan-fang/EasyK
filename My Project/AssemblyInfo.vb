@@ -9,7 +9,7 @@ Imports System.Runtime.InteropServices
 '查看程序集特性的值
 
 <Assembly: AssemblyTitle("EasyK")>
-<Assembly: AssemblyDescription("")>
+<Assembly: AssemblyDescription("Beta")>
 <Assembly: AssemblyCompany("li_yuan_fang")>
 <Assembly: AssemblyProduct("EasyK")>
 <Assembly: AssemblyCopyright("Copyright © li_yuan_fang 2025-2026")>
@@ -28,5 +28,5 @@ Imports System.Runtime.InteropServices
 '      修订号
 '
 
-<Assembly: AssemblyVersion("1.1.4.0")>
-<Assembly: AssemblyFileVersion("1.1.4.0")>
+<Assembly: AssemblyVersion("1.1.4.1")>
+<Assembly: AssemblyFileVersion("1.1.4.1")>

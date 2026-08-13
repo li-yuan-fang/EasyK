@@ -208,7 +208,23 @@ Public Class KWebCore
 
     <WebApi("/push", HttpMethod.Get)>
     Private Function Push(ctx As HttpContext) As Task
-        K.Push(True)
+        Dim User As String = ctx.Request.Cookies.Item("name")
+        UpdateUserName(User, ctx)
+
+        With K
+            Dim Current = .GetCurrent()
+
+            .Push(True)
+
+            If Current Is Nothing Then
+                Logger.Info("{0}> 尝试执行切歌", User)
+            Else
+                With Current
+                    Logger.Info("{0}> 对 {1} 执行切歌", User, $"{ .Title}(来自:{ .Order})")
+                End With
+            End If
+        End With
+
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 

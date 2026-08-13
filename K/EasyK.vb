@@ -413,7 +413,12 @@ Public Class EasyK
     Private Function CheckRankPermission(Id As String, Rank As Integer) As Boolean
         If String.IsNullOrEmpty(Blocked) Then Return True
 
-        Return If(Blocked = Id, Rank = 0, Rank <> 0)
+        If Blocked = Id Then Return Rank = 0
+
+        '要考虑正在播放的情况
+        If Current IsNot Nothing AndAlso Blocked = Current.Id Then Return True
+
+        Return Rank <> 0
     End Function
 
     ''' <summary>
