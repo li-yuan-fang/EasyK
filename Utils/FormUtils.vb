@@ -36,6 +36,18 @@ Public Class FormUtils
     Public Shared Function SendMessage(hWnd As IntPtr, Msg As UInteger, wParam As IntPtr, lParam As IntPtr) As IntPtr
     End Function
 
+    <DllImport("kernel32.dll", CharSet:=CharSet.Auto)>
+    Public Shared Function SetThreadExecutionState(esFlags As EXECUTION_STATE) As EXECUTION_STATE
+    End Function
+
+    <FlagsAttribute>
+    Public Enum EXECUTION_STATE
+        ES_AWAYMODE_REQUIRED = &H40
+        ES_CONTINUOUS = &H80000000
+        ES_DISPLAY_REQUIRED = &H2
+        ES_SYSTEM_REQUIRED = &H1
+    End Enum
+
     Private Const Volume_Mute As Integer = &H80000
     Private Const Volume_Up As Integer = &HA0000
     Private Const Volume_Down As Integer = &H90000
@@ -112,6 +124,20 @@ Public Class FormUtils
             Case VolumeAction.Down
                 SendMessage(Handle, WM_APPCOMMAND, Handle, New IntPtr(Volume_Down))
         End Select
+    End Sub
+
+    ''' <summary>
+    ''' 保持屏幕常亮
+    ''' </summary>
+    Public Shared Sub KeepScreenOn()
+        SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS Or EXECUTION_STATE.ES_DISPLAY_REQUIRED Or EXECUTION_STATE.ES_SYSTEM_REQUIRED)
+    End Sub
+
+    ''' <summary>
+    ''' 取消保持屏幕常亮
+    ''' </summary>
+    Public Shared Sub CancelKeepScreenOn()
+        SetThreadExecutionState(EXECUTION_STATE.ES_CONTINUOUS)
     End Sub
 
 End Class

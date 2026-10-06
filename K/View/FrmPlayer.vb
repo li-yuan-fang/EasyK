@@ -251,6 +251,9 @@ Public Class FrmPlayer
         '初始化消息提示窗口
         _Alert = New AlertManager(Me, Settings)
 
+        '保持屏幕常亮
+        BeginInvoke(Sub() FormUtils.KeepScreenOn())
+
         _Setuped = True
     End Sub
 
@@ -303,6 +306,7 @@ Public Class FrmPlayer
             Prevent = False
             Task.Run(Sub() K.Reset(True))
         End If
+        FormUtils.CancelKeepScreenOn()
     End Sub
 
     Public Overloads Sub Close()
