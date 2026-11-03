@@ -134,6 +134,10 @@ Public Class FrmPlayer
     '单位:s
     Private _BiliPosition As Long = 0
 
+    ''' <summary>
+    ''' 获取或设置播放进度
+    ''' </summary>
+    ''' <returns></returns>
     Public Property Position As Single
         Get
             If Not Setuped Then Return 0
