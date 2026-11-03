@@ -6,7 +6,7 @@
         Private ReadOnly K As EasyK
 
         Public Sub New(K As EasyK)
-            MyBase.New("seek", "seek <-/+/具体秒数>  - 快进/快退(暂时不支持bilibili)", CommandType.User)
+            MyBase.New("seek", "seek <-/+/具体秒数>  - 快进/快退", CommandType.User)
             Me.K = K
         End Sub
 

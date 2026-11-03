@@ -660,19 +660,15 @@ Public Class EasyK
     ''' <param name="Prev">向前调整</param>
     ''' <param name="Step">步长</param>
     Public Sub Seek(Prev As Boolean, Optional [Step] As Double = 5D)
-        With DLNAServer
-            If .Player Is Nothing Then Return
+        If PlayerForm Is Nothing OrElse Not PlayerForm.Setuped Then Return
 
-            With .Player
-                If Not PlayerForm.Playing Then Return
-
-                Dim Offset As Single = CSng(Math.Abs([Step]) / PlayerForm.Duration)
-                If Prev Then
-                    .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
-                Else
-                    .Position = Math.Max(Math.Min(.Position + Offset, 1), 0)
-                End If
-            End With
+        With PlayerForm
+            Dim Offset As Single = CSng(Math.Abs([Step]) / .Duration)
+            If Prev Then
+                .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
+            Else
+                .Position = Math.Max(Math.Min(.Position + Offset, 1), 0)
+            End If
         End With
     End Sub
 
@@ -680,16 +676,14 @@ Public Class EasyK
     ''' 重唱
     ''' </summary>
     Public Sub Replay()
-        If Current Is Nothing OrElse DLNAServer.Player Is Nothing Then Return
+        If Current Is Nothing Then Return
 
-        If Current.Type = EasyKType.Bilibili Then
-            '调用B站复位脚本
-            PlayerForm.BiliReplay()
-        Else
-            'VLC播放器模式
-            If Not PlayerForm.Playing Then Return
-            DLNAServer.Player.Position = 0
-        End If
+        If PlayerForm Is Nothing Then Return
+
+        With PlayerForm
+            If .IsDisposed OrElse Not .Setuped Then Return
+            .Position = 0
+        End With
     End Sub
 
     Private Shared Function GetOccupied(Record As EasyKBookRecord) As String

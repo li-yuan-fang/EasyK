@@ -93,9 +93,21 @@ Public Class FrmPlayer
 
         'B站相关调用
         Public Sub onComplete()
-            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
 
             _Base.K.Push()
+        End Sub
+
+        Public Sub onLoaded(duration As String)
+            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+
+            _Base._Duration = TimeUtils.ParseString(duration) * 1000L
+        End Sub
+
+        Public Sub onUpdate(current As String)
+            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+
+            _Base._BiliPosition = TimeUtils.ParseString(current)
         End Sub
 
         'DLNA音频流相关调用
@@ -119,6 +131,50 @@ Public Class FrmPlayer
         End Get
     End Property
 
+    '单位:s
+    Private _BiliPosition As Long = 0
+
+    Public Property Position As Single
+        Get
+            If Not Setuped Then Return 0
+
+            Dim Current = K.GetCurrent()
+            If Current Is Nothing Then Return 0
+
+            If Current.Type = EasyKType.Bilibili Then
+                If _Duration = 0 Then Return 0
+
+                Return _BiliPosition * 1000L / _Duration
+            End If
+
+            If DPlayer IsNot Nothing Then Return DPlayer.Position
+
+            Return 0
+        End Get
+        Set(value As Single)
+            If Not Setuped Then Return
+
+            Dim Current = K.GetCurrent()
+            If Current Is Nothing Then Return
+
+            If Current.Type = EasyKType.Bilibili Then
+                If _Duration = 0 Then
+                    Logger.Warn("无法更新进度 - B站视频未完成加载")
+                    Return
+                End If
+
+                Dim Pos As Double = _Duration / 1000 * value
+                BiliUpdate(Pos)
+                _BiliPosition = Math.Round(Pos)
+
+                Return
+            End If
+
+            If DPlayer IsNot Nothing Then DPlayer.Position = value
+        End Set
+    End Property
+
+    '单位:ms
     Private _Duration As Long = 0
 
     ''' <summary>
@@ -357,16 +413,16 @@ Public Class FrmPlayer
                End Sub)
     End Sub
 
-    'B站重新播放
-    Friend Sub BiliReplay()
-        BeginInvoke(Sub() Browser.EvaluateScriptAsync("var interval5=setInterval(()=>{let ele=document.getElementsByClassName('bpx-player-progress-wrap');if(ele.length==0)return;ele=ele[0];if(ele==undefined)return;let args={bubbles:true,cancelable:true,view:window,button:0,buttons:0,clientX:ele.clientLeft,clientY:ele.clientTop,screenX:ele.clientLeft,screenY:ele.clientTop,offsetX:0,offsetY:0,ctrlKey:false,altKey:false,shiftKey:false,metaKey:false,detail:1};ele.dispatchEvent(new MouseEvent('mousedown',args));setTimeout(()=>ele.dispatchEvent(new MouseEvent('mouseup',args)),100);clearInterval(interval5);interval5=undefined},100);"))
+    'B站更新进度
+    Private Sub BiliUpdate(Pos As Double)
+        BeginInvoke(Sub() Browser.EvaluateScriptAsync($"(() => {{ let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; video.currentTime = {Pos:0.00}; }})();"))
     End Sub
 
     '运行B站自动脚本
     Private Sub RunBiliScript(Browser As IBrowser)
         With Browser
-            '全屏&进度检查
-            .EvaluateScriptAsync("var interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); interval1 = setInterval(() => { if (document.getElementsByClassName('bpx-player-ctrl-time-current')[0].innerText === document.getElementsByClassName('bpx-player-ctrl-time-duration')[0].innerText) { clearInterval(interval1); easy_k.onComplete(); } }, 1000); } }, 100);")
+            '全屏
+            .EvaluateScriptAsync("var interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); } }, 100);")
             '关闭自动连播
             .EvaluateScriptAsync("var interval2 = setInterval(() => document.getElementsByName('bui-radio1')?.forEach((item) => { if (item.value === '2') { item.click(); clearInterval(interval2); } }), 50);")
 
@@ -375,6 +431,9 @@ Public Class FrmPlayer
 
             '尝试从头播放
             .EvaluateScriptAsync("var head_cnt = 0; var interval4 = setInterval(() => { let buttons = document.getElementsByClassName('bpx-player-toast-confirm'); for (let i = 0; i < buttons.length; i++) { if (buttons[i].textContent == '从头播放') { buttons[i].click(); clearInterval(interval4); break; } } head_cnt++; if (head_cnt >= 100) clearInterval(interval4); }, 50);")
+
+            '进度管理
+            .EvaluateScriptAsync("var element_current = undefined; var element_duration = undefined; var interval5 = setInterval(() => { if (!element_current) { let sel = document.getElementsByClassName('bpx-player-ctrl-time-current'); if (!sel || sel.length == 0) return; element_current = sel[0]; } if (!element_duration) { let sel = document.getElementsByClassName('bpx-player-ctrl-time-duration'); if (!sel || sel.length == 0) return; element_duration = sel[0]; easy_k.onLoaded(element_duration.innerText); } let current = element_current.innerText; let duration = element_duration.innerText; if (current === duration) { clearInterval(interval5); easy_k.onComplete(); return; } easy_k.onUpdate(element_current.innerText); }, 1000);")
         End With
     End Sub
 
@@ -487,11 +546,12 @@ Public Class FrmPlayer
 
     Private Sub OnPlayerTerminated()
         _Duration = 0
+        _BiliPosition = 0
 
         Invoke(Sub()
                    With Browser
                        If Browser_Bili Then
-                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); clearInterval(interval5); window.location.href = 'about:blank';")
+                           .EvaluateScriptAsync("document.getElementById('bilibili-player').innerHTML = ''; clearInterval(interval1); clearInterval(interval2); clearInterval(interval3); clearInterval(interval4); clearInterval(interval5); clearInterval(interval6); window.location.href = 'about:blank';")
                            Browser_Bili = False
                        End If
 
