@@ -886,7 +886,7 @@ Public Class EasyK
         Dim Storage As New CefStorage()
         Cef.GetGlobalCookieManager().VisitAllCookies(Storage)
 
-        '释放Player
+        _Player.Dispose()
 
         Storage.Clean()
     End Sub
