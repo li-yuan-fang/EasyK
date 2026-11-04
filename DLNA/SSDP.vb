@@ -353,40 +353,44 @@ Namespace DLNA
                 ServiceCopy = New List(Of SSDPService)(Services)
             End SyncLock
 
-            For Each ni In NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
-                If ni.OperationalStatus <> NetworkInformation.OperationalStatus.Up Then Continue For
+            Try
+                For Each ni In NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                    If ni.OperationalStatus <> NetworkInformation.OperationalStatus.Up Then Continue For
 
-                For Each addr In ni.GetIPProperties().UnicastAddresses
-                    If addr.Address.AddressFamily <> AddressFamily.InterNetwork Then Continue For
+                    For Each addr In ni.GetIPProperties().UnicastAddresses
+                        If addr.Address.AddressFamily <> AddressFamily.InterNetwork Then Continue For
 
-                    Dim LocalIP As String = $"{ addr.Address.ToString()}:{Settings.Settings.Web.Port.ToString()}"
+                        Dim LocalIP As String = $"{ addr.Address.ToString()}:{Settings.Settings.Web.Port.ToString()}"
 
-                    For Each Service As SSDPService In ServiceCopy
-                        Dim Builder As New Text.StringBuilder
-                        With Builder
-                            .Append("NOTIFY * HTTP/1.1").AppendLine()
-                            .Append($"HOST: {SSDP_Group}:{SSDP_Port}").AppendLine()
-                            .Append($"NTS: {NTS}").AppendLine()
-                            .Append(Service.GetNotify(LocalIP))
-                            .AppendLine()
-                        End With
-
-                        Dim Buffer As Byte() = UTF8.GetBytes(Builder.ToString())
-                        Using Client As New UdpClient()
-                            With Client
-                                With .Client
-                                    .SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastLoopback, 0)
-                                    .SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1)
-                                    .SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastInterface, addr.Address.GetAddressBytes())
-                                End With
-                                .JoinMulticastGroup(Group, addr.Address)
-
-                                .Send(Buffer, Buffer.Length, Multicast)
+                        For Each Service As SSDPService In ServiceCopy
+                            Dim Builder As New Text.StringBuilder
+                            With Builder
+                                .Append("NOTIFY * HTTP/1.1").AppendLine()
+                                .Append($"HOST: {SSDP_Group}:{SSDP_Port}").AppendLine()
+                                .Append($"NTS: {NTS}").AppendLine()
+                                .Append(Service.GetNotify(LocalIP))
+                                .AppendLine()
                             End With
-                        End Using
+
+                            Dim Buffer As Byte() = UTF8.GetBytes(Builder.ToString())
+                            Using Client As New UdpClient()
+                                With Client
+                                    With .Client
+                                        .SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastLoopback, 0)
+                                        .SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, 1)
+                                        .SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastInterface, addr.Address.GetAddressBytes())
+                                    End With
+                                    .JoinMulticastGroup(Group, addr.Address)
+
+                                    .Send(Buffer, Buffer.Length, Multicast)
+                                End With
+                            End Using
+                        Next
                     Next
                 Next
-            Next
+            Catch ex As Exception
+                Logger.Error("SSDP广播时遭遇网络错误 - {0}", ex.Message)
+            End Try
         End Sub
 
         ''' <summary>

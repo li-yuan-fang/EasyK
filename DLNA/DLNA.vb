@@ -153,25 +153,25 @@ Namespace DLNA
         '虚拟文件API
 
         <WebApi(SSDP_Description, HttpMethod.Get)>
-        Private Function Description(ctx As HttpContext) As Task
+        Protected Function Description(ctx As HttpContext) As Task
             AddAllowHeader(ctx)
             Return WebStartup.RespondText(ctx, SSDPContent, "application/xml")
         End Function
 
         <WebApi(AVTransport & ".xml", HttpMethod.Get)>
-        Private Function AVTransportXml(ctx As HttpContext) As Task
+        Protected Function AVTransportXml(ctx As HttpContext) As Task
             AddAllowHeader(ctx)
             Return WebStartup.RespondText(ctx, My.Resources.AVTransport, "application/xml")
         End Function
 
         <WebApi(RenderingControl & ".xml", HttpMethod.Get)>
-        Private Function RenderingControlXml(ctx As HttpContext) As Task
+        Protected Function RenderingControlXml(ctx As HttpContext) As Task
             AddAllowHeader(ctx)
             Return WebStartup.RespondText(ctx, My.Resources.RenderingControl, "application/xml")
         End Function
 
         <WebApi(ConnectionManager & ".xml", HttpMethod.Get)>
-        Private Function ConnectionManagerXml(ctx As HttpContext) As Task
+        Protected Function ConnectionManagerXml(ctx As HttpContext) As Task
             AddAllowHeader(ctx)
             Return WebStartup.RespondText(ctx, My.Resources.ConnectionManager, "application/xml")
         End Function
@@ -179,31 +179,31 @@ Namespace DLNA
         '事件API
 
         <WebApi(AVTransport & ActionPrefix, HttpMethod.Post)>
-        Private Function AVTransportAction(ctx As HttpContext) As Task
+        Protected Function AVTransportAction(ctx As HttpContext) As Task
             AddHeaders(ctx)
             Return Protocol.AVTransportService.Act(ctx, CheckAccess(ctx))
         End Function
 
         <WebApi(AVTransport & EventPrefix)>
-        Private Function AVTransportEvent(ctx As HttpContext) As Task
+        Protected Function AVTransportEvent(ctx As HttpContext) As Task
             AddHeaders(ctx)
             Return Protocol.AVTransportService.EventHandler(ctx)
         End Function
 
         <WebApi(RenderingControl & ActionPrefix, HttpMethod.Post)>
-        Private Function RenderingControlAction(ctx As HttpContext) As Task
+        Protected Function RenderingControlAction(ctx As HttpContext) As Task
             AddHeaders(ctx)
             Return Protocol.RenderingControlService.Act(ctx, CheckAccess(ctx))
         End Function
 
         <WebApi(RenderingControl & EventPrefix)>
-        Private Function RenderingControlEvent(ctx As HttpContext) As Task
+        Protected Function RenderingControlEvent(ctx As HttpContext) As Task
             AddHeaders(ctx)
             Return Protocol.RenderingControlService.EventHandler(ctx)
         End Function
 
         <WebApi(ConnectionManager & ActionPrefix, HttpMethod.Post)>
-        Private Function ConnectionManagerAction(ctx As HttpContext) As Task
+        Protected Function ConnectionManagerAction(ctx As HttpContext) As Task
             AddHeaders(ctx)
 
             '为了适配某些软件的特性 允许ConnectionManager无条件访问
@@ -211,7 +211,7 @@ Namespace DLNA
         End Function
 
         <WebApi(ConnectionManager & EventPrefix)>
-        Private Function ConnectionManagerEvent(ctx As HttpContext) As Task
+        Protected Function ConnectionManagerEvent(ctx As HttpContext) As Task
             AddHeaders(ctx)
             Return Protocol.ConnectionManagerService.EventHandler(ctx)
         End Function

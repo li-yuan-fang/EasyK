@@ -14,10 +14,10 @@ Namespace Commands
 
         Protected Overrides Sub Process(Args() As String)
             If Args.Length < 2 Then
-                Console.WriteLine("DLNA设备名称: {0}", K.DLNADevice)
+                Console.WriteLine("DLNA设备名称: {0}", K.DLNAProvider.DeviceName)
             Else
                 Dim Name As String = SecurityElement.Escape(Args(1))
-                K.DLNADevice = Name
+                K.DLNAProvider.DeviceName = Name
                 Console.WriteLine("DLNA设备名称已设置为 {0}", Name)
             End If
         End Sub

@@ -334,10 +334,10 @@ Public Class KWebCore
             .Add("volume", K.Volume)
             If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
 
-            .Add("intersect", K.DLNALyricIntersect)
+            .Add("intersect", K.DLNAProvider.LyricIntersect)
 
-            .Add("offset", K.DLNALyricOffset)
-            .Add("contrast", K.DLNALyricContrast)
+            .Add("offset", K.DLNAProvider.LyricOffset)
+            .Add("contrast", K.DLNAProvider.LyricContrast)
 
             If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.QRManager.IsQRCodeShown())
             If Settings.Settings.AllowRemoteFairness Then .Add("fairness", Settings.Settings.FairnessMode)
@@ -375,21 +375,21 @@ Public Class KWebCore
                     Case "offset"
                         '更改歌词偏移
                         Try
-                            K.DLNALyricOffset = Double.Parse(p.Value)
+                            K.DLNAProvider.LyricOffset = Double.Parse(p.Value)
                         Catch
                             Logger.Debug("HTTP服务端收到错误的歌词偏移 - {0}", p.Value)
                         End Try
                     Case "contrast"
                         '更改歌词对比度
                         Try
-                            K.DLNALyricContrast = Double.Parse(p.Value)
+                            K.DLNAProvider.LyricContrast = Double.Parse(p.Value)
                         Catch
                             Logger.Debug("HTTP服务端收到错误的歌词对比度 - {0}", p.Value)
                         End Try
                     Case "intersect"
                         '更改歌词交错
                         Try
-                            K.DLNALyricIntersect = Boolean.Parse(p.Value)
+                            K.DLNAProvider.LyricIntersect = Boolean.Parse(p.Value)
                         Catch
                             Logger.Debug("HTTP服务端收到错误的歌词交错 - {0}", p.Value)
                         End Try

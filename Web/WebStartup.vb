@@ -219,6 +219,7 @@ Public Class WebStartup
     ''' 注册Web API调用
     ''' </summary>
     ''' <param name="Instance">响应器实例</param>
+    ''' <remarks>无自动鉴权功能</remarks>
     Public Shared Sub Register(Instance As Object)
         Register(Instance, vbNullString)
     End Sub
@@ -228,6 +229,7 @@ Public Class WebStartup
     ''' </summary>
     ''' <param name="Instance">响应器实例</param>
     ''' <param name="Prefix">匹配前缀</param>
+    ''' <remarks>无自动鉴权功能</remarks>
     Public Shared Sub Register(Instance As Object, Prefix As String)
         If Instance Is Nothing Then Return
 
@@ -254,6 +256,7 @@ Public Class WebStartup
     ''' </summary>
     ''' <param name="Instance">响应器实例</param>
     ''' <param name="Settings">配置容器</param>
+    ''' <remarks>包含自动鉴权功能</remarks>
     Public Shared Sub Register(Instance As Object, Settings As SettingContainer)
         Register(Instance, Settings, vbNullString)
     End Sub
@@ -264,6 +267,7 @@ Public Class WebStartup
     ''' <param name="Instance">响应器实例</param>
     ''' <param name="Settings">配置容器</param>
     ''' <param name="Prefix">匹配前缀</param>
+    ''' <remarks>包含自动鉴权功能</remarks>
     Public Shared Sub Register(Instance As Object, Settings As SettingContainer, Prefix As String)
         If Instance Is Nothing Then Return
 

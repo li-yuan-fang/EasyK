@@ -529,6 +529,9 @@
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
     <Compile Include="K\Cef\CefSetting.vb" />
     <Compile Include="K\Cef\CefStorage.vb" />
+    <Compile Include="K\DLNA\DLNAServer.vb" />
+    <Compile Include="K\DLNA\DLNAServerManager.vb" />
+    <Compile Include="K\DLNA\DLNAServerProvider.vb" />
     <Compile Include="K\EasyKBookRecord.vb" />
     <Compile Include="K\EasyKType.vb" />
     <Compile Include="K\KLogger.vb" />

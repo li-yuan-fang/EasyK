@@ -26,6 +26,7 @@ Namespace DLNA.Player
         ''' <summary>
         ''' 播放事件
         ''' </summary>
+        ''' <remarks>PauseFirst为True代表实际功能为进度调整</remarks>
         Public Event OnPlay(PauseFirst As Boolean)
 
         ''' <summary>
@@ -482,7 +483,7 @@ Namespace DLNA.Player
                          If Not Accessible() OrElse Cancelled Then Return
 
                          Try
-                             Player.RunScript(DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNALyricOffset))
+                             Player.RunScript(DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNAProvider.LyricOffset))
                          Catch ex As Exception
                              Logger.Debug("DLNA音乐模式更新歌词偏移出错 - {0}", ex.Message)
                          End Try
@@ -619,7 +620,7 @@ Namespace DLNA.Player
                 Dim Intersect = DLNAMusicProviders.GenerateUpdateLyricIntersectScript(K.Settings.Settings.DLNA.LyricIntersect)
 
                 '生成偏移脚本
-                Dim Offset = DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNALyricOffset)
+                Dim Offset = DLNAMusicProviders.GenerateUpdateOffsetScript(K.DLNAProvider.LyricOffset)
 
                 '等待浏览器加载
                 BrowserLoaded.Wait()
@@ -891,7 +892,7 @@ Namespace DLNA.Player
         Private Sub OnPlayerTerminated()
             '更新偏移量
             With K
-                If CurrentRecord IsNot Nothing AndAlso .Settings.Settings.DLNA.AutoResetOffset Then ._LyricOffset = 0
+                If CurrentRecord IsNot Nothing AndAlso .Settings.Settings.DLNA.AutoResetOffset Then .DLNAManager.ResetLyricsOffset()
             End With
 
             '播放速度复位

@@ -16,13 +16,11 @@ Public Class EasyK
 
     Private ReadOnly OutdatedQueue As New LinkedList(Of EasyKBookRecord)
 
-    Friend ReadOnly DLNAServer As DLNA.DLNA
+    Private ReadOnly DLNAServer As DLNAServerProvider
 
     Friend ReadOnly Settings As SettingContainer
 
     Friend ReadOnly Dummy As DummyPlayer
-
-    Friend _LyricOffset As Double = 0.0D
 
     Private _Running As Boolean = False
 
@@ -55,16 +53,23 @@ Public Class EasyK
     Public ReadOnly Property QRManager As QRManager
 
     ''' <summary>
-    ''' 获取或设置DLNA设备名称
+    ''' 获取DLNA服务管理器
     ''' </summary>
     ''' <returns></returns>
-    Public Property DLNADevice As String
+    Friend ReadOnly Property DLNAManager As DLNAServerManager
         Get
-            Return DLNAServer.Name
+            Return DLNAServer
         End Get
-        Set(value As String)
-            DLNAServer.Name = value
-        End Set
+    End Property
+
+    ''' <summary>
+    ''' 获取DLNA服务对象
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property DLNAProvider As DLNAServer
+        Get
+            Return DLNAServer
+        End Get
     End Property
 
     ''' <summary>
@@ -112,61 +117,6 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取或设置DLNA歌词偏移
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property DLNALyricOffset As Double
-        Get
-            Return _LyricOffset
-        End Get
-        Set(value As Double)
-            If _LyricOffset <> value Then
-                _LyricOffset = value
-
-                If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOffset()
-            End If
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取或设置DLNA歌词交错
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property DLNALyricIntersect As Boolean
-        Get
-            Return Settings.Settings.DLNA.LyricIntersect
-        End Get
-        Set(value As Boolean)
-            With Settings.Settings.DLNA
-                If .LyricIntersect <> value Then
-                    .LyricIntersect = value
-
-                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOptions()
-                End If
-            End With
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取或设置DLNA歌词对比度阈值
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property DLNALyricContrast As Double
-        Get
-            Return Settings.Settings.DLNA.LyricContrastThreshold
-        End Get
-        Set(value As Double)
-            With Settings.Settings.DLNA
-                If .LyricContrastThreshold <> value Then
-                    .LyricContrastThreshold = value
-
-                    If DLNAServer.Player IsNot Nothing Then DLNAServer.Player.UpdateMusicLyricOptions()
-                End If
-            End With
-        End Set
-    End Property
-
-    ''' <summary>
     ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>
@@ -192,7 +142,7 @@ Public Class EasyK
         DLNA.MusicProvider.DLNAMusicProviders.LoadProviders(Settings)
 
         '加载DLNA服务
-        DLNAServer = New DLNA.DLNA(Me, Settings) With {
+        DLNAServer = New DLNAServerProvider(Me, Settings) With {
             .CheckAccess = New DLNA.DLNAAccessCheck(AddressOf DLNAAccessCheck)
         }
 
@@ -223,7 +173,7 @@ Public Class EasyK
             Current.Content <> ctx.Connection.RemoteIpAddress.ToString() AndAlso
             Not NetUtils.LocalAddresses.Contains(Current.Content) Then
 
-            Logger.Debug("{0} 试图越权访问DLNA服务被拒", ctx.Connection.RemoteIpAddress.ToString())
+            Logger.Warn("{0} 试图越权访问DLNA服务被拒", ctx.Connection.RemoteIpAddress.ToString())
 
             Return False
         End If

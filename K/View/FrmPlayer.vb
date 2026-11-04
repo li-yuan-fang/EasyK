@@ -306,7 +306,7 @@ Public Class FrmPlayer
         DPlayer = New DLNAPlayer(K, Me, VLCLib, Browser_Loaded) With {
             .Update = New UpdateRecord(AddressOf K.UpdateRecord)
         }
-        K.DLNAServer.Player = DPlayer
+        K.DLNAManager.SetDLNAPlayer(DPlayer)
 
         '初始化消息提示窗口
         _Alert = New AlertManager(Me, Settings)
@@ -372,7 +372,7 @@ Public Class FrmPlayer
     Public Overloads Sub Close()
         With K
             .Dummy.Stop()
-            .DLNAServer.Player = Nothing
+            .DLNAManager.SetDLNAPlayer(Nothing)
         End With
 
         If DPlayer IsNot Nothing Then DPlayer.Dispose()
