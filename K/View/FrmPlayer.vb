@@ -318,7 +318,7 @@ Public Class FrmPlayer
 
         '初始化DLNA播放器
         DPlayer = New DLNAPlayer(K, Me, VLCLib, Browser_Loaded) With {
-            .Update = New UpdateRecord(AddressOf K.UpdateRecord)
+            .Update = K.DLNAManager.UpdateRecordCallback
         }
         K.DLNAManager.SetDLNAPlayer(DPlayer)
 
