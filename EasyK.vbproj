@@ -562,6 +562,7 @@
     <Compile Include="DLNA\Protocol\DLNAState.vb" />
     <Compile Include="DLNA\SSDP.vb" />
     <Compile Include="K\EasyK.vb" />
+    <Compile Include="K\QRManager.vb" />
     <Compile Include="Commands\Implements\FrmLogin.Designer.vb">
       <DependentUpon>FrmLogin.vb</DependentUpon>
     </Compile>

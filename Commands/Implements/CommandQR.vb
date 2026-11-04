@@ -64,37 +64,39 @@ Namespace Commands
             Dim Content As String = If(Args.Length < 2, "auto", Args(1).ToLower())
             Dim Outside As Boolean = Args.Length >= 3 AndAlso Args(2).ToLower() = "outside"
 
-            Select Case Content
-                Case "auto"
-                    If K.IsQRCodeShown() Then
+            With K.QRManager
+                Select Case Content
+                    Case "auto"
+                        If .IsQRCodeShown() Then
+                            '关闭二维码窗口
+                            .CloseQRCode()
+                            Return
+                        End If
+
+                        If Not .ShowQRCode(Outside) Then
+                            PrintValidAdapters()
+                            Return
+                        End If
+                    Case "list"
+                        '列出可用网卡
+                        PrintValidAdapters()
+                    Case "hide"
                         '关闭二维码窗口
-                        K.CloseQRCode()
-                        Return
-                    End If
+                        .CloseQRCode()
+                    Case Else
+                        '指定网卡
+                        Dim Adapter As NetworkInterface = NetUtils.GetAdapter(Content)
+                        If Adapter Is Nothing Then Adapter = NetUtils.GetAdapterByMAC(Content)
 
-                    If Not K.ShowQRCode(Outside) Then
-                        PrintValidAdapters()
-                        Return
-                    End If
-                Case "list"
-                    '列出可用网卡
-                    PrintValidAdapters()
-                Case "hide"
-                    '关闭二维码窗口
-                    K.CloseQRCode()
-                Case Else
-                    '指定网卡
-                    Dim Adapter As NetworkInterface = NetUtils.GetAdapter(Content)
-                    If Adapter Is Nothing Then Adapter = NetUtils.GetAdapterByMAC(Content)
+                        If Adapter Is Nothing Then
+                            Console.WriteLine("找不到指定的网卡")
+                            PrintValidAdapters()
+                            Return
+                        End If
 
-                    If Adapter Is Nothing Then
-                        Console.WriteLine("找不到指定的网卡")
-                        PrintValidAdapters()
-                        Return
-                    End If
-
-                    K.ShowQRCode(Adapter, Outside)
-            End Select
+                        .ShowQRCode(Adapter, Outside)
+                End Select
+            End With
         End Sub
 
     End Class

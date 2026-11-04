@@ -28,7 +28,7 @@
 
                 Settings.Settings.Web.Port = Port
                 Web.RestartServer()
-                K.RefreshQRCode()
+                K.QRManager.RefreshQRCode()
                 Console.WriteLine("HTTP端口已修改为 {0}", Port)
             End If
         End Sub

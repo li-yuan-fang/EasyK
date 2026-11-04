@@ -23,7 +23,7 @@
             End If
 
             '刷新二维码
-            K.RefreshQRCode()
+            K.QRManager.RefreshQRCode()
         End Sub
 
     End Class

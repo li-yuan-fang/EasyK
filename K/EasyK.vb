@@ -1,5 +1,4 @@
 ﻿Imports System.Drawing
-Imports System.Net.NetworkInformation
 Imports System.Threading
 Imports Newtonsoft.Json
 Imports CefSharp
@@ -11,17 +10,13 @@ Public Class EasyK
 
     Private PlayerForm As FrmPlayer
 
-    Private WithEvents QRForm As FrmQRCode
+    Public ReadOnly Property QRManager As QRManager
 
     Private Current As EasyKBookRecord = Nothing
 
     Private ReadOnly Queue As New LinkedList(Of EasyKBookRecord)
 
     Private ReadOnly OutdatedQueue As New LinkedList(Of EasyKBookRecord)
-
-    Private LastValidAdapter As NetworkInterface = Nothing
-
-    Private NetworkChangeCommit As Date = Date.MinValue
 
     Friend ReadOnly DLNAServer As DLNA.DLNA
 
@@ -32,8 +27,6 @@ Public Class EasyK
     Friend _LyricOffset As Double = 0.0D
 
     Private _Running As Boolean = False
-
-    Private _SavedQRBounds As Rectangle
 
     Private Blocked As String = vbNullString
 
@@ -205,8 +198,7 @@ Public Class EasyK
         '启动播放器窗口
         PlayerForm = New FrmPlayer(Me, Settings)
 
-        '绑定网络变化事件
-        AddHandler NetworkChange.NetworkAddressChanged, AddressOf OnNetworkAddressChange
+        QRManager = New QRManager(Function() PlayerForm, Settings)
     End Sub
 
     ''' <summary>
@@ -277,11 +269,11 @@ Public Class EasyK
     ''' <param name="Bounds">部署区域</param>
     Public Sub Setup(Bounds As Rectangle)
         _Running = True
-        _SavedQRBounds = New Rectangle(-1, -1, 0, 0)
+        QRManager.ResetBounds()
         PlayerForm.Setup(Bounds)
 
         '检测是否需要显示二维码
-        If Settings.Settings.AutoShowQR Then ShowQRCode(False)
+        If Settings.Settings.AutoShowQR Then QRManager.ShowQRCode(False)
 
         Push()
     End Sub
@@ -734,166 +726,6 @@ Public Class EasyK
     End Sub
 
     ''' <summary>
-    ''' 获取二维码显示状态
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function IsQRCodeShown() As Boolean
-        Return QRForm IsNot Nothing AndAlso QRForm.Visible AndAlso Not QRForm.IsDisposed()
-    End Function
-
-    Private Sub UpdateQRBounds()
-        If Not IsQRCodeShown() Then Return
-
-        With PlayerForm
-            Dim Width, Height As Integer
-            Dim X, Y As Integer
-
-            If _SavedQRBounds.X >= 0 AndAlso _SavedQRBounds.Y >= 0 Then
-                With _SavedQRBounds
-                    X = .X
-                    Y = .Y
-                    Width = .Width
-                    Height = .Height
-                End With
-            Else
-                Height = CInt(.Height * 0.25)
-                Width = CInt(Height * 0.9)
-
-                X = CInt(.Width - Width - 1)
-                Y = CInt((.Height - Height) / 2 - 1)
-            End If
-
-            .Invoke(Sub() QRForm.SetBounds(X, Y, Width, Height))
-        End With
-    End Sub
-
-    ''' <summary>
-    ''' 显示二维码
-    ''' </summary>
-    ''' <param name="Adapter">网卡</param>
-    ''' <param name="Outside">以独立窗口显示</param>
-    Public Sub ShowQRCode(Adapter As NetworkInterface, Outside As Boolean)
-        Dim LocalIP As String = NetUtils.GetLocalIP(Adapter)
-        If String.IsNullOrEmpty(LocalIP) Then
-            Logger.Error("显示二维码失败 - 获取本机IP失败")
-            Return
-        End If
-
-        '缓存有效网卡
-        LastValidAdapter = Adapter
-
-        Dim Key As String = Settings.Settings.Web.PassKey
-        Dim Port As Integer = Settings.Settings.Web.Port
-        If String.IsNullOrEmpty(Key) Then
-            ShowQRCode($"http://{LocalIP}:{Port}/", Outside)
-        Else
-            ShowQRCode($"http://{LocalIP}:{Port}/?pass={System.Web.HttpUtility.UrlEncode(Key)}", Outside)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' 显示二维码
-    ''' </summary>
-    ''' <param name="Url">点歌Url</param>
-    ''' <param name="Outside">以独立窗口显示</param>
-    Public Sub ShowQRCode(Url As String, Outside As Boolean)
-        CloseQRCode()
-
-        If PlayerForm Is Nothing Then Return
-
-        With PlayerForm
-            If Outside OrElse Not .Setuped Then
-                .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url)
-                            QRForm.Show()
-                        End Sub)
-            Else
-                .Invoke(Sub()
-                            QRForm = New FrmQRCode(Url)
-
-                            With QRForm
-                                .Parent = PlayerForm
-                                .FormBorderStyle = Windows.Forms.FormBorderStyle.None
-                                .ShowInTaskbar = False
-                                .Round = True
-                                .Show()
-
-                                FormUtils.SetParent(.Handle, PlayerForm.Handle)
-                            End With
-                        End Sub)
-
-                UpdateQRBounds()
-                AddHandler QRForm.OnBoundsUpdate, AddressOf QRForm_OnBoundsUpdate
-            End If
-        End With
-    End Sub
-
-    Private Sub QRForm_OnBoundsUpdate(Bounds As Rectangle)
-        _SavedQRBounds = Bounds
-    End Sub
-
-    ''' <summary>
-    ''' 显示二维码
-    ''' </summary>
-    ''' <param name="Outside">以独立窗口显示</param>
-    Public Function ShowQRCode(Outside As Boolean) As Boolean
-        Dim Adapter As NetworkInterface = NetUtils.TryGetMajorAdapter()
-        If Adapter Is Nothing AndAlso LastValidAdapter IsNot Nothing Then Adapter = LastValidAdapter
-
-        If Adapter IsNot Nothing Then
-            '获取网卡成功
-            ShowQRCode(Adapter, Outside)
-            Return True
-        Else
-            Logger.Error("自动显示二维码失败 - 无法获取默认网卡")
-            Return False
-        End If
-    End Function
-
-    ''' <summary>
-    ''' 关闭二维码显示
-    ''' </summary>
-    Public Sub CloseQRCode()
-        If QRForm Is Nothing Then Return
-
-        If PlayerForm IsNot Nothing AndAlso Not PlayerForm.IsDisposed Then PlayerForm.Invoke(Sub() QRForm.Close())
-        RemoveHandler QRForm.OnBoundsUpdate, AddressOf QRForm_OnBoundsUpdate
-        QRForm = Nothing
-    End Sub
-
-    '网络变化
-    Private Sub OnNetworkAddressChange(sender As Object, e As EventArgs)
-        If NetworkChangeCommit = Date.MinValue Then
-            '新触发
-            NetworkChangeCommit = Now.AddSeconds(3)
-
-            Task.Run(Sub()
-                         While Now < NetworkChangeCommit
-                             Thread.Sleep(100)
-                         End While
-
-                         '复位
-                         NetworkChangeCommit = Date.MinValue
-
-                         '提交二维码更新
-                         RefreshQRCode()
-                     End Sub)
-        Else
-            '更新时间
-            NetworkChangeCommit = Now.AddSeconds(3)
-        End If
-    End Sub
-
-    ''' <summary>
-    ''' 刷新二维码
-    ''' </summary>
-    Public Sub RefreshQRCode()
-        If QRForm Is Nothing OrElse QRForm.IsDisposed Then Return
-
-        ShowQRCode(False)
-    End Sub
-
-    ''' <summary>
     ''' 获取主屏幕
     ''' </summary>
     ''' <returns></returns>
@@ -1250,7 +1082,7 @@ Public Class EasyK
     Private Sub RestartPlayerForm()
         Dim NewForm As FrmPlayer = Nothing
 
-        If QRForm IsNot Nothing Then CloseQRCode()
+        QRManager.CloseQRCode()
 
         With PlayerForm
             .Invoke(Sub()
@@ -1270,7 +1102,7 @@ Public Class EasyK
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
-        RemoveHandler NetworkChange.NetworkAddressChanged, AddressOf OnNetworkAddressChange
+        QRManager.Dispose()
 
         Dummy.Dispose()
         DLNAServer.Dispose()

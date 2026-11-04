@@ -339,7 +339,7 @@ Public Class KWebCore
             .Add("offset", K.DLNALyricOffset)
             .Add("contrast", K.DLNALyricContrast)
 
-            If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.IsQRCodeShown())
+            If Settings.Settings.AllowRemoteQR Then .Add("qrcode", K.QRManager.IsQRCodeShown())
             If Settings.Settings.AllowRemoteFairness Then .Add("fairness", Settings.Settings.FairnessMode)
         End With
 
@@ -399,9 +399,9 @@ Public Class KWebCore
                             Try
                                 With K
                                     If Boolean.Parse(p.Value) Then
-                                        .ShowQRCode(Not .IsSetup)
+                                        .QRManager.ShowQRCode(Not .IsSetup)
                                     Else
-                                        .CloseQRCode()
+                                        .QRManager.CloseQRCode()
                                     End If
                                 End With
                             Catch
