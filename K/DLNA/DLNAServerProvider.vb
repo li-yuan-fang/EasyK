@@ -75,6 +75,12 @@ Public Class DLNAServerProvider
     End Property
 
     ''' <summary>
+    ''' 获取点歌记录更新回调
+    ''' </summary>
+    ''' <returns></returns> 
+    Public ReadOnly Property UpdateRecordCallback As UpdateRecord Implements DLNAServerManager.UpdateRecordCallback
+
+    ''' <summary>
     ''' 重置歌词偏移
     ''' </summary>
     Public Sub ResetLyricsOffset() Implements DLNAServerManager.ResetLyricsOffset
@@ -94,8 +100,12 @@ Public Class DLNAServerProvider
     ''' </summary>
     ''' <param name="K"></param>
     ''' <param name="Settings">配置容器</param>
-    Public Sub New(K As EasyK, Settings As SettingContainer)
+    ''' <param name="UpdateRecordCallback">点歌记录更新回调</param>
+    ''' <param name="CheckAccess">访问权限检查</param>
+    Public Sub New(K As EasyK, Settings As SettingContainer, UpdateRecordCallback As UpdateRecord, CheckAccess As DLNA.DLNAAccessCheck)
         MyBase.New(K, Settings)
+        Me.UpdateRecordCallback = UpdateRecordCallback
+        Me.CheckAccess = CheckAccess
     End Sub
 
 End Class

@@ -142,9 +142,7 @@ Public Class EasyK
         DLNA.MusicProvider.DLNAMusicProviders.LoadProviders(Settings)
 
         '加载DLNA服务
-        DLNAServer = New DLNAServerProvider(Me, Settings) With {
-            .CheckAccess = New DLNA.DLNAAccessCheck(AddressOf DLNAAccessCheck)
-        }
+        DLNAServer = New DLNAServerProvider(Me, Settings, AddressOf UpdateRecord, AddressOf DLNAAccessCheck)
 
         '尝试恢复点歌记录
         Load()
@@ -943,7 +941,7 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Id"></param>
     ''' <param name="Content"></param>
-    Friend Sub UpdateRecord(Id As String, Content As String)
+    Private Sub UpdateRecord(Id As String, Content As String)
         SyncLock OutdatedQueue
             Dim Node As LinkedListNode(Of EasyKBookRecord) = OutdatedQueue.First()
             While Node IsNot Nothing

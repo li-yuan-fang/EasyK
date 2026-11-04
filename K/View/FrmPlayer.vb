@@ -178,6 +178,20 @@ Public Class FrmPlayer
         End Set
     End Property
 
+    ''' <summary>
+    ''' 获取或设置播放速率
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property Rate As Single
+        Get
+            Return VLCPlayer.MediaPlayer.Rate
+        End Get
+        Set(value As Single)
+            If Not Setuped Then Return
+            VLCPlayer.MediaPlayer.SetRate(value)
+        End Set
+    End Property
+
     '单位:ms
     Private _Duration As Long = 0
 
@@ -572,6 +586,7 @@ Public Class FrmPlayer
                 AddHandler .Stopped, AddressOf VLC_Stopped
             End If
             If .Media IsNot Nothing Then .Media.Dispose()
+            .SetRate(1.0F)
         End With
     End Sub
 

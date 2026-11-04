@@ -13,4 +13,10 @@ Public Interface DLNAServerManager
     ''' <param name="Player">DLNA播放器对象</param>
     Sub SetDLNAPlayer(Player As DLNAPlayer)
 
+    ''' <summary>
+    ''' 获取点歌记录更新回调
+    ''' </summary>
+    ''' <returns></returns>
+    ReadOnly Property UpdateRecordCallback As UpdateRecord
+
 End Interface
