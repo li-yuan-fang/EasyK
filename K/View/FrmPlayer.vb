@@ -191,12 +191,21 @@ Public Class FrmPlayer
     ''' 获取或设置播放速率
     ''' </summary>
     ''' <returns></returns>
+    ''' <remarks>B站渠道暂时不支持速度调节 可能后续会调整</remarks>
     Public Property Rate As Single
         Get
+            Dim Current = K.GetCurrent()
+            If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then
+                Return 1.0F
+            End If
+
             Return VLCPlayer.MediaPlayer.Rate
         End Get
         Set(value As Single)
             If Not Setuped Then Return
+            Dim Current = K.GetCurrent()
+            If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then Return
+
             VLCPlayer.MediaPlayer.SetRate(value)
         End Set
     End Property
