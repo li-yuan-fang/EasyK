@@ -10,8 +10,6 @@ Public Class EasyK
 
     Private PlayerForm As FrmPlayer
 
-    Public ReadOnly Property QRManager As QRManager
-
     Private Current As EasyKBookRecord = Nothing
 
     Private ReadOnly Queue As New LinkedList(Of EasyKBookRecord)
@@ -49,6 +47,12 @@ Public Class EasyK
     ''' 播放器终止事件
     ''' </summary>
     Public Event OnPlayerTerminated()
+
+    ''' <summary>
+    ''' 获取二维码管理器
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property QRManager As QRManager
 
     ''' <summary>
     ''' 获取或设置DLNA设备名称
@@ -646,6 +650,8 @@ Public Class EasyK
         Return vbNullString
     End Function
 
+    'TODO: 移除Seek 统一采用Duration和Position控制
+
     ''' <summary>
     ''' 调整进度
     ''' </summary>
@@ -663,6 +669,8 @@ Public Class EasyK
             End If
         End With
     End Sub
+
+    'TODO: Replay后续移除 改到统一的Position = 0
 
     ''' <summary>
     ''' 重唱
