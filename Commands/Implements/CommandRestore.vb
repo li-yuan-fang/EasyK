@@ -31,8 +31,8 @@
             Select Case Content
                 Case "info"
 
-                    If K.IsSetup Then
-                        Dim major = K.GetMainScreen()
+                    If K.Player.IsSetup Then
+                        Dim major = K.PlayerManager.GetMainScreen()
                         With major
                             If .Id < 0 Then
                                 Console.WriteLine("无法获取当前播放器信息")
@@ -63,12 +63,12 @@
                         Console.WriteLine("自动部署状态: 未配置")
                     End If
                 Case "save"
-                    If Not K.IsSetup Then
+                    If Not K.Player.IsSetup Then
                         Console.WriteLine("当前播放器未部署")
                         Return
                     End If
 
-                    Dim major = K.GetMainScreen()
+                    Dim major = K.PlayerManager.GetMainScreen()
                     With major
                         If .Id < 0 Then
                             Console.WriteLine("无法获取当前播放器信息")

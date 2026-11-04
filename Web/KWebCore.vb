@@ -271,7 +271,7 @@ Public Class KWebCore
 
     <WebApi("/replay", HttpMethod.Get)>
     Private Function Replay(ctx As HttpContext) As Task
-        K.Replay()
+        K.Player.Position = 0F
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 
@@ -331,8 +331,8 @@ Public Class KWebCore
         Dim PanelResult As New Dictionary(Of String, Object)(Settings.Settings.PluginCommon)
 
         With PanelResult
-            .Add("volume", K.Volume)
-            If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Accompaniment)
+            .Add("volume", K.Player.Volume)
+            If Settings.Settings.Audio.AllowAccompaniment Then .Add("accompaniment", K.Player.Accompaniment)
 
             .Add("intersect", K.DLNAProvider.LyricIntersect)
 
@@ -361,14 +361,14 @@ Public Class KWebCore
                     Case "volume"
                         '更改音量
                         Try
-                            K.Volume = Double.Parse(p.Value)
+                            K.Player.Volume = Double.Parse(p.Value)
                         Catch
                             Logger.Debug("HTTP服务端收到错误的音量 - {0}", p.Value)
                         End Try
                     Case "accompaniment"
                         '更改伴唱状态
                         Try
-                            K.Accompaniment = Boolean.Parse(p.Value)
+                            K.Player.Accompaniment = Boolean.Parse(p.Value)
                         Catch
                             Logger.Debug("HTTP服务端收到错误的伴唱状态 - {0}", p.Value)
                         End Try
@@ -399,7 +399,7 @@ Public Class KWebCore
                             Try
                                 With K
                                     If Boolean.Parse(p.Value) Then
-                                        .QRManager.ShowQRCode(Not .IsSetup)
+                                        .QRManager.ShowQRCode(Not .Player.IsSetup)
                                     Else
                                         .QRManager.CloseQRCode()
                                     End If
@@ -447,9 +447,9 @@ Public Class KWebCore
         Dim p As RequestVolume = JsonUtils.SafeDeserializeObject(Of RequestVolume)(Request)
         If p Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
 
-        K.Volume = p.Volume
+        K.Player.Volume = p.Volume
 
-        Return WebStartup.RespondJson(ctx, $"{{""value"":{K.Volume}}}")
+        Return WebStartup.RespondJson(ctx, $"{{""value"":{K.Player.Volume}}}")
     End Function
 
 End Class

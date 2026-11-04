@@ -25,6 +25,8 @@ Public Class FrmPlayer
 
     Private ReadOnly Settings As SettingContainer
 
+    Private ReadOnly PlayerStarter As KPlayerManager
+
     Private ReadOnly VlcAudioHandler As VlcAudioHandler
 
     Private ReadOnly VLCLib As LibVLC
@@ -174,7 +176,14 @@ Public Class FrmPlayer
                 Return
             End If
 
-            If DPlayer IsNot Nothing Then DPlayer.Position = value
+            If DPlayer IsNot Nothing Then
+                With DPlayer
+                    .Position = value
+
+                    '到开头自动播放
+                    If value = 0F Then .Play(Not Playing)
+                End With
+            End If
         End Set
     End Property
 
@@ -212,7 +221,7 @@ Public Class FrmPlayer
         End Get
     End Property
 
-    Public Sub New(K As EasyK, Settings As SettingContainer)
+    Public Sub New(K As EasyK, Settings As SettingContainer, PlayerStarter As KPlayerManager)
 
         ' 此调用是设计器所必需的。
         InitializeComponent()
@@ -221,6 +230,7 @@ Public Class FrmPlayer
 
         '加载配置
         Me.Settings = Settings
+        Me.PlayerStarter = PlayerStarter
 
         '初始化浏览器
         Browser = New ChromiumWebBrowser()
@@ -229,7 +239,7 @@ Public Class FrmPlayer
             .Visible = False
             .Dock = DockStyle.Fill
 
-            .AudioHandler = New CefAudioHandler(K, Settings, K.Dummy)
+            .AudioHandler = New CefAudioHandler(K, Settings, PlayerStarter.Dummy)
 
             .MenuHandler = New BrowserMenuHandler()
             .JavascriptObjectRepository.Settings.LegacyBindingEnabled = True
@@ -253,7 +263,7 @@ Public Class FrmPlayer
             .Dock = DockStyle.Fill
             .MediaPlayer = New MediaPlayer(VLCLib)
 
-            If Settings.Settings.Audio.IsDummyAudio Then VlcAudioHandler = New VlcAudioHandler(K, .MediaPlayer, K.Dummy)
+            If Settings.Settings.Audio.IsDummyAudio Then VlcAudioHandler = New VlcAudioHandler(K, .MediaPlayer, PlayerStarter.Dummy)
 
             With .MediaPlayer
                 .Media = Nothing
@@ -384,10 +394,8 @@ Public Class FrmPlayer
     End Sub
 
     Public Overloads Sub Close()
-        With K
-            .Dummy.Stop()
-            .DLNAManager.SetDLNAPlayer(Nothing)
-        End With
+        PlayerStarter.Dummy.Stop()
+        K.DLNAManager.SetDLNAPlayer(Nothing)
 
         If DPlayer IsNot Nothing Then DPlayer.Dispose()
         If _Alert IsNot Nothing Then _Alert.Dispose()
@@ -414,7 +422,7 @@ Public Class FrmPlayer
 
     Private Sub Btn_Setup_Click(sender As Object, e As EventArgs) Handles Btn_Setup.Click
         Btn_Setup.Enabled = False
-        K.Setup()
+        PlayerStarter.Setup()
     End Sub
 
     ''' <summary>

@@ -55,7 +55,7 @@ Module ModMain
         SetConsoleCtrlHandler(ConsoleExitHandler, True)
 
         '显示播放器窗口
-        KCore.Show()
+        KCore.PlayerManager.Start()
 
         Logger.PrintOriginalLines(
             "===== EasyK =====",
@@ -66,7 +66,7 @@ Module ModMain
         )
 
         '尝试自动部署
-        KCore.TryAutoSetup()
+        KCore.PlayerManager.TryAutoSetup()
 
         Application.Run()
     End Sub

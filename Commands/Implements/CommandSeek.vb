@@ -10,6 +10,17 @@
             Me.K = K
         End Sub
 
+        Private Sub Seek(Prev As Boolean, Optional [Step] As Double = 5D)
+            With K.Player
+                Dim Offset As Single = CSng(Math.Abs([Step]) / .Duration)
+                If Prev Then
+                    .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
+                Else
+                    .Position = Math.Max(Math.Min(.Position + Offset, 1), 0)
+                End If
+            End With
+        End Sub
+
         Protected Overrides Sub Process(Args() As String)
             If Args.Length < 2 Then
                 InvalidUsage()
@@ -18,9 +29,9 @@
 
             Select Case Args(1).ToLower()
                 Case "-"
-                    K.Seek(True)
+                    Seek(True)
                 Case "+"
-                    K.Seek(False)
+                    Seek(False)
                 Case Else
                     Dim [Step] As Double
 
@@ -31,7 +42,7 @@
                         Return
                     End Try
 
-                    If [Step] <> 0 Then K.Seek([Step] < 0, [Step])
+                    If [Step] <> 0 Then Seek([Step] < 0, [Step])
             End Select
 
             Console.WriteLine("操作成功")

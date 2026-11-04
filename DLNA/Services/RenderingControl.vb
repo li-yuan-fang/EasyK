@@ -55,7 +55,7 @@
             Handled = True
 
             Return New Dictionary(Of String, String) From {
-                    {"CurrentVolume", Math.Round(Protocol.DLNA.K.Volume * 100)}
+                    {"CurrentVolume", Math.Round(Protocol.DLNA.K.Player.Volume * 100)}
                 }
         End Function
 
@@ -63,7 +63,7 @@
             Handled = True
 
             If Args.ContainsKey("DesiredVolume") Then
-                Protocol.DLNA.K.Volume = Math.Max(Math.Min(Val(Args("DesiredVolume")) / 100.0F, 1), 0)
+                Protocol.DLNA.K.Player.Volume = Math.Max(Math.Min(Val(Args("DesiredVolume")) / 100.0F, 1), 0)
             End If
 
             Return Nothing
@@ -73,7 +73,7 @@
             Handled = True
 
             Return New Dictionary(Of String, String)() From {
-                    {"CurrentMute", Protocol.DLNA.K.Volume = 0}
+                    {"CurrentMute", Protocol.DLNA.K.Player.Volume = 0}
                 }
         End Function
 
@@ -83,7 +83,7 @@
             If Args.ContainsKey(Args("DesiredMute")) Then
                 With Protocol
                     Try
-                        With .DLNA.K
+                        With .DLNA.K.Player
                             If Boolean.Parse(Args("DesiredMute")) Then
                                 If .Volume > 0 Then
                                     StoredVolume = .Volume

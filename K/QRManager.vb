@@ -5,8 +5,6 @@ Imports System.Threading
 Public Class QRManager
     Implements IDisposable
 
-    Private ReadOnly GetPlayerForm As Func(Of FrmPlayer)
-
     Private ReadOnly Settings As SettingContainer
 
     Private WithEvents QRForm As FrmQRCode
@@ -17,14 +15,23 @@ Public Class QRManager
 
     Private _SavedQRBounds As Rectangle
 
+    ''' <summary>
+    ''' 获取或设置获取播放器窗体的委托
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property GetPlayerForm As Func(Of FrmPlayer) = Function() Nothing
+
     Private ReadOnly Property PlayerForm As FrmPlayer
         Get
-            Return GetPlayerForm()
+            Return GetPlayerForm()()
         End Get
     End Property
 
-    Public Sub New(GetPlayerForm As Func(Of FrmPlayer), Settings As SettingContainer)
-        Me.GetPlayerForm = GetPlayerForm
+    ''' <summary>
+    ''' 初始化二维码管理器
+    ''' </summary>
+    ''' <param name="Settings">配置容器</param>
+    Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
 
         '绑定网络变化事件

@@ -8,8 +8,6 @@ Imports Microsoft.AspNetCore.Http
 Public Class EasyK
     Implements IDisposable
 
-    Private PlayerForm As FrmPlayer
-
     Private Current As EasyKBookRecord = Nothing
 
     Private ReadOnly Queue As New LinkedList(Of EasyKBookRecord)
@@ -18,11 +16,9 @@ Public Class EasyK
 
     Private ReadOnly DLNAServer As DLNAServerProvider
 
+    Private ReadOnly _Player As EasyKPlayer
+
     Friend ReadOnly Settings As SettingContainer
-
-    Friend ReadOnly Dummy As DummyPlayer
-
-    Private _Running As Boolean = False
 
     Private Blocked As String = vbNullString
 
@@ -53,6 +49,26 @@ Public Class EasyK
     Public ReadOnly Property QRManager As QRManager
 
     ''' <summary>
+    ''' 获取播放器对象
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property Player As KPlayer
+        Get
+            Return _Player
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' 获取播放器管理器
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property PlayerManager As KPlayerManager
+        Get
+            Return _Player
+        End Get
+    End Property
+
+    ''' <summary>
     ''' 获取DLNA服务管理器
     ''' </summary>
     ''' <returns></returns>
@@ -73,67 +89,10 @@ Public Class EasyK
     End Property
 
     ''' <summary>
-    ''' 获取或设置音量
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property Volume As Single
-        Get
-            Return If(Settings.Settings.Audio.IsDummyAudio, Dummy.Volume, AudioUtils.GetSystemVolume())
-        End Get
-        Set(value As Single)
-            If Settings.Settings.Audio.IsDummyAudio Then
-                Dummy.Volume = Math.Max(0, Math.Min(value, 1))
-            ElseIf Settings.Settings.Audio.AllowUpdateSystemVolume Then
-                AudioUtils.SetSystemVolume(value)
-            End If
-
-            If value > 0 Then
-                Alert(Math.Round(value * 100.0F), AlertIcon.Volume)
-            Else
-                Alert("静音", AlertIcon.Mute)
-            End If
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取或设置伴唱状态
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property Accompaniment As Boolean
-        Get
-            If Not Settings.Settings.Audio.AllowAccompaniment Then Return False
-            Return Dummy.Accompaniment
-        End Get
-        Set(value As Boolean)
-            If Not Settings.Settings.Audio.AllowAccompaniment Then Return
-            Dummy.Accompaniment = value
-
-            If value Then
-                Alert("实时伴奏", AlertIcon.Accompaniment)
-            Else
-                Alert("原声", AlertIcon.Original)
-            End If
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' 获取部署状态
-    ''' </summary>
-    ''' <returns></returns>
-    Public ReadOnly Property IsSetup As Boolean
-        Get
-            Return _Running
-        End Get
-    End Property
-
-    ''' <summary>
     ''' 初始化
     ''' </summary>
     Public Sub New(Settings As SettingContainer)
         Me.Settings = Settings
-
-        '初始化托管音频
-        Dummy = New DummyPlayer(Me, Settings)
 
         '初始化CefSharp
         If Not Cef.IsInitialized Then Cef.Initialize(New CefSetting(Settings))
@@ -147,22 +106,15 @@ Public Class EasyK
         '尝试恢复点歌记录
         Load()
 
-        '启动播放器窗口
-        PlayerForm = New FrmPlayer(Me, Settings)
+        QRManager = New QRManager(Settings)
 
-        QRManager = New QRManager(Function() PlayerForm, Settings)
-    End Sub
-
-    ''' <summary>
-    ''' 显示主窗体
-    ''' </summary>
-    Public Sub Show()
-        PlayerForm.Show()
+        _Player = New EasyKPlayer(Me, Settings, QRManager)
+        QRManager.GetPlayerForm = Function() PlayerManager.PlayerForm
     End Sub
 
     'DLNA访问权限检查
     Private Function DLNAAccessCheck(ctx As HttpContext) As Boolean
-        If Not IsSetup OrElse Current Is Nothing Then Return False
+        If Not Player.IsSetup OrElse Current Is Nothing Then Return False
 
         If Current.Type <> EasyKType.DLNA Then Return False
 
@@ -178,57 +130,6 @@ Public Class EasyK
 
         Return True
     End Function
-
-    ''' <summary>
-    ''' 部署
-    ''' </summary>
-    Public Sub Setup()
-        Setup(Rectangle.Empty)
-    End Sub
-
-    ''' <summary>
-    ''' 尝试自动部署
-    ''' </summary>
-    Public Sub TryAutoSetup()
-        With Settings.Settings
-            If .Restore Is Nothing Then Return
-
-            '查找屏幕
-            Dim m = ScreenUtils.GetMonitors()
-            With .Restore
-                For i = 0 To m.Count - 1
-                    If m(i).Name = .Name AndAlso m(i).ManufacturerName = .ManufacturerName AndAlso
-                        m(i).ProductCodeID = .ProductCodeID AndAlso m(i).SerialNumber = .SerialNumber AndAlso
-                        m(i).ManufactureDate = .ManufactureDate Then
-                        Dim Screens As Windows.Forms.Screen() = Windows.Forms.Screen.AllScreens()
-                        If i >= Screens.Length Then Continue For
-
-                        '部署
-                        Setup(Screens(i).Bounds)
-
-                        Return
-                    End If
-                Next
-            End With
-
-            Logger.Warn("自动部署失败 - 找不到对应的屏幕")
-        End With
-    End Sub
-
-    ''' <summary>
-    ''' 部署
-    ''' </summary>
-    ''' <param name="Bounds">部署区域</param>
-    Public Sub Setup(Bounds As Rectangle)
-        _Running = True
-        QRManager.ResetBounds()
-        PlayerForm.Setup(Bounds)
-
-        '检测是否需要显示二维码
-        If Settings.Settings.AutoShowQR Then QRManager.ShowQRCode(False)
-
-        Push()
-    End Sub
 
     ''' <summary>
     ''' 推进播放进度/切歌
@@ -274,18 +175,18 @@ Public Class EasyK
         Dim Temp As EasyKBookRecord
 
         SyncLock Queue
-            If Not IsSetup Then
+            If Not Player.IsSetup Then
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
                              Current = Nothing
-                             RestartPlayerForm()
+                             PlayerManager.RestartPlayerForm()
 
                              Interlocked.Exchange(PushLock, 0)
                          End Sub)
                 Return
             End If
 
-            If Manual AndAlso Current IsNot Nothing Then Alert("切歌", AlertIcon.Push)
+            If Manual AndAlso Current IsNot Nothing Then PlayerManager.Alert("切歌", AlertIcon.Push)
 
             If Queue.Count = 0 Then
                 Task.Run(Sub()
@@ -335,13 +236,13 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Now">立刻复位</param>
     Public Sub Reset(Now As Boolean)
-        _Running = False
+        PlayerManager.Running = False
 
         If Now Then
-            RestartPlayerForm()
+            PlayerManager.RestartPlayerForm()
             Current = Nothing
         ElseIf Current Is Nothing Then
-            RestartPlayerForm()
+            PlayerManager.RestartPlayerForm()
         End If
     End Sub
 
@@ -598,42 +499,6 @@ Public Class EasyK
         Return vbNullString
     End Function
 
-    'TODO: 移除Seek 统一采用Duration和Position控制
-
-    ''' <summary>
-    ''' 调整进度
-    ''' </summary>
-    ''' <param name="Prev">向前调整</param>
-    ''' <param name="Step">步长</param>
-    Public Sub Seek(Prev As Boolean, Optional [Step] As Double = 5D)
-        If PlayerForm Is Nothing OrElse Not PlayerForm.Setuped Then Return
-
-        With PlayerForm
-            Dim Offset As Single = CSng(Math.Abs([Step]) / .Duration)
-            If Prev Then
-                .Position = Math.Max(Math.Min(.Position - Offset, 1), 0)
-            Else
-                .Position = Math.Max(Math.Min(.Position + Offset, 1), 0)
-            End If
-        End With
-    End Sub
-
-    'TODO: Replay后续移除 改到统一的Position = 0
-
-    ''' <summary>
-    ''' 重唱
-    ''' </summary>
-    Public Sub Replay()
-        If Current Is Nothing Then Return
-
-        If PlayerForm Is Nothing Then Return
-
-        With PlayerForm
-            If .IsDisposed OrElse Not .Setuped Then Return
-            .Position = 0
-        End With
-    End Sub
-
     Private Shared Function GetOccupied(Record As EasyKBookRecord) As String
         With Record
             Select Case .Type
@@ -674,29 +539,7 @@ Public Class EasyK
         Return Occupied
     End Function
 
-    '发送提示消息
-    Private Sub Alert(Title As String, Icon As AlertIcon)
-        If PlayerForm Is Nothing Then Return
-
-        PlayerForm.Alert(Title, Icon)
-    End Sub
-
-    ''' <summary>
-    ''' 获取主屏幕
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function GetMainScreen() As ScreenUtils.OverlapScreen
-        If PlayerForm Is Nothing OrElse PlayerForm.IsDisposed() Then
-            Return New ScreenUtils.OverlapScreen With {
-                .Id = -1,
-                .Screen = Nothing
-            }
-        Else
-            With PlayerForm
-                Return .Invoke(Function() ScreenUtils.GetOverlapScreen(.DesktopBounds))
-            End With
-        End If
-    End Function
+    'TODO: 整合到DLNAServer接口
 
     ''' <summary>
     ''' 刷新DLNA歌词
@@ -1034,51 +877,18 @@ Public Class EasyK
         Logger.Info("恢复点歌记录完成")
     End Sub
 
-    '重启主窗体
-    Private Sub RestartPlayerForm()
-        Dim NewForm As FrmPlayer = Nothing
-
-        QRManager.CloseQRCode()
-
-        With PlayerForm
-            .Invoke(Sub()
-                        NewForm = New FrmPlayer(Me, Settings)
-                        NewForm.Show()
-
-                        .Close()
-                    End Sub)
-
-            .Dispose()
-        End With
-
-        PlayerForm = NewForm
-    End Sub
-
     ''' <summary>
     ''' 销毁资源
     ''' </summary>
     Public Sub Dispose() Implements IDisposable.Dispose
         QRManager.Dispose()
 
-        Dummy.Dispose()
         DLNAServer.Dispose()
 
         Dim Storage As New CefStorage()
         Cef.GetGlobalCookieManager().VisitAllCookies(Storage)
 
-        With PlayerForm
-            Try
-                .Invoke(Sub()
-                            Cef.Shutdown()
-                            .Close()
-                        End Sub)
-            Catch ex As Exception
-                Logger.Debug("释放主窗体出错 - {0}", ex.Message)
-            End Try
-
-            .Dispose()
-        End With
-        PlayerForm = Nothing
+        '释放Player
 
         Storage.Clean()
     End Sub
