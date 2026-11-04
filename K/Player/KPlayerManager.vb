@@ -28,12 +28,6 @@
     ReadOnly Property Dummy As DummyPlayer
 
     ''' <summary>
-    ''' 获取或设置运行状态
-    ''' </summary>
-    ''' <returns></returns>
-    Property Running As Boolean
-
-    ''' <summary>
     ''' 重启播放器窗体
     ''' </summary>
     Sub RestartPlayerForm()

@@ -236,8 +236,6 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Now">立刻复位</param>
     Public Sub Reset(Now As Boolean)
-        PlayerManager.Running = False
-
         If Now Then
             PlayerManager.RestartPlayerForm()
             Current = Nothing

@@ -13,12 +13,6 @@ Public Class EasyKPlayer
     Private _PlayerForm As FrmPlayer
 
     ''' <summary>
-    ''' 获取或设置运行状态
-    ''' </summary>
-    ''' <returns></returns>
-    Friend Property Running As Boolean Implements KPlayerManager.Running
-
-    ''' <summary>
     ''' 获取播放器窗体
     ''' </summary>
     ''' <returns></returns>
@@ -84,7 +78,7 @@ Public Class EasyKPlayer
     ''' <returns></returns>
     Public Property Rate As Single Implements KPlayer.Rate
         Get
-            If _PlayerForm Is Nothing Then Return 1.0F
+            If K.GetCurrent() Is Nothing OrElse _PlayerForm Is Nothing Then Return 1.0F
 
             With _PlayerForm
                 If .IsDisposed() OrElse Not .Setuped Then Return 1.0F
@@ -92,7 +86,7 @@ Public Class EasyKPlayer
             End With
         End Get
         Set(value As Single)
-            If _PlayerForm Is Nothing Then Return
+            If K.GetCurrent() Is Nothing OrElse _PlayerForm Is Nothing Then Return
 
             With _PlayerForm
                 If .IsDisposed() OrElse Not .Setuped Then Return
@@ -107,7 +101,7 @@ Public Class EasyKPlayer
     ''' <returns></returns>
     Public Property Position As Single Implements KPlayer.Position
         Get
-            If _PlayerForm Is Nothing Then Return 0F
+            If K.GetCurrent() Is Nothing OrElse _PlayerForm Is Nothing Then Return 0F
 
             With _PlayerForm
                 If .IsDisposed() OrElse Not .Setuped Then Return 0F
@@ -115,7 +109,7 @@ Public Class EasyKPlayer
             End With
         End Get
         Set(value As Single)
-            If _PlayerForm Is Nothing Then Return
+            If K.GetCurrent() Is Nothing OrElse _PlayerForm Is Nothing Then Return
 
             With _PlayerForm
                 If .IsDisposed() OrElse Not .Setuped Then Return
@@ -130,7 +124,7 @@ Public Class EasyKPlayer
     ''' <returns></returns>
     Public ReadOnly Property Duration As Double Implements KPlayer.Duration
         Get
-            If _PlayerForm Is Nothing Then Return 0D
+            If K.GetCurrent() Is Nothing OrElse _PlayerForm Is Nothing Then Return 0D
 
             With _PlayerForm
                 If .IsDisposed() OrElse Not .Setuped Then Return 0D
@@ -145,7 +139,12 @@ Public Class EasyKPlayer
     ''' <returns></returns>
     Public ReadOnly Property IsSetup As Boolean Implements KPlayer.IsSetup
         Get
-            Return _Running
+            If PlayerForm Is Nothing Then Return False
+
+            With PlayerForm
+                If .IsDisposed() Then Return False
+                Return .Setuped
+            End With
         End Get
     End Property
 
@@ -193,7 +192,6 @@ Public Class EasyKPlayer
     End Sub
 
     Private Sub Setup(Bounds As Rectangle)
-        _Running = True
         QR.ResetBounds()
         _PlayerForm.Setup(Bounds)
 
@@ -213,7 +211,6 @@ Public Class EasyKPlayer
         Me.K = K
         Me.Settings = Settings
         Me.QR = QR
-        Running = False
 
         Dummy = New DummyPlayer(K, Settings)
         _PlayerForm = New FrmPlayer(K, Settings, Me)
