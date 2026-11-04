@@ -108,4 +108,12 @@ Public Class DLNAServerProvider
         Me.CheckAccess = CheckAccess
     End Sub
 
+    ''' <summary>
+    ''' 刷新DLNA歌词
+    ''' </summary>
+    Public Sub RefreshLyrics() Implements DLNAServer.RefreshLyrics
+        If Player Is Nothing Then Return
+        Player.PullMusicLyrics()
+    End Sub
+
 End Class

@@ -428,7 +428,7 @@ Public Class KWebCore
                             Settings.Settings.PluginCommon(p.Id) = p.Value
                             DLNA.MusicProvider.DLNAMusicProviders.TryUpdateSettings()
 
-                            K.RefreshDLNALyrics()
+                            K.DLNAProvider.RefreshLyrics()
                         Else
                             Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
                         End If

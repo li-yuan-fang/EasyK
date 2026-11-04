@@ -11,7 +11,7 @@
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            K.RefreshDLNALyrics()
+            K.DLNAProvider.RefreshLyrics()
             Console.WriteLine("刷新指令已发送")
         End Sub
 

@@ -537,17 +537,6 @@ Public Class EasyK
         Return Occupied
     End Function
 
-    'TODO: 整合到DLNAServer接口
-
-    ''' <summary>
-    ''' 刷新DLNA歌词
-    ''' </summary>
-    Public Sub RefreshDLNALyrics()
-        If DLNAServer.Player Is Nothing Then Return
-
-        DLNAServer.Player.PullMusicLyrics()
-    End Sub
-
     ''' <summary>
     ''' 已点列表随机排序
     ''' </summary>

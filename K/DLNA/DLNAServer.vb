@@ -24,4 +24,9 @@
     ''' <returns></returns>
     Property LyricOffset As Double
 
+    ''' <summary>
+    ''' 刷新DLNA歌词
+    ''' </summary>
+    Sub RefreshLyrics()
+
 End Interface
