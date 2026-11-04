@@ -112,6 +112,20 @@ Public Class FrmPlayer
             _Base._BiliPosition = TimeUtils.ParseString(current)
         End Sub
 
+        Public Sub onPaused(Paused As Boolean)
+            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+
+            With _Base
+                If .Playing Then
+                    .Alert("暂停", AlertIcon.Pause)
+                Else
+                    .Alert("播放", AlertIcon.Play)
+                End If
+            End With
+
+            _Base._BiliPlaying = Not Paused
+        End Sub
+
         'DLNA音频流相关调用
         Public Sub queryState()
             If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
@@ -129,9 +143,18 @@ Public Class FrmPlayer
     ''' <returns></returns>
     Public ReadOnly Property Playing As Boolean
         Get
+            If Not Setuped Then Return False
+
+            Dim Current = K.GetCurrent()
+            If Current Is Nothing Then Return False
+
+            If Current.Type = EasyKType.Bilibili Then Return _BiliPlaying
+
             Return VLCPlayer.MediaPlayer.IsPlaying
         End Get
     End Property
+
+    Private _BiliPlaying As Boolean = False
 
     '单位:s
     Private _BiliPosition As Long = 0
@@ -181,7 +204,7 @@ Public Class FrmPlayer
                     .Position = value
 
                     '到开头自动播放
-                    If value = 0F Then .Play(Not Playing)
+                    If value = 0F Then .Play()
                 End With
             End If
         End Set
@@ -199,14 +222,17 @@ Public Class FrmPlayer
                 Return 1.0F
             End If
 
-            Return VLCPlayer.MediaPlayer.Rate
+            If DPlayer Is Nothing Then Return 1.0F
+
+            Return DPlayer.Rate
         End Get
         Set(value As Single)
             If Not Setuped Then Return
             Dim Current = K.GetCurrent()
             If Current Is Nothing OrElse Current.Type = EasyKType.Bilibili Then Return
 
-            VLCPlayer.MediaPlayer.SetRate(value)
+            If DPlayer Is Nothing Then Return
+            DPlayer.Rate = value
         End Set
     End Property
 
@@ -455,6 +481,8 @@ Public Class FrmPlayer
 
     '运行B站自动脚本
     Private Sub RunBiliScript(Browser As IBrowser)
+        _BiliPlaying = True
+
         With Browser
             '全屏
             .EvaluateScriptAsync("var interval1 = setInterval(() => { let s = document.getElementsByClassName('bpx-player-ctrl-web'); if (s.length > 0) { s[0].click(); clearInterval(interval1); } }, 100);")
@@ -516,7 +544,7 @@ Public Class FrmPlayer
     Private Sub OnPlayerPause(Type As EasyKType)
         Select Case Type
             Case EasyKType.Bilibili
-                Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click();"))
+                Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click(); setTimeout(() => { let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; easy_k.onPaused(video.paused); }, 20);"))
             Case EasyKType.Video, EasyKType.DLNA
                 With VLCPlayer.MediaPlayer
                     If .IsPlaying Then
@@ -582,6 +610,7 @@ Public Class FrmPlayer
     Private Sub OnPlayerTerminated()
         _Duration = 0
         _BiliPosition = 0
+        _BiliPlaying = False
 
         Invoke(Sub()
                    With Browser

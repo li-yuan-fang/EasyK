@@ -11,7 +11,7 @@
         End Sub
 
         Protected Overrides Sub Process(Args() As String)
-            K.Pause()
+            K.Player.Pause()
             Console.WriteLine("暂停执行成功")
         End Sub
 

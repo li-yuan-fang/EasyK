@@ -154,9 +154,21 @@ Namespace DLNA.Protocol
             With Protocol.DLNA
                 If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
-                With .Player
-                    .Play(GetState("TransportState") = "PAUSED_PLAYBACK")
-                    .Rate = Val(Args("Speed"))
+                'TODO: 测试可行性
+                Dim TransportState As String = GetState("TransportState")
+                If TransportState = "PAUSED_PLAYBACK" Then
+                    With .K.Player
+                        If Not .IsPlaying Then .Pause()
+                    End With
+                Else
+                    '一般是初次调用
+                    .Player.Play()
+                End If
+
+                With .K.Player
+                    '最大限度减少更新频率 降低推送负担
+                    Dim Rate As Single = Val(Args("Speed"))
+                    If Rate <> .Rate Then .Rate = Rate
                 End With
             End With
 
@@ -173,7 +185,7 @@ Namespace DLNA.Protocol
                 If Not Args.ContainsKey("Target") Then Throw New ArgumentException("无效的转跳目标")
                 Dim Target As Long = TimeUtils.ParseString(Args("Target"))
 
-                With .Player
+                With .K.Player
                     .Position = Math.Max(Math.Min(Target / .Duration, 1), 0)
                 End With
             End With
@@ -188,7 +200,9 @@ Namespace DLNA.Protocol
                 With .DLNA
                     If .Player IsNot Nothing AndAlso Not .Player.Buffered AndAlso .Player.Playing Then
                         RemoveHandler Player.OnPause, AddressOf OnPause
-                        .K.Pause()
+                        With .K.Player
+                            If .IsPlaying Then .Pause()
+                        End With
                         AddHandler Player.OnPause, AddressOf OnPause
                     End If
                 End With

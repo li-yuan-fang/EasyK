@@ -36,4 +36,15 @@
     ''' <returns></returns>
     ReadOnly Property IsSetup As Boolean
 
+    ''' <summary>
+    ''' 获取播放状态
+    ''' </summary>
+    ''' <returns></returns>
+    ReadOnly Property IsPlaying As Boolean
+
+    ''' <summary>
+    ''' 暂停
+    ''' </summary>
+    Sub Pause()
+
 End Interface

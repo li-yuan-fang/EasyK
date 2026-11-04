@@ -134,6 +134,21 @@ Public Class EasyKPlayer
     End Property
 
     ''' <summary>
+    ''' 获取播放状态
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property IsPlaying As Boolean Implements KPlayer.IsPlaying
+        Get
+            If PlayerForm Is Nothing Then Return False
+
+            With PlayerForm
+                If .IsDisposed Then Return False
+                Return .Playing
+            End With
+        End Get
+    End Property
+
+    ''' <summary>
     ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>
@@ -214,6 +229,13 @@ Public Class EasyKPlayer
 
         Dummy = New DummyPlayer(K, Settings)
         _PlayerForm = New FrmPlayer(K, Settings, Me)
+    End Sub
+
+    ''' <summary>
+    ''' 暂停
+    ''' </summary>
+    Public Sub Pause() Implements KPlayer.Pause
+        K.Pause()
     End Sub
 
     ''' <summary>

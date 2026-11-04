@@ -230,7 +230,7 @@ Public Class KWebCore
 
     <WebApi("/pause", HttpMethod.Get)>
     Private Function Pause(ctx As HttpContext) As Task
-        K.Pause()
+        K.Player.Pause()
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
     End Function
 

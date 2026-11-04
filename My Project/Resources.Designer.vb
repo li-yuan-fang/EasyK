@@ -59,7 +59,7 @@ Namespace My.Resources
                 resourceCulture = value
             End Set
         End Property
-        
+
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd
@@ -83,7 +83,7 @@ Namespace My.Resources
                 Return ResourceManager.GetString("AVTransport", resourceCulture)
             End Get
         End Property
-        
+
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd
@@ -107,7 +107,7 @@ Namespace My.Resources
                 Return ResourceManager.GetString("ConnectionManager", resourceCulture)
             End Get
         End Property
-        
+
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd

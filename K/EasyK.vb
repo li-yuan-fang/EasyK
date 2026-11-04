@@ -226,7 +226,7 @@ Public Class EasyK
     ''' <summary>
     ''' 暂停
     ''' </summary>
-    Public Sub Pause()
+    Friend Sub Pause()
         If Current Is Nothing Then Return
         Task.Run(Sub() RaiseEvent OnPlayerPause(Current.Type))
     End Sub
