@@ -82,13 +82,8 @@ Namespace DLNA.Protocol
         End Sub
 
         '暂停播放
-        Private Sub OnPause()
-            Task.Run(Sub()
-                         Threading.Thread.Sleep(50)
-
-                         If Player Is Nothing Then Return
-                         SetState("TransportState", If(Player.Playing(), "PLAYING", "PAUSED_PLAYBACK"))
-                     End Sub)
+        Private Sub OnPause(Paused As Boolean)
+            SetState("TransportState", If(Paused, "PAUSED_PLAYBACK", "PLAYING"))
         End Sub
 
         '开始播放

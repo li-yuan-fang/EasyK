@@ -25,10 +25,17 @@ Public Class EasyK
     Private PushLock As Integer = 0
 
     ''' <summary>
-    ''' 播放器暂停事件
+    ''' 播放器触发暂停事件
     ''' <param name="Type">类型</param>
     ''' </summary>
     Public Event OnPlayerPause(Type As EasyKType)
+
+    ''' <summary>
+    ''' 播放器暂停事件
+    ''' <param name="Type">类型</param>
+    ''' <param name="Paused">已暂停</param>
+    ''' </summary>
+    Public Event OnPlayerPaused(Type As EasyKType, Paused As Boolean)
 
     ''' <summary>
     ''' 播放器播放事件
@@ -229,6 +236,15 @@ Public Class EasyK
     Friend Sub Pause()
         If Current Is Nothing Then Return
         Task.Run(Sub() RaiseEvent OnPlayerPause(Current.Type))
+    End Sub
+
+    ''' <summary>
+    ''' 触发暂停结果回调
+    ''' </summary>
+    ''' <param name="Type">播放源类型</param>
+    ''' <param name="Paused">已暂停</param>
+    Friend Sub TriggerPaused(Type As EasyKType, Paused As Boolean)
+        Task.Run(Sub() RaiseEvent OnPlayerPaused(Type, Paused))
     End Sub
 
     ''' <summary>

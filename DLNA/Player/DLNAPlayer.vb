@@ -37,7 +37,8 @@ Namespace DLNA.Player
         ''' <summary>
         ''' 暂停事件
         ''' </summary>
-        Public Event OnPause()
+        ''' <param name="Paused">已暂停</param>
+        Public Event OnPause(Paused As Boolean)
 
         Private WithEvents K As EasyK
 
@@ -210,7 +211,7 @@ Namespace DLNA.Player
 
             With K
                 AddHandler .OnPlayerPlay, AddressOf OnPlayerPlay
-                AddHandler .OnPlayerPause, AddressOf OnPlayerPause
+                AddHandler .OnPlayerPaused, AddressOf OnPlayerPause
                 AddHandler .OnPlayerTerminated, AddressOf OnPlayerTerminated
             End With
         End Sub
@@ -800,15 +801,15 @@ Namespace DLNA.Player
 
             With K
                 RemoveHandler .OnPlayerPlay, AddressOf OnPlayerPlay
-                RemoveHandler .OnPlayerPause, AddressOf OnPlayerPause
+                RemoveHandler .OnPlayerPaused, AddressOf OnPlayerPause
                 RemoveHandler .OnPlayerTerminated, AddressOf OnPlayerTerminated
             End With
         End Sub
 
-        Private Sub OnPlayerPause(Type As EasyKType)
+        Private Sub OnPlayerPause(Type As EasyKType, Paused As Boolean)
             If Type <> EasyKType.DLNA OrElse Buffered Then Return
 
-            RaiseEvent OnPause()
+            Task.Run(Sub() RaiseEvent OnPause(Paused))
         End Sub
 
         Private Sub OnPlayerPlay(Type As EasyKType, Content As String)

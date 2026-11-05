@@ -116,11 +116,12 @@ Public Class FrmPlayer
             If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
 
             With _Base
-                If .Playing Then
+                If Paused Then
                     .Alert("暂停", AlertIcon.Pause)
                 Else
                     .Alert("播放", AlertIcon.Play)
                 End If
+                .K.TriggerPaused(EasyKType.Bilibili, Paused)
             End With
 
             _Base._BiliPlaying = Not Paused
@@ -546,8 +547,10 @@ Public Class FrmPlayer
             Case EasyKType.Bilibili
                 Invoke(Sub() Browser.EvaluateScriptAsync("document.getElementsByClassName('bpx-player-ctrl-play')[0].click(); setTimeout(() => { let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; easy_k.onPaused(video.paused); }, 20);"))
             Case EasyKType.Video, EasyKType.DLNA
+                Dim Paused As Boolean
                 With VLCPlayer.MediaPlayer
-                    If .IsPlaying Then
+                    Paused = .IsPlaying
+                    If Paused Then
                         Alert("暂停", AlertIcon.Pause)
                     Else
                         Alert("播放", AlertIcon.Play)
@@ -555,6 +558,8 @@ Public Class FrmPlayer
 
                     .Pause()
                 End With
+
+                K.TriggerPaused(Type, Paused)
 
                 Task.Run(Sub()
                              '延迟使状态稳定 避免暂停后播放状态无法及时恢复问题
