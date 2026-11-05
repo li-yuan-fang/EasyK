@@ -1,9 +1,13 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestVolume
+Namespace KWeb.Serializable
 
-    <JsonProperty("value")>
-    Public Property Volume As Double
+    <Serializable>
+    Public Class RequestVolume
 
-End Class
+        <JsonProperty("value")>
+        Public Property Volume As Double
+
+    End Class
+
+End Namespace

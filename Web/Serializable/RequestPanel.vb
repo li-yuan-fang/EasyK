@@ -1,12 +1,16 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestPanel
+Namespace KWeb.Serializable
 
-    <JsonProperty("id")>
-    Public Property Id As String
+    <Serializable>
+    Public Class RequestPanel
 
-    <JsonProperty("value")>
-    Public Property Value As Object
+        <JsonProperty("id")>
+        Public Property Id As String
 
-End Class
+        <JsonProperty("value")>
+        Public Property Value As Object
+
+    End Class
+
+End Namespace

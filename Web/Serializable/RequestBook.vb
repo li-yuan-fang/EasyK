@@ -1,15 +1,19 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestBook
+Namespace KWeb.Serializable
 
-    <JsonProperty("title")>
-    Public Property Title As String
+    <Serializable>
+    Public Class RequestBook
 
-    <JsonProperty("type")>
-    Public Property Type As Integer
+        <JsonProperty("title")>
+        Public Property Title As String
 
-    <JsonProperty("content")>
-    Public Property Content As String
+        <JsonProperty("type")>
+        Public Property Type As Integer
 
-End Class
+        <JsonProperty("content")>
+        Public Property Content As String
+
+    End Class
+
+End Namespace

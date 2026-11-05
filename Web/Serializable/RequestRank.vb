@@ -1,12 +1,16 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestRank
+Namespace KWeb.Serializable
 
-    <JsonProperty("id")>
-    Public Property Id As String
+    <Serializable>
+    Public Class RequestRank
 
-    <JsonProperty("rank")>
-    Public Property Rank As Integer
+        <JsonProperty("id")>
+        Public Property Id As String
 
-End Class
+        <JsonProperty("rank")>
+        Public Property Rank As Integer
+
+    End Class
+
+End Namespace

@@ -1,9 +1,13 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestId
+Namespace KWeb.Serializable
 
-    <JsonProperty("id")>
-    Public Property Id As String
+    <Serializable>
+    Public Class RequestId
 
-End Class
+        <JsonProperty("id")>
+        Public Property Id As String
+
+    End Class
+
+End Namespace

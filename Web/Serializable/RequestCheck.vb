@@ -1,12 +1,16 @@
 ﻿Imports Newtonsoft.Json
 
-<Serializable>
-Public Class RequestCheck
+Namespace KWeb.Serializable
 
-    <JsonProperty("size")>
-    Public Property Size As Integer
+    <Serializable>
+    Public Class RequestCheck
 
-    <JsonProperty("hash")>
-    Public Property Hash As String
+        <JsonProperty("size")>
+        Public Property Size As Integer
 
-End Class
+        <JsonProperty("hash")>
+        Public Property Hash As String
+
+    End Class
+
+End Namespace
