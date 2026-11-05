@@ -609,7 +609,7 @@ Public Class FrmPlayer
                     Return
                 End If
 
-                Logger.Info("加载本地视频 - {0}"， VideoPath)
+                Logger.Info("加载本地视频 - {0}", VideoPath)
 
                 Invoke(Sub()
                            With VLCPlayer

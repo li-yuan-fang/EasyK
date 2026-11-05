@@ -17,8 +17,7 @@ Namespace KWeb.State
         ''' </summary>
         ''' <returns></returns>
         Public Function GetResponse() As String
-            '牺牲部分实时性 降低IO访问量
-            If String.IsNullOrEmpty(BufferedData) Then BufferedData = GetData()
+            If String.IsNullOrEmpty(BufferedData) Then Return vbNullString
 
             Return $"event: {Type.ToString().ToLower()}{vbLf}data: {BufferedData}{vbLf}{vbLf}"
         End Function
@@ -35,6 +34,13 @@ Namespace KWeb.State
         ''' <param name="Type">事件类型</param>
         Protected Sub New(Type As PlayerEventType)
             Me.Type = Type
+        End Sub
+
+        ''' <summary>
+        ''' 截取快照
+        ''' </summary>
+        Public Sub Snapshot()
+            BufferedData = GetData()
         End Sub
 
     End Class

@@ -37,14 +37,7 @@ Namespace KWeb.State
         ''' <param name="e">事件类型</param>
         Public Sub Commit(e As PlayerEvent)
             SyncLock Queue
-                With Queue
-                    If .Count = 0 Then
-                        .AddLast(e)
-                    Else
-                        If .Last.Value.Type <> e.Type Then .AddLast(e)
-                    End If
-                End With
-
+                Queue.AddLast(e)
                 KeepAliveSlim.Set()
             End SyncLock
         End Sub

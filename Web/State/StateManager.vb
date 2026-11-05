@@ -71,6 +71,7 @@ Namespace KWeb.State
                     Return WebStartup.RespondJson(ctx, ServerState.GenerateJson(K, _State))
                 End If
 
+                ' TODO: Accept解析要优化
                 Dim Accepts As String() = Strings.Split(Accept.ToLower(), ",")
                 If Accepts.Any(Function(item) item.Trim().StartsWith("text/event-stream")) Then
                     Dim Session As New StateSession(Me, Settings)
@@ -93,6 +94,7 @@ Namespace KWeb.State
             End With
         End Function
 
+        ' TODO: 考虑立即快照并提交事件结果
         Private Sub Commit(e As PlayerEvent)
             Dim Saved As List(Of StateSession)
             SyncLock Sessions
@@ -116,7 +118,7 @@ Namespace KWeb.State
 
         Private Sub OnPlayerTerminated() Handles K.OnPlayerTerminated
             _State = PlayState.Stopped
-            Commit(New PlayerPushEvent(K))
+            Commit(New PlayerPushEvent(K, True))
         End Sub
 
         Private Sub OnPlayerUpdate() Handles PlayerManager.OnPlayingUpdate
