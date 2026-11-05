@@ -21,8 +21,6 @@ Namespace KWeb.State
                 Media = .GetCurrent()
                 Player = New PlayerState(State, .Player.Position, .Player.Duration, .Player.Rate)
             End With
-
-            Logger.Debug(JsonConvert.SerializeObject(Me, Formatting.Indented))
         End Sub
 
         Public Overrides Function ToString() As String

@@ -73,17 +73,24 @@ Namespace KWeb.State
                     Return WebStartup.RespondJson(ctx, ServerState.GenerateJson(K, _State))
                 End If
 
-                ' TODO: Accept解析要优化
-                Dim Accepts As String() = Strings.Split(Accept.ToLower(), ",")
-                If Accepts.Any(Function(item) item.Trim().StartsWith("text/event-stream")) Then
-                    Dim Session As New StateSession(Me, Settings)
-                    Return Session.SSEHandler(ctx)
-                End If
+                Dim Accepts As New List(Of String)
+                For Each Item As String In Accept.Replace(" ", "").ToLower().Split(","c)
+                    For Each SubItem As String In Item.Split(";"c)
+                        With SubItem
+                            If .StartsWith("q=") Then Continue For
 
-                If Accepts.Any(Function(item)
-                                   Dim Trimmed As String = item.Trim()
-                                   Return Trimmed.StartsWith("application/json") OrElse Trimmed.StartsWith("*/*")
-                               End Function) Then
+                            If .StartsWith("text/event-stream") Then
+                                'SSE响应
+                                Dim Session As New StateSession(Me, Settings)
+                                Return Session.SSEHandler(ctx)
+                            End If
+                        End With
+
+                        Accepts.Add(SubItem)
+                    Next
+                Next
+
+                If Accepts.Any(Function(item) item.StartsWith("application/json") OrElse item.StartsWith("*/*")) Then
                     With .Response
                         .Headers("Cache-Control") = "no-store"
                         .Headers("Vary") = "Accept"

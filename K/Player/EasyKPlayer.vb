@@ -38,7 +38,6 @@ Public Class EasyKPlayer
     ''' <returns></returns>
     Public ReadOnly Property Dummy As DummyPlayer Implements KPlayerManager.Dummy
 
-    ' TODO: 检查Handles + WithEvents的做法能否适应动态变化的PlayerForm对象
     Private Sub OnBasePlayerParsed() Handles _PlayerForm.OnPlayerParsed
         RaiseEvent OnPlayerParsed()
     End Sub
