@@ -62,7 +62,14 @@ Namespace KWeb.State
         Public Function WebHandler(ctx As HttpContext) As Task
             With ctx
                 Dim Accept As String = .Request.Headers().Item("Accept")
-                If String.IsNullOrEmpty(Accept) Then Return WebStartup.RespondJson(ctx, ServerState.GenerateJson(K, _State))
+                If String.IsNullOrEmpty(Accept) Then
+                    With .Response
+                        .Headers("Cache-Control") = "no-store"
+                        .Headers("Vary") = "Accept"
+                    End With
+
+                    Return WebStartup.RespondJson(ctx, ServerState.GenerateJson(K, _State))
+                End If
 
                 Dim Accepts As String() = Strings.Split(Accept.ToLower(), ",")
                 If Accepts.Any(Function(item) item.Trim().StartsWith("text/event-stream")) Then
@@ -74,6 +81,11 @@ Namespace KWeb.State
                                    Dim Trimmed As String = item.Trim()
                                    Return Trimmed.StartsWith("application/json") OrElse Trimmed.StartsWith("*/*")
                                End Function) Then
+                    With .Response
+                        .Headers("Cache-Control") = "no-store"
+                        .Headers("Vary") = "Accept"
+                    End With
+
                     Return WebStartup.RespondJson(ctx, ServerState.GenerateJson(K, _State))
                 End If
 
@@ -112,6 +124,7 @@ Namespace KWeb.State
         End Sub
 
         Private Sub OnPlayerParsed() Handles PlayerManager.OnPlayerParsed
+            _State = PlayState.Playing
             Commit(New PlayerLoadedEvent(Me, K))
         End Sub
 
@@ -119,12 +132,15 @@ Namespace KWeb.State
         ''' 销毁资源
         ''' </summary>
         Public Sub Dispose() Implements IDisposable.Dispose
+            Dim Saved As List(Of StateSession)
             SyncLock Sessions
-                For Each Session As StateSession In Sessions
-                    Session.Dispose()
-                Next
+                Saved = New List(Of StateSession)(Sessions)
                 Sessions.Clear()
             End SyncLock
+
+            For Each Session As StateSession In Saved
+                Session.Dispose()
+            Next
         End Sub
 
     End Class

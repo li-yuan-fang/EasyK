@@ -615,8 +615,10 @@ Public Class FrmPlayer
                            With VLCPlayer
                                With .MediaPlayer
                                    .Media = New Media(VLCLib, VideoPath, FromType.FromPath)
-                                   .Media.Parse().ContinueWith(Sub() _Duration = .Media.Duration)
-                                   TriggerParsed()
+                                   .Media.Parse().ContinueWith(Sub()
+                                                                   _Duration = .Media.Duration
+                                                                   TriggerParsed()
+                                                               End Sub)
 
                                    .Play()
                                End With

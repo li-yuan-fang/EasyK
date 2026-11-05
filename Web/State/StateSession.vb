@@ -82,26 +82,29 @@ Namespace KWeb.State
                     With KeepAliveSlim
                         Result = .WaitOne(Settings.Settings.Web.StateTimeout)
 
-                        If Cancelled Then
-                            .Dispose()
-                            Return
-                        End If
+                        If Cancelled Then Return
 
                         .Reset()
                     End With
 
                     If Result Then
                         '外部触发
-                        Dim e As PlayerEvent
+                        Dim Events As List(Of PlayerEvent)
                         SyncLock Queue
                             With Queue
                                 If .Count = 0 Then Continue While
-                                e = .First.Value
-                                .RemoveFirst()
+
+                                Events = New List(Of PlayerEvent)(Queue)
+                                .Clear()
                             End With
                         End SyncLock
 
-                        Await WriteSSEFrameAsync(ctx, e.GetResponse())
+                        Dim Builder As New StringBuilder
+                        For Each e As PlayerEvent In Events
+                            Builder.Append(e.GetResponse())
+                        Next
+
+                        Await WriteSSEFrameAsync(ctx, Builder.ToString())
                     Else
                         '超时
                         Await WriteSSEFrameAsync(ctx, Packet_Keepalive)
@@ -114,8 +117,8 @@ Namespace KWeb.State
                 Else
                     Logger.Debug("SSE连接意外断开: {0} - {1}", Remote, ex.Message)
                 End If
-
-                Dispose()
+            Finally
+                If Not Cancelled Then Dispose()
             End Try
         End Function
 
