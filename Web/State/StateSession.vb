@@ -44,9 +44,9 @@ Namespace KWeb.State
                         If .Last.Value.Type <> e.Type Then .AddLast(e)
                     End If
                 End With
-            End SyncLock
 
-            KeepAliveSlim.Set()
+                KeepAliveSlim.Set()
+            End SyncLock
         End Sub
 
         Private Shared Async Function WriteSSEFrameAsync(ctx As HttpContext, frame As String) As Task
@@ -78,35 +78,27 @@ Namespace KWeb.State
                 Dim Token = ctx.RequestAborted
 
                 While Not Token.IsCancellationRequested
-                    Dim Result As Boolean
-                    With KeepAliveSlim
-                        Result = .WaitOne(Settings.Settings.Web.StateTimeout)
+                    Dim Signaled As Boolean = KeepAliveSlim.WaitOne(Settings.Settings.Web.StateTimeout)
 
-                        If Cancelled Then Return
+                    If Cancelled OrElse Token.IsCancellationRequested Then Return
 
-                        .Reset()
-                    End With
+                    Dim PendingEvents As List(Of PlayerEvent)
 
-                    If Result Then
-                        '外部触发
-                        Dim Events As List(Of PlayerEvent)
-                        SyncLock Queue
-                            With Queue
-                                If .Count = 0 Then Continue While
+                    SyncLock Queue
+                        PendingEvents = New List(Of PlayerEvent)(Queue)
+                        Queue.Clear()
+                        KeepAliveSlim.Reset()
+                    End SyncLock
 
-                                Events = New List(Of PlayerEvent)(Queue)
-                                .Clear()
-                            End With
-                        End SyncLock
+                    If PendingEvents.Count > 0 Then
+                        Dim Builder As New StringBuilder()
 
-                        Dim Builder As New StringBuilder
-                        For Each e As PlayerEvent In Events
-                            Builder.Append(e.GetResponse())
+                        For Each PlayerEvent As PlayerEvent In PendingEvents
+                            Builder.Append(PlayerEvent.GetResponse())
                         Next
 
                         Await WriteSSEFrameAsync(ctx, Builder.ToString())
-                    Else
-                        '超时
+                    ElseIf Not Signaled Then
                         Await WriteSSEFrameAsync(ctx, Packet_Keepalive)
                     End If
                 End While

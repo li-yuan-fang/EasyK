@@ -124,7 +124,7 @@ Namespace KWeb.State
         End Sub
 
         Private Sub OnPlayerParsed() Handles PlayerManager.OnPlayerParsed
-            _State = PlayState.Playing
+            If _State = PlayState.Stopped Then _State = PlayState.Playing
             Commit(New PlayerLoadedEvent(Me, K))
         End Sub
 
