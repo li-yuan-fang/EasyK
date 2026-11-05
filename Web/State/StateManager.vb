@@ -94,8 +94,9 @@ Namespace KWeb.State
             End With
         End Function
 
-        ' TODO: 考虑立即快照并提交事件结果
         Private Sub Commit(e As PlayerEvent)
+            e.Snapshot()
+
             Dim Saved As List(Of StateSession)
             SyncLock Sessions
                 Saved = New List(Of StateSession)(Sessions)
