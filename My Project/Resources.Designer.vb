@@ -197,7 +197,7 @@ Namespace My.Resources
         End Property
         
         '''<summary>
-        '''  查找类似 &lt;?xml version=&quot;1.0&quot; standalone=&quot;no&quot;?&gt;&lt;!DOCTYPE svg PUBLIC &quot;-//W3C//DTD SVG 1.1//EN&quot; &quot;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&quot;&gt;&lt;svg t=&quot;1793842408185&quot; class=&quot;icon&quot; viewBox=&quot;0 0 1024 1024&quot; version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; p-id=&quot;5287&quot; width=&quot;32&quot; height=&quot;32&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;&gt;&lt;path d=&quot;M524.288 25.173333l2.816 2.389334 128 128a21.333333 21.333333 0 0 1 2.432 27.221333l-2.432 2.986667-128 128a21.333333 21.333333 0 0 1-36.138667-11.434667L490.666667 298.666667V213.9 [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        '''  查找类似 &lt;?xml version=&quot;1.0&quot; standalone=&quot;no&quot;?&gt;&lt;!DOCTYPE svg PUBLIC &quot;-//W3C//DTD SVG 1.1//EN&quot; &quot;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&quot;&gt;&lt;svg t=&quot;1793895715238&quot; class=&quot;icon&quot; viewBox=&quot;0 0 1024 1024&quot; version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; p-id=&quot;5290&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot; width=&quot;32&quot; height=&quot;32&quot;&gt;&lt;path d=&quot;M524.288 25.173333l2.816 2.389334 128 128a21.333333 21.333333 0 0 1 2.432 27.221333l-2.432 2.986667-128 128a21.333333 21.333333 0 0 1-36.138667-11.434667L490.666667 298.666667V213.9 [字符串的其余部分被截断]&quot;; 的本地化字符串。
         '''</summary>
         Friend ReadOnly Property SVG_Replay() As String
             Get
