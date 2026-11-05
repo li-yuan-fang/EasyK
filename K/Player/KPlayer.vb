@@ -50,6 +50,11 @@
     Sub Alert(Title As String, Icon As AlertIcon)
 
     ''' <summary>
+    ''' 播放
+    ''' </summary>
+    Sub Play()
+
+    ''' <summary>
     ''' 暂停
     ''' </summary>
     Sub Pause()

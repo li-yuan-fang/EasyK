@@ -215,14 +215,7 @@ Public Class FrmPlayer
                 Return
             End If
 
-            If DPlayer IsNot Nothing Then
-                With DPlayer
-                    .Position = value
-
-                    '到开头自动播放
-                    If value = 0F Then .Play()
-                End With
-            End If
+            If DPlayer IsNot Nothing Then DPlayer.Position = value
         End Set
     End Property
 
@@ -450,6 +443,26 @@ Public Class FrmPlayer
         FormUtils.CancelKeepScreenOn()
     End Sub
 
+    ''' <summary>
+    ''' 播放
+    ''' </summary>
+    Public Sub Play()
+        If Not Setuped Then Return
+
+        Dim Current As EasyKBookRecord = K.GetCurrent()
+        If Current Is Nothing Then Return
+
+        Select Case Current.Type
+            Case EasyKType.Bilibili
+                Task.Run(Sub()
+                             Browser_Loaded.Wait()
+                             BeginInvoke(Sub() Browser.EvaluateScriptAsync("(() => {{ let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; video.play(); }})();"))
+                         End Sub)
+            Case EasyKType.Video, EasyKType.DLNA
+                VLCPlayer.MediaPlayer.Play()
+        End Select
+    End Sub
+
     Public Overloads Sub Close()
         PlayerStarter.Dummy.Stop()
         K.DLNAManager.SetDLNAPlayer(Nothing)
@@ -503,6 +516,7 @@ Public Class FrmPlayer
 
     'B站更新进度
     Private Sub BiliUpdate(Pos As Double)
+        '直接运行 不保证完成
         BeginInvoke(Sub() Browser.EvaluateScriptAsync($"(() => {{ let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; video.currentTime = {Pos:0.00}; }})();"))
     End Sub
 

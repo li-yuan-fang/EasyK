@@ -275,6 +275,7 @@ Public Class KWebCore
     Private Function Replay(ctx As HttpContext) As Task
         With K.Player
             .Position = 0F
+            .Play()
             .Alert("重唱", AlertIcon.Replay)
         End With
         Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)

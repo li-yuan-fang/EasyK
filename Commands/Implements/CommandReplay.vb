@@ -13,6 +13,7 @@
         Protected Overrides Sub Process(Args() As String)
             With K.Player
                 .Position = 0F
+                .Play()
                 .Alert("重唱", AlertIcon.Replay)
             End With
             Console.WriteLine("操作成功完成")

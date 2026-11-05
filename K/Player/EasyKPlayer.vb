@@ -182,6 +182,18 @@ Public Class EasyKPlayer
     End Property
 
     ''' <summary>
+    ''' 播放
+    ''' </summary>
+    Public Sub Play() Implements KPlayer.Play
+        If PlayerForm Is Nothing Then Return
+
+        With PlayerForm
+            If .IsDisposed OrElse Not .Setuped Then Return
+            .Play()
+        End With
+    End Sub
+
+    ''' <summary>
     ''' 部署
     ''' </summary>
     Friend Sub Setup() Implements KPlayerManager.Setup
