@@ -623,6 +623,16 @@
     <Compile Include="Web\Serializable\RequestRank.vb" />
     <Compile Include="Web\Serializable\RequestCheck.vb" />
     <Compile Include="Web\Serializable\RequestVolume.vb" />
+    <Compile Include="Web\State\PlayerEvent.vb" />
+    <Compile Include="Web\State\PlayerEventType.vb" />
+    <Compile Include="Web\State\PlayerLoadedEvent.vb" />
+    <Compile Include="Web\State\PlayerPushEvent.vb" />
+    <Compile Include="Web\State\PlayerPlayingEvent.vb" />
+    <Compile Include="Web\State\PlayerState.vb" />
+    <Compile Include="Web\State\PlayState.vb" />
+    <Compile Include="Web\State\ServerState.vb" />
+    <Compile Include="Web\State\StateManager.vb" />
+    <Compile Include="Web\State\StateSession.vb" />
     <Compile Include="Web\Upload\UploadManager.vb" />
     <Compile Include="Web\Upload\UploadSession.vb" />
     <Compile Include="Web\WebServer.vb" />
@@ -666,9 +676,7 @@
     <None Include="packages.config" />
     <None Include="wwwroot\dlna\SinkProtocolInfo.csv" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Web\State\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="logo.ico" />
     <Content Include="plugins\LyricKernel.dll">

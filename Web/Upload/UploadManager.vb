@@ -1,6 +1,5 @@
 ﻿
 Imports System.Collections.Concurrent
-Imports System.Security.Cryptography
 Imports System.Threading
 Imports System.Windows.Forms
 Imports Microsoft.AspNetCore.Http

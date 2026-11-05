@@ -45,4 +45,11 @@ Public Class KWebSettings
     <JsonProperty("upload")>
     Public Property Upload As UploadSettings = New UploadSettings()
 
+    ''' <summary>
+    ''' SSE心跳时间(单位:ms)
+    ''' </summary>
+    ''' <returns></returns>
+    <JsonProperty("state_timeout")>
+    Public Property StateTimeout As Integer = 30 * 1000
+
 End Class

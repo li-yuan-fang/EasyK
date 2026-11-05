@@ -40,6 +40,11 @@ Namespace DLNA.Player
         ''' <param name="Paused">已暂停</param>
         Public Event OnPause(Paused As Boolean)
 
+        ''' <summary>
+        ''' 解析完成事件
+        ''' </summary>
+        Public Event OnParsed()
+
         Private WithEvents K As EasyK
 
         Private ReadOnly Player As FrmPlayer
@@ -319,6 +324,8 @@ Namespace DLNA.Player
                                                                                             _Duration = 0
                                                                                             Throw New DataException("无法解析的资源")
                                                                                         End If
+
+                                                                                        Task.Run(Sub() RaiseEvent OnParsed())
                                                                                     Catch excp As Exception
                                                                                         Return excp
                                                                                     End Try
@@ -412,6 +419,7 @@ Namespace DLNA.Player
                                                    Catch ex As Exception
                                                        Logger.Debug("触发DLNA加载时出错 - {0}", ex.Message)
                                                    End Try
+                                                   Task.Run(Sub() RaiseEvent OnParsed())
                                                    ResourceParsed.Set()
 
                                                    '播放
@@ -437,6 +445,7 @@ Namespace DLNA.Player
                                                Catch e As Exception
                                                    Logger.Debug("触发DLNA加载时出错 - {0}", e.Message)
                                                End Try
+                                               Task.Run(Sub() RaiseEvent OnParsed())
                                                ResourceParsed.Set()
 
                                                '缓存模式处理

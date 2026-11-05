@@ -4,6 +4,7 @@ Imports Newtonsoft.Json
 Imports EasyK.KWeb.Serializable
 Imports EasyK.KWeb.Upload
 Imports HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod
+Imports EasyK.KWeb.State
 
 Public Class KWebCore
     Implements IDisposable
@@ -23,6 +24,8 @@ Public Class KWebCore
     Private WithEvents Server As WebServer
 
     Private ReadOnly Uploader As UploadManager
+
+    Private ReadOnly StateManager As StateManager
 
     Private ReadOnly Settings As SettingContainer
 
@@ -46,6 +49,7 @@ Public Class KWebCore
         WebStartup.Register(Me, Settings, APIPrefix)
 
         Uploader = New UploadManager(Settings)
+        StateManager = New StateManager(K, Settings)
 
         Handler = ServerErrorHandler.None
         Server = New WebServer(Settings.Settings.Web.Port, Settings.Settings.DebugMode)
@@ -163,6 +167,7 @@ Public Class KWebCore
         End With
 
         Uploader.Dispose()
+        StateManager.Dispose()
     End Sub
 
     Private Shared Sub UpdateUserName(ByRef User As String, ctx As HttpContext)
@@ -455,6 +460,11 @@ Public Class KWebCore
         K.Player.Volume = p.Volume
 
         Return WebStartup.RespondJson(ctx, $"{{""value"":{K.Player.Volume}}}")
+    End Function
+
+    <WebApi("/state", HttpMethod.Get)>
+    Private Function State(ctx As HttpContext) As Task
+        Return StateManager.WebHandler(ctx)
     End Function
 
 End Class

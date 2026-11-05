@@ -1,6 +1,16 @@
 ﻿Public Interface KPlayerManager
 
     ''' <summary>
+    ''' 播放状态更新事件
+    ''' </summary>
+    Event OnPlayingUpdate()
+
+    ''' <summary>
+    ''' 播放器解析完成事件
+    ''' </summary>
+    Event OnPlayerParsed()
+
+    ''' <summary>
     ''' 启动播放器
     ''' </summary>
     Sub Start()

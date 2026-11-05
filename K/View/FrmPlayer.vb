@@ -34,6 +34,11 @@ Public Class FrmPlayer
     Private Prevent As Boolean = True
 
     ''' <summary>
+    ''' 播放器解析完成事件
+    ''' </summary>
+    Friend Event OnPlayerParsed()
+
+    ''' <summary>
     ''' 获取部署状态
     ''' </summary>
     ''' <returns></returns>
@@ -59,7 +64,7 @@ Public Class FrmPlayer
     Private ReadOnly Browser_Loaded As New ManualResetEventSlim(False)
 
     'DLNA播放器逻辑
-    Private DPlayer As DLNAPlayer = Nothing
+    Private WithEvents DPlayer As DLNAPlayer = Nothing
 
     '消息提示窗口
     Private _Alert As AlertManager = Nothing
@@ -101,38 +106,48 @@ Public Class FrmPlayer
         End Sub
 
         Public Sub onLoaded(duration As String)
-            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+            If _Base Is Nothing Then Return
 
-            _Base._Duration = TimeUtils.ParseString(duration) * 1000L
+            With _Base
+                If .IsDisposed() OrElse .K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+
+                ._Duration = TimeUtils.ParseString(duration) * 1000L
+                .TriggerParsed()
+            End With
         End Sub
 
         Public Sub onUpdate(current As String)
-            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+            If _Base Is Nothing Then Return
 
-            _Base._BiliPosition = TimeUtils.ParseString(current)
+            With _Base
+                If .IsDisposed() OrElse .K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+                ._BiliPosition = TimeUtils.ParseString(current)
+            End With
         End Sub
 
         Public Sub onPaused(Paused As Boolean)
-            If _Base Is Nothing OrElse _Base.IsDisposed() OrElse _Base.K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+            If _Base Is Nothing Then Return
 
             With _Base
+                If .IsDisposed() OrElse .K.GetCurrent().Type <> EasyKType.Bilibili Then Return
+
                 If Paused Then
                     .Alert("暂停", AlertIcon.Pause)
                 Else
                     .Alert("播放", AlertIcon.Play)
                 End If
                 .K.TriggerPaused(EasyKType.Bilibili, Paused)
-            End With
 
-            _Base._BiliPlaying = Not Paused
+                ._BiliPlaying = Not Paused
+            End With
         End Sub
 
         'DLNA音频流相关调用
         Public Sub queryState()
-            If _Base Is Nothing OrElse _Base.IsDisposed() Then Return
+            If _Base Is Nothing Then Return
 
             With _Base
-                If .DPlayer IsNot Nothing Then .DPlayer.UpdateMusicState()
+                If Not .IsDisposed() AndAlso .DPlayer IsNot Nothing Then .DPlayer.UpdateMusicState()
             End With
         End Sub
 
@@ -257,6 +272,11 @@ Public Class FrmPlayer
         End Get
     End Property
 
+    '触发解析事件
+    Private Sub TriggerParsed()
+        Task.Run(Sub() RaiseEvent OnPlayerParsed())
+    End Sub
+
     Public Sub New(K As EasyK, Settings As SettingContainer, PlayerStarter As KPlayerManager)
 
         ' 此调用是设计器所必需的。
@@ -367,6 +387,7 @@ Public Class FrmPlayer
             .Update = K.DLNAManager.UpdateRecordCallback
         }
         K.DLNAManager.SetDLNAPlayer(DPlayer)
+        AddHandler DPlayer.OnParsed, AddressOf TriggerParsed
 
         '初始化消息提示窗口
         _Alert = New AlertManager(Me, Settings)
@@ -433,7 +454,12 @@ Public Class FrmPlayer
         PlayerStarter.Dummy.Stop()
         K.DLNAManager.SetDLNAPlayer(Nothing)
 
-        If DPlayer IsNot Nothing Then DPlayer.Dispose()
+        If DPlayer IsNot Nothing Then
+            With DPlayer
+                RemoveHandler .OnParsed, AddressOf TriggerParsed
+                .Dispose()
+            End With
+        End If
         If _Alert IsNot Nothing Then _Alert.Dispose()
 
         With VLCPlayer
@@ -590,6 +616,7 @@ Public Class FrmPlayer
                                With .MediaPlayer
                                    .Media = New Media(VLCLib, VideoPath, FromType.FromPath)
                                    .Media.Parse().ContinueWith(Sub() _Duration = .Media.Duration)
+                                   TriggerParsed()
 
                                    .Play()
                                End With

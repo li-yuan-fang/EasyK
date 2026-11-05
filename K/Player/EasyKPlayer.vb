@@ -10,7 +10,17 @@ Public Class EasyKPlayer
 
     Private ReadOnly QR As QRManager
 
-    Private _PlayerForm As FrmPlayer
+    Private WithEvents _PlayerForm As FrmPlayer
+
+    ''' <summary>
+    ''' 播放状态更新事件
+    ''' </summary>
+    Public Event OnPlayingUpdate() Implements KPlayerManager.OnPlayingUpdate
+
+    ''' <summary>
+    ''' 播放器解析完成事件
+    ''' </summary>
+    Public Event OnPlayerParsed() Implements KPlayerManager.OnPlayerParsed
 
     ''' <summary>
     ''' 获取播放器窗体
@@ -27,6 +37,11 @@ Public Class EasyKPlayer
     ''' </summary>
     ''' <returns></returns>
     Public ReadOnly Property Dummy As DummyPlayer Implements KPlayerManager.Dummy
+
+    ' TODO: 检查Handles + WithEvents的做法能否适应动态变化的PlayerForm对象
+    Private Sub OnBasePlayerParsed() Handles _PlayerForm.OnPlayerParsed
+        RaiseEvent OnPlayerParsed()
+    End Sub
 
     ''' <summary>
     ''' 获取或设置音量
@@ -92,6 +107,8 @@ Public Class EasyKPlayer
                 If .IsDisposed() OrElse Not .Setuped Then Return
                 .Rate = value
             End With
+
+            Task.Run(Sub() RaiseEvent OnPlayingUpdate())
         End Set
     End Property
 
@@ -115,6 +132,8 @@ Public Class EasyKPlayer
                 If .IsDisposed() OrElse Not .Setuped Then Return
                 .Position = value
             End With
+
+            Task.Run(Sub() RaiseEvent OnPlayingUpdate())
         End Set
     End Property
 
