@@ -623,7 +623,8 @@
     <Compile Include="Web\Serializable\RequestRank.vb" />
     <Compile Include="Web\Serializable\RequestCheck.vb" />
     <Compile Include="Web\Serializable\RequestVolume.vb" />
-    <Compile Include="Web\UploadManager.vb" />
+    <Compile Include="Web\Upload\UploadManager.vb" />
+    <Compile Include="Web\Upload\UploadSession.vb" />
     <Compile Include="Web\WebServer.vb" />
     <Compile Include="Web\WebStartup.vb" />
   </ItemGroup>
@@ -665,7 +666,9 @@
     <None Include="packages.config" />
     <None Include="wwwroot\dlna\SinkProtocolInfo.csv" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Web\State\" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="logo.ico" />
     <Content Include="plugins\LyricKernel.dll">

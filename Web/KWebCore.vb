@@ -2,6 +2,7 @@
 Imports Microsoft.AspNetCore.Http
 Imports Newtonsoft.Json
 Imports EasyK.KWeb.Serializable
+Imports EasyK.KWeb.Upload
 Imports HttpMethod = Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http.HttpMethod
 
 Public Class KWebCore
