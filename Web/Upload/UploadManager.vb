@@ -129,6 +129,15 @@ Namespace KWeb.Upload
                     '上传完成
                     Dim Hash As String = Session.ComputeSHA256()
 
+                    If String.IsNullOrEmpty(Hash) Then
+                        Logger.Warn("会话 #{0} 上传文件时遭遇严重错误 已取消上传")
+
+                        Sessions.TryRemove(Name, Session)
+                        If Session IsNot Nothing Then Session.Dispose()
+
+                        Return WebStartup.RespondJson(ctx, "{""busy"":false}")
+                    End If
+
                     Task.Run(Sub()
                                  SyncLock Uploaded
                                      Uploaded.Add(Session.Id, Hash)

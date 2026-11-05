@@ -54,18 +54,23 @@ Namespace KWeb.Upload
 
             Dim Result As String = vbNullString
             Using sha256 As IncrementalHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256)
-                SyncLock StreamMuteX
-                    With Stream
-                        Dim buffer(1023) As Byte
+                Try
+                    SyncLock StreamMuteX
+                        With Stream
+                            Dim buffer(1023) As Byte
 
-                        .Seek(0, IO.SeekOrigin.Begin)
-                        Dim cnt As Integer = .Read(buffer, 0, buffer.Length)
-                        While cnt > 0
-                            sha256.AppendData(buffer, 0, cnt)
-                            cnt = .Read(buffer, 0, buffer.Length)
-                        End While
-                    End With
-                End SyncLock
+                            .Seek(0, IO.SeekOrigin.Begin)
+                            Dim cnt As Integer = .Read(buffer, 0, buffer.Length)
+                            While cnt > 0
+                                sha256.AppendData(buffer, 0, cnt)
+                                cnt = .Read(buffer, 0, buffer.Length)
+                            End While
+                        End With
+                    End SyncLock
+                Catch ex As Exception
+                    Logger.Warn("上传会话 #{0} 计算摘要时出错 - {1}", Id, ex.Message)
+                    Return vbNullString
+                End Try
 
                 Dim hashBytes As Byte() = sha256.GetHashAndReset()
                 If hashBytes IsNot Nothing Then
@@ -96,18 +101,26 @@ Namespace KWeb.Upload
                 Complete = Uploaded.Count >= Total
             End SyncLock
 
-            SyncLock StreamMuteX
-                With Stream
-                    .Seek(Index * Settings.Settings.Web.Upload.ChunkSize, IO.SeekOrigin.Begin)
-                    .Write(Buffer, 0, Math.Min(Settings.Settings.Web.Upload.ChunkSize, Buffer.Length))
-                End With
-                RefreshCount += 1
+            Try
+                SyncLock StreamMuteX
+                    With Stream
+                        .Seek(Index * Settings.Settings.Web.Upload.ChunkSize, IO.SeekOrigin.Begin)
+                        .Write(Buffer, 0, Math.Min(Settings.Settings.Web.Upload.ChunkSize, Buffer.Length))
+                    End With
+                    RefreshCount += 1
 
-                If RefreshCount >= Settings.Settings.Web.Upload.RefreshThreshold OrElse Complete Then
-                    RefreshCount = 0
-                    Stream.Flush()
-                End If
-            End SyncLock
+                    If RefreshCount >= Settings.Settings.Web.Upload.RefreshThreshold OrElse Complete Then
+                        RefreshCount = 0
+                        Stream.Flush()
+                    End If
+                End SyncLock
+            Catch ex As Exception
+                SyncLock Uploaded
+                    Uploaded.Remove(Id)
+                End SyncLock
+
+                Logger.Warn("上传会话 #{0} 上传分块 #{1} 时出错 - {2}", Id, Index, ex.Message)
+            End Try
 
             Return Complete
         End Function
@@ -149,11 +162,15 @@ Namespace KWeb.Upload
         ''' 销毁资源
         ''' </summary>
         Public Sub Dispose() Implements IDisposable.Dispose
-            With Stream
-                .Flush()
-                .Close()
-                .Dispose()
-            End With
+            Try
+                With Stream
+                    .Flush()
+                    .Close()
+                    .Dispose()
+                End With
+            Catch ex As Exception
+                Logger.Debug("上传会话 #{0} 销毁时出错 - {1}", Id, ex.Message)
+            End Try
         End Sub
 
     End Class
