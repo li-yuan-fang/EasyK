@@ -27,4 +27,8 @@
     ''' 切歌图标
     ''' </summary>
     Push
+    ''' <summary>
+    ''' 重唱图标
+    ''' </summary>
+    Replay
 End Enum

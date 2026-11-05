@@ -186,7 +186,7 @@ Public Class EasyK
                 Return
             End If
 
-            If Manual AndAlso Current IsNot Nothing Then PlayerManager.Alert("切歌", AlertIcon.Push)
+            If Manual AndAlso Current IsNot Nothing Then Player.Alert("切歌", AlertIcon.Push)
 
             If Queue.Count = 0 Then
                 Task.Run(Sub()

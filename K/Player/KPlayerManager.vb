@@ -33,13 +33,6 @@
     Sub RestartPlayerForm()
 
     ''' <summary>
-    ''' 提示消息
-    ''' </summary>
-    ''' <param name="Title">消息标题</param>
-    ''' <param name="Icon">消息图标</param>
-    Sub Alert(Title As String, Icon As AlertIcon)
-
-    ''' <summary>
     ''' 获取播放器窗体
     ''' </summary>
     ''' <returns></returns>

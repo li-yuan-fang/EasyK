@@ -22,7 +22,7 @@ Namespace My.Resources
     '''<summary>
     '''  一个强类型的资源类，用于查找本地化的字符串等。
     '''</summary>
-    <Global.System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0"),  _
+    <Global.System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0"),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
      Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute(),  _
      Global.Microsoft.VisualBasic.HideModuleNameAttribute()>  _
@@ -59,7 +59,7 @@ Namespace My.Resources
                 resourceCulture = value
             End Set
         End Property
-
+        
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd
@@ -83,7 +83,7 @@ Namespace My.Resources
                 Return ResourceManager.GetString("AVTransport", resourceCulture)
             End Get
         End Property
-
+        
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd
@@ -107,7 +107,7 @@ Namespace My.Resources
                 Return ResourceManager.GetString("ConnectionManager", resourceCulture)
             End Get
         End Property
-
+        
         '''<summary>
         '''  查找类似 &lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
         '''&lt;scpd
@@ -193,6 +193,15 @@ Namespace My.Resources
         Friend ReadOnly Property SVG_Push() As String
             Get
                 Return ResourceManager.GetString("SVG_Push", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  查找类似 &lt;?xml version=&quot;1.0&quot; standalone=&quot;no&quot;?&gt;&lt;!DOCTYPE svg PUBLIC &quot;-//W3C//DTD SVG 1.1//EN&quot; &quot;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&quot;&gt;&lt;svg t=&quot;1793842408185&quot; class=&quot;icon&quot; viewBox=&quot;0 0 1024 1024&quot; version=&quot;1.1&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; p-id=&quot;5287&quot; width=&quot;32&quot; height=&quot;32&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;&gt;&lt;path d=&quot;M524.288 25.173333l2.816 2.389334 128 128a21.333333 21.333333 0 0 1 2.432 27.221333l-2.432 2.986667-128 128a21.333333 21.333333 0 0 1-36.138667-11.434667L490.666667 298.666667V213.9 [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        '''</summary>
+        Friend ReadOnly Property SVG_Replay() As String
+            Get
+                Return ResourceManager.GetString("SVG_Replay", resourceCulture)
             End Get
         End Property
         

@@ -43,6 +43,13 @@
     ReadOnly Property IsPlaying As Boolean
 
     ''' <summary>
+    ''' 提示消息
+    ''' </summary>
+    ''' <param name="Title">消息标题</param>
+    ''' <param name="Icon">消息图标</param>
+    Sub Alert(Title As String, Icon As AlertIcon)
+
+    ''' <summary>
     ''' 暂停
     ''' </summary>
     Sub Pause()

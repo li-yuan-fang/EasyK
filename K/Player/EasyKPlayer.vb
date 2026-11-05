@@ -265,7 +265,7 @@ Public Class EasyKPlayer
     ''' </summary>
     ''' <param name="Title">消息标题</param>
     ''' <param name="Icon">消息图标</param>
-    Friend Sub Alert(Title As String, Icon As AlertIcon) Implements KPlayerManager.Alert
+    Friend Sub Alert(Title As String, Icon As AlertIcon) Implements KPlayer.Alert
         If _PlayerForm Is Nothing Then Return
 
         With _PlayerForm
