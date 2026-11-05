@@ -462,6 +462,20 @@ Public Class KWebCore
         Return WebStartup.RespondJson(ctx, $"{{""value"":{K.Player.Volume}}}")
     End Function
 
+    <WebApi("/seek", HttpMethod.Post)>
+    Private Function Seek(ctx As HttpContext) As Task
+        Dim Request As String = WebStartup.GetRequestBody(ctx)
+
+        Dim SeekPos As RequestSeek = JsonUtils.SafeDeserializeObject(Of RequestSeek)(Request)
+        If SeekPos Is Nothing OrElse SeekPos.Position < 0F OrElse SeekPos.Position > 1.0F Then _
+            Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
+
+        If K.GetCurrent() Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status403Forbidden)
+        K.Player.Position = SeekPos.Position
+
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status204NoContent)
+    End Function
+
     <WebApi("/state", HttpMethod.Get)>
     Private Function State(ctx As HttpContext) As Task
         Return StateManager.WebHandler(ctx)

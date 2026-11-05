@@ -618,6 +618,7 @@
     <Compile Include="Utils\XmlUtils.vb" />
     <Compile Include="Web\KWebCore.vb" />
     <Compile Include="Web\Serializable\RequestBook.vb" />
+    <Compile Include="Web\Serializable\RequestSeek.vb" />
     <Compile Include="Web\Serializable\RequestId.vb" />
     <Compile Include="Web\Serializable\RequestPanel.vb" />
     <Compile Include="Web\Serializable\RequestRank.vb" />

@@ -45,12 +45,14 @@ Namespace KWeb.State
         Friend Sub Register(Session As StateSession)
             SyncLock Sessions
                 Sessions.Add(Session)
+                Logger.Debug("State Register: {0}", Sessions.Count)
             End SyncLock
         End Sub
 
         Friend Sub Unregister(Session As StateSession)
             SyncLock Sessions
                 Sessions.Remove(Session)
+                Logger.Debug("State Unregister: {0}", Sessions.Count)
             End SyncLock
         End Sub
 
