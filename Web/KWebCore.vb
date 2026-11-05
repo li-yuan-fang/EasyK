@@ -174,11 +174,6 @@ Public Class KWebCore
         If String.IsNullOrWhiteSpace(User) Then User = $"未知用户({ctx.Connection.RemoteIpAddress})"
     End Sub
 
-    <WebApi("/current", HttpMethod.Get)>
-    Private Function Current(ctx As HttpContext) As Task
-        Return WebStartup.RespondJson(ctx, $"{{""current"":{JsonConvert.SerializeObject(K.GetCurrent())}}}")
-    End Function
-
     <WebApi("/list", HttpMethod.Get)>
     Private Function List(ctx As HttpContext) As Task
         Return WebStartup.RespondJson(ctx, $"{{""list"":{JsonConvert.SerializeObject(K.GetBookList())}}}")
