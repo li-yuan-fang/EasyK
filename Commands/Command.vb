@@ -90,6 +90,8 @@
 
             If Not String.IsNullOrEmpty(Buffer) Then Args.Add(Buffer)
 
+            If Args.Count = 0 Then Return False
+
             If Not Prefix.ToLower().Equals(Args(0).ToLower()) Then Return False
 
             Process(Args.ToArray())
