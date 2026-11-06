@@ -8,12 +8,14 @@ Public Class DeviceChangeHandler
     Private Const TriggerCool As Double = 500D
 
     '设备ID
-    Private Device As String = String.Empty
+    Private Device As String = vbNullString
 
     '上次更新时间
     Private LastUpdate As Date
 
     Private ReadOnly Emu As MMDeviceEnumerator
+
+    Private ReadOnly DeviceLock As New Object()
 
     ''' <summary>
     ''' 播放设备更新事件
@@ -21,27 +23,29 @@ Public Class DeviceChangeHandler
     ''' <param name="DeviceId">设备ID</param>
     Public Event OnDeviceUpdate(DeviceId As String)
 
-    Public Sub OnDeviceStateChanged(deviceId As String, newState As DeviceState) Implements IMMNotificationClient.OnDeviceStateChanged
+    Private Sub OnDeviceStateChanged(deviceId As String, newState As DeviceState) Implements IMMNotificationClient.OnDeviceStateChanged
     End Sub
 
-    Public Sub OnDeviceAdded(pwstrDeviceId As String) Implements IMMNotificationClient.OnDeviceAdded
+    Private Sub OnDeviceAdded(pwstrDeviceId As String) Implements IMMNotificationClient.OnDeviceAdded
     End Sub
 
-    Public Sub OnDeviceRemoved(deviceId As String) Implements IMMNotificationClient.OnDeviceRemoved
+    Private Sub OnDeviceRemoved(deviceId As String) Implements IMMNotificationClient.OnDeviceRemoved
     End Sub
 
-    Public Sub OnDefaultDeviceChanged(flow As DataFlow, role As Role, defaultDeviceId As String) Implements IMMNotificationClient.OnDefaultDeviceChanged
+    Private Sub OnDefaultDeviceChanged(flow As DataFlow, role As Role, defaultDeviceId As String) Implements IMMNotificationClient.OnDefaultDeviceChanged
         If flow = DataFlow.Capture Then Return
 
-        SyncLock Device
+        SyncLock DeviceLock
             If String.IsNullOrEmpty(defaultDeviceId) Then
-                Device = defaultDeviceId
+                Device = vbNullString
             ElseIf defaultDeviceId <> Device OrElse
                 (Now - LastUpdate).TotalMilliseconds >= TriggerCool Then
                 Device = defaultDeviceId
                 LastUpdate = Now
 
                 Dim Dev = Emu.GetDevice(Device)
+                If Dev Is Nothing Then Return
+
                 Dim Guid = Dev.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID)
 
                 Task.Run(Sub() RaiseEvent OnDeviceUpdate(Guid.Value))
@@ -49,7 +53,7 @@ Public Class DeviceChangeHandler
         End SyncLock
     End Sub
 
-    Public Sub OnPropertyValueChanged(pwstrDeviceId As String, key As PropertyKey) Implements IMMNotificationClient.OnPropertyValueChanged
+    Private Sub OnPropertyValueChanged(pwstrDeviceId As String, key As PropertyKey) Implements IMMNotificationClient.OnPropertyValueChanged
     End Sub
 
     ''' <summary>
