@@ -9,7 +9,7 @@ Namespace DLNA.MusicProvider
         ''' 获取专辑封面
         ''' </summary>
         ''' <returns></returns>
-        <JsonProperty("album")>
+        <JsonProperty("album", NullValueHandling:=NullValueHandling.Ignore)>
         Public ReadOnly Property Album As String
 
         ''' <summary>
@@ -30,7 +30,7 @@ Namespace DLNA.MusicProvider
         ''' 获取歌曲长度
         ''' </summary>
         ''' <returns></returns>
-        <JsonProperty("duration")>
+        <JsonProperty("total")>
         Public ReadOnly Property Duration As Long
 
         ''' <summary>

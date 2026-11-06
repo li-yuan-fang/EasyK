@@ -219,20 +219,17 @@ Namespace DLNA.MusicProvider
         Public Shared Function GenerateUpdateMusicScript(Attribute As DLNAMusicAttribute,
                                                          DefaultTitle As String,
                                                          DefaultDuration As Long) As String
-            Dim Builder As New StringBuilder()
-            With Builder
-                .Append("{")
-                Dim Title As String = If(String.IsNullOrEmpty(Attribute.Title), DefaultTitle, Attribute.Title)
-                .Append($"title:""{Title.Replace("""", "\""")}"",")
-                .Append($"artist:""{Attribute.Artist.Replace("""", "\""")}"",")
-
-                If Not String.IsNullOrEmpty(Attribute.Album) Then
-                    .Append($"album:""{Attribute.Album.Replace("""", "\""")}"",")
-                End If
-
-                .Append($"total:{If(Attribute.Duration > 0, Attribute.Duration, DefaultDuration)}}}")
+            Dim Snapshot As DLNAMusicAttribute
+            With Attribute
+                Snapshot = New DLNAMusicAttribute(
+                    .Album,
+                    If(String.IsNullOrEmpty(Attribute.Title), DefaultTitle, Attribute.Title),
+                    .Artist,
+                    If(Attribute.Duration > 0, Attribute.Duration, DefaultDuration)
+                )
             End With
-            Return $"window.setAttribute({Builder.ToString()});"
+
+            Return $"window.setAttribute({Snapshot});"
         End Function
 
         ''' <summary>
