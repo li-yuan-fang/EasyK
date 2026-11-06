@@ -49,14 +49,20 @@ Public Class AlertManager
                 Return
             End If
 
-            With Player
-                .Invoke(Sub()
-                            If .IsDisposed Then Return
+            Try
+                With Player
+                    .Invoke(Sub()
+                                If .IsDisposed Then Return
 
-                            Alert = New FrmAlert(Player, Control, Title, GetIcon(Icon), Duration)
-                            AddHandler Alert.OnClose, AddressOf Alert_Closed
-                        End Sub)
-            End With
+                                Alert = New FrmAlert(Player, Control, Title, GetIcon(Icon), Duration)
+                                AddHandler Alert.OnClose, AddressOf Alert_Closed
+                            End Sub)
+                End With
+            Catch ex As ObjectDisposedException
+                Logger.Debug("消息触发时主窗体已销毁 - {0}", ex.Message)
+            Catch ex As Exception
+                Logger.Warn("无法弹出提示消息 - {0}", ex.Message)
+            End Try
         Else
             Alert.Refresh(Title, GetIcon(Icon), Duration)
         End If
