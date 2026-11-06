@@ -60,15 +60,27 @@ Namespace KWeb.Upload
 
                 Dim ToRemove As New List(Of String)
                 SyncLock Occupied
-                    Occupied.Clear()
-                    For Each key As String In Sessions.Keys
-                        If Sessions(key).IsExpired() Then
-                            ToRemove.Add(key)
-                            Continue For
-                        End If
+                    Dim Saved As New List(Of String)(Occupied)
 
-                        Occupied.Add(Sessions(key).Id)
-                    Next
+                    With Occupied
+                        .Clear()
+
+                        Try
+                            For Each kv In Sessions
+                                If kv.Value.IsExpired() Then
+                                    ToRemove.Add(kv.Key)
+                                    Continue For
+                                End If
+
+                                .Add(kv.Value.Id)
+                            Next
+                        Catch ex As Exception
+                            .Clear()
+                            .AddRange(Saved)
+
+                            Logger.Debug("上传会话清理时出错 - {0}", ex.Message)
+                        End Try
+                    End With
                 End SyncLock
 
                 For Each key As String In ToRemove
@@ -286,7 +298,12 @@ Namespace KWeb.Upload
         Public Sub Dispose() Implements IDisposable.Dispose
             ExitFlag = True
             With Cleaner
-                .Wait()
+                Try
+                    .Wait()
+                Catch ex As Exception
+                    Logger.Debug("上传会话清理任务无法正常退出 - {0}", ex.Message)
+                End Try
+
                 .Dispose()
             End With
 
