@@ -618,7 +618,7 @@ Public Class FrmPlayer
                                                 IO.Path.Combine(Application.StartupPath, Settings.Settings.TempFolder, Content))
                 If Not IO.File.Exists(VideoPath) Then
                     Logger.Error("加载本地视频失败 - {0}", Content)
-                    K.Push()
+                    K.ForcePush()
 
                     Return
                 End If
