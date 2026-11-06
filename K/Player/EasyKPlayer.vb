@@ -12,6 +12,8 @@ Public Class EasyKPlayer
 
     Private WithEvents _PlayerForm As FrmPlayer
 
+    Private _Running As Boolean = False
+
     ''' <summary>
     ''' 播放状态更新事件
     ''' </summary>
@@ -182,6 +184,17 @@ Public Class EasyKPlayer
     End Property
 
     ''' <summary>
+    ''' 获取运行状态
+    ''' </summary>
+    ''' <returns></returns>
+    Friend ReadOnly Property IsRunning As Boolean Implements KPlayerManager.IsRunning
+        Get
+            Return _Running
+        End Get
+    End Property
+
+
+    ''' <summary>
     ''' 播放
     ''' </summary>
     Public Sub Play() Implements KPlayer.Play
@@ -198,6 +211,15 @@ Public Class EasyKPlayer
     ''' </summary>
     Friend Sub Setup() Implements KPlayerManager.Setup
         Setup(Rectangle.Empty)
+    End Sub
+
+    ''' <summary>
+    ''' 复位播放器
+    ''' </summary>
+    Friend Sub Reset() Implements KPlayerManager.Reset
+        _Running = False
+
+        If K.GetCurrent() Is Nothing Then RestartPlayerForm()
     End Sub
 
     ''' <summary>
@@ -237,6 +259,7 @@ Public Class EasyKPlayer
     End Sub
 
     Private Sub Setup(Bounds As Rectangle)
+        _Running = True
         QR.ResetBounds()
         _PlayerForm.Setup(Bounds)
 
@@ -268,10 +291,8 @@ Public Class EasyKPlayer
         K.Pause()
     End Sub
 
-    ''' <summary>
-    ''' 重启播放器窗体
-    ''' </summary>
-    Friend Sub RestartPlayerForm() Implements KPlayerManager.RestartPlayerForm
+    '重启播放器窗体
+    Private Sub RestartPlayerForm()
         Dim NewForm As FrmPlayer = Nothing
 
         QR.CloseQRCode()

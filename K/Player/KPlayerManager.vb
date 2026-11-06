@@ -38,14 +38,20 @@
     ReadOnly Property Dummy As DummyPlayer
 
     ''' <summary>
-    ''' 重启播放器窗体
-    ''' </summary>
-    Sub RestartPlayerForm()
-
-    ''' <summary>
     ''' 获取播放器窗体
     ''' </summary>
     ''' <returns></returns>
     ReadOnly Property PlayerForm As FrmPlayer
+
+    ''' <summary>
+    ''' 获取运行状态
+    ''' </summary>
+    ''' <returns></returns>
+    ReadOnly Property IsRunning As Boolean
+
+    ''' <summary>
+    ''' 复位播放器
+    ''' </summary>
+    Sub Reset()
 
 End Interface

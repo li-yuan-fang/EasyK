@@ -182,11 +182,11 @@ Public Class EasyK
         Dim Temp As EasyKBookRecord
 
         SyncLock Queue
-            If Not Player.IsSetup Then
+            If Not PlayerManager.IsRunning Then
                 Task.Run(Sub()
                              RaiseEvent OnPlayerTerminated()
                              Current = Nothing
-                             PlayerManager.RestartPlayerForm()
+                             PlayerManager.Reset()
 
                              Interlocked.Exchange(PushLock, 0)
                          End Sub)
@@ -252,12 +252,8 @@ Public Class EasyK
     ''' </summary>
     ''' <param name="Now">立刻复位</param>
     Public Sub Reset(Now As Boolean)
-        If Now Then
-            PlayerManager.RestartPlayerForm()
-            Current = Nothing
-        ElseIf Current Is Nothing Then
-            PlayerManager.RestartPlayerForm()
-        End If
+        If Now Then Current = Nothing
+        PlayerManager.Reset()
     End Sub
 
     ''' <summary>
