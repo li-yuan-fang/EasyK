@@ -85,7 +85,7 @@ Public Class WebStartup
             Next
         End If
 
-        Return Base & Uri.Replace("/", "\")
+        Return IO.Path.GetFullPath(Base & Uri.Replace("/", "\"))
     End Function
 
     Private Function HttpResponse(ctx As HttpContext) As Task
@@ -113,6 +113,10 @@ Public Class WebStartup
         If RemotePath.EndsWith("/") Then RemotePath &= WebDefault
 
         Dim PhysicsPath As String = CombinePath(WebRoot, RemotePath)
+        If String.IsNullOrEmpty(PhysicsPath) OrElse Not PhysicsPath.StartsWith(WebRoot) Then
+            Logger.Debug("{0} - {1} {2} Illegal Access", RemotePath, Request.Method, PhysicsPath)
+            Return RespondStatusOnly(ctx, StatusCodes.Status403Forbidden)
+        End If
 
         If Not IO.File.Exists(PhysicsPath) Then
             Logger.Debug("{0} - {1} {2} 404", RemotePath, Request.Method, PhysicsPath)
