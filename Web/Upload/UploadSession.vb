@@ -94,6 +94,11 @@ Namespace KWeb.Upload
         Public Function Upload(Buffer() As Byte, Index As Integer) As Boolean
             Dim Complete As Boolean
 
+            If Index >= Total Then
+                Logger.Warn("上传会话 #{0} 上传了非法分块 #{1}", Id, Index)
+                Return False
+            End If
+
             SyncLock Uploaded
                 Uploaded.Add(Index)
                 ExpireTime = Now.Ticks + Settings.Settings.Web.Upload.ExpireDuration
