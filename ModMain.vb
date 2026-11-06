@@ -13,7 +13,7 @@ Module ModMain
 
     Public WebServer As KWebCore
 
-    Public Logger As KLogger
+    Public Logger As KLogger = Nothing
 
     Private ReadOnly ConsoleExitHandler As HandlerRoutine = AddressOf ConsoleExit
 

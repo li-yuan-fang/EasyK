@@ -161,9 +161,15 @@ Public Class KSettings
         Dim Path As String = IO.Path.Combine(Application.StartupPath, "configs.json")
         If IO.File.Exists(Path) Then
             Try
-                Return JsonConvert.DeserializeObject(Of KSettings)(IO.File.ReadAllText(Path, Text.Encoding.UTF8))
+                Dim Content As String = IO.File.ReadAllText(Path, Text.Encoding.UTF8)
+                Dim Parsed As KSettings = JsonUtils.SafeDeserializeObject(Of KSettings)(Content)
+                If Parsed IsNot Nothing Then Return Parsed
             Catch ex As Exception
-                Logger.Error("读取配置文件失败 - {0}", ex.Message)
+                If Logger IsNot Nothing Then
+                    Logger.Error("读取配置文件失败 - {0}", ex.Message)
+                Else
+                    Console.WriteLine("读取配置文件失败 - {0}", ex.Message)
+                End If
             End Try
         End If
 
