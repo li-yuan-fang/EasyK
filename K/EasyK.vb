@@ -718,23 +718,23 @@ Public Class EasyK
     Public Sub ReRankFair()
         SyncLock Queue
             '创建剩余池和点歌顺序
-            Dim Pool As New Dictionary(Of String, List(Of EasyKBookRecord))
-            Dim Members As New SortedSet(Of String)
+            Dim Pool As New Dictionary(Of String, Queue(Of EasyKBookRecord))
+            Dim Members As New List(Of String)
             For Each Record As EasyKBookRecord In Queue
                 With Record
-                    Members.Add(.Order)
+                    If Not Members.Contains(.Order) Then Members.Add(.Order)
                     If Pool.ContainsKey(.Order) Then
-                        Pool(.Order).Add(Record)
+                        Pool(.Order).Enqueue(Record)
                     Else
-                        Pool.Add(.Order, New List(Of EasyKBookRecord)({Record}))
+                        Pool.Add(.Order, New Queue(Of EasyKBookRecord)({Record}))
                     End If
                 End With
             Next
 
             If Current IsNot Nothing Then
-                With Current
-                    Members.Remove(.Order)
-                    Members.Add(.Order)
+                Dim Order As String = Current.Order
+                With Members
+                    If .Remove(Order) Then .Add(Order)
                 End With
             End If
 
@@ -743,10 +743,12 @@ Public Class EasyK
             Queue.Clear()
             While Total > 0
                 For Each m In Members
-                    Dim r As List(Of EasyKBookRecord) = Pool(m)
+                    If Not Pool.ContainsKey(m) Then Continue For
+
+                    Dim r As Queue(Of EasyKBookRecord) = Pool(m)
                     If r.Count = 0 Then Continue For
 
-                    Queue.AddLast(r(0))
+                    Queue.AddLast(r.Dequeue())
                     Total -= 1
                 Next
             End While
