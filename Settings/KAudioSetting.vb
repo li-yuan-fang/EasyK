@@ -67,6 +67,30 @@ Public Class KAudioSetting
     Public Property AccompanimentVolumeGain As Single = 0.05F
 
     ''' <summary>
+    ''' 是否使用WASAPI
+    ''' </summary>
+    ''' <remarks>默认采用DirectsoundOut以获得更好的性能表现 但是切换音频设备时小概率可能会触发Bug 所以保留WASAPI备用</remarks>
+    ''' <returns></returns>
+    <JsonProperty("dummy_use_wasapi")>
+    Public Property DummyUseWasApi As Boolean = False
+
+    ''' <summary>
+    ''' WASAPI模式下是否开启同步处理事件
+    ''' </summary>
+    ''' <remarks>低性能设备不建议开启</remarks>
+    ''' <returns></returns>
+    <JsonProperty("wasapi_sync_event")>
+    Public Property WasApiSyncEvent As Boolean = False
+
+    ''' <summary>
+    ''' WASAPI延迟(单位:ms)
+    ''' </summary>
+    ''' <remarks>一般不需要动</remarks>
+    ''' <returns></returns>
+    <JsonProperty("wasapi_latency")>
+    Public Property WasApiLatency As Integer = 200
+
+    ''' <summary>
     ''' 获取托管音频启用状态
     ''' </summary>
     ''' <returns></returns>

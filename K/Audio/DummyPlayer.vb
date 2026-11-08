@@ -1,5 +1,7 @@
 ﻿Imports System.Text.RegularExpressions
 Imports System.Threading
+Imports Microsoft.Extensions.Logging
+Imports NAudio.CoreAudioApi
 Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
 
@@ -8,15 +10,17 @@ Public Class DummyPlayer
 
     Private Shared ReadOnly DeviceIdRegex As New Regex("(\{[A-Fa-f\d\-].{35,35}\})(?=$)")
 
+    Private ReadOnly PlayerMutex As New Object()
+
     Private WaveProvider As BufferedWaveProvider = Nothing
 
     Private MusicProvider As Accompaniment.IResetable = Nothing
 
     Private VolumeProvider As VolumeSampleProvider = Nothing
 
-    Private Direct As DirectSoundOut = Nothing
+    Private WithEvents Player As IWavePlayer = Nothing
 
-    Private StoredDevice As String = vbNullString
+    Private StoredDevice As MMDevice = Nothing
 
     '储存的音量(主要用于VolumeProvider未初始化时储存音量)
     Private StoredVolume As Single = 0.5
@@ -26,6 +30,9 @@ Public Class DummyPlayer
 
     '加载播放设备信号量
     Private ReadOnly Loading As New ManualResetEventSlim(True)
+
+    '加载完成标志
+    Private Loaded As Boolean = False
 
     '播放设备传感器
     Private WithEvents DeviceSensor As New DeviceChangeHandler()
@@ -106,17 +113,46 @@ Public Class DummyPlayer
         End If
     End Sub
 
+    Private Function BuildDirectPlayer(Device As MMDevice) As DirectSoundOut
+        If Device IsNot Nothing Then
+            Dim Id As String = Device.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID).Value
+            If Not String.IsNullOrEmpty(Id) Then
+                Try
+                    Return New DirectSoundOut(Guid.Parse(Id))
+                Catch ex As Exception
+                    Logger.Debug("创建指定的 DirectSound 设备时出错 - {0}", ex.Message)
+                End Try
+            End If
+        End If
+
+        Return New DirectSoundOut()
+    End Function
+
+    Private Function BuildWASPlayer(Device As MMDevice) As WasapiOut
+        With Settings.Settings.Audio
+            If Device IsNot Nothing Then
+                Return New WasapiOut(Device, AudioClientShareMode.Shared, .WasApiSyncEvent, .WasApiLatency)
+            Else
+                Return New WasapiOut(AudioClientShareMode.Shared, .WasApiSyncEvent, .WasApiLatency)
+            End If
+        End With
+    End Function
+
+    Private Function BuildPlayer(Device As MMDevice) As IWavePlayer
+        Return If(Settings.Settings.Audio.DummyUseWasApi, BuildWASPlayer(Device), BuildDirectPlayer(Device))
+    End Function
+
     ''' <summary>
     ''' 重载播放设备
     ''' </summary>
-    ''' <param name="DeviceId">指定设备ID</param>
+    ''' <param name="Device">指定设备ID</param>
     ''' <remarks>指定设备ID说明重装请求来自事件</remarks>
-    Private Sub ReloadDevice(DeviceId As String) Handles DeviceSensor.OnDeviceUpdate
+    Private Sub ReloadDevice(Device As MMDevice) Handles DeviceSensor.OnDeviceUpdate
         '检测访问来源
-        Dim Trigger As Boolean = Not String.IsNullOrEmpty(DeviceId)
+        Dim Trigger As Boolean = Device IsNot Nothing
 
         If Trigger Then
-            Logger.Debug("更新播放设备事件> {0}", DeviceId)
+            Logger.Debug("更新播放设备事件> {0}", Device.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID).Value)
 
             If VolumeProvider Is Nothing OrElse WaveProvider Is Nothing Then Return
 
@@ -127,80 +163,105 @@ Public Class DummyPlayer
             End With
         End If
 
-        If Direct IsNot Nothing Then
-            SyncLock Direct
+        If Player IsNot Nothing Then
+            SyncLock PlayerMutex
                 Try
-                    Direct.Stop()
-                    Direct.Dispose()
+                    Player.Stop()
+                    Player.Dispose()
                 Catch ex As Exception
                     Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
-                Direct = Nothing
+                Player = Nothing
             End SyncLock
         End If
 
-        If Trigger Then
-            StoredDevice = DeviceId
-            Direct = New DirectSoundOut(Guid.Parse(DeviceId))
+        Try
+            SyncLock PlayerMutex
+                If Trigger Then
+                    StoredDevice = Device
+                    Player = BuildPlayer(Device)
 
-            '如果是来自事件的更新 需要执行播放
-            Task.Run(Sub() Play(True))
-        Else
-            If String.IsNullOrEmpty(StoredDevice) Then
-                Direct = New DirectSoundOut()
-            Else
-                Direct = New DirectSoundOut(Guid.Parse(StoredDevice))
-            End If
-        End If
-        SyncLock Direct
-            Direct.Init(VolumeProvider)
-        End SyncLock
+                    '如果是来自事件的更新 需要执行播放
+                    Task.Run(Sub() Play(True))
+                Else
+                    Player = BuildPlayer(StoredDevice)
+                End If
 
-        '允许播放
-        Loading.Set()
+                Player.Init(VolumeProvider)
+            End SyncLock
+
+            Loaded = True
+            Loading.Set()
+        Catch ex As Exception
+            Logger.Error("重载托管音频设备出错 - {0}", ex.Message)
+
+            '彻底卸载音频设备
+            [Stop](True, False)
+        End Try
     End Sub
 
+    Private Sub Player_PlaybackStopped(sender As Object, e As StoppedEventArgs) Handles Player.PlaybackStopped
+        If e.Exception IsNot Nothing Then
+            Logger.Error("托管音频 NAudio 内部错误 - {0}", e.Exception.ToString)
+            Logger.Info("请优先尝试通过 Windows音量合成器 调整程序播放设备 使其与主播放设备一致 一般都能解决")
+            Logger.Warn("如无法解决 也可尝试通过配置文件开启WASAPI 但是这样做会造成额外的CPU负担")
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' 初始化设备
+    ''' </summary>
+    ''' <param name="WaveFormat">波形格式</param>
+    ''' <param name="Float">浮点格式</param>
     Public Sub Setup(WaveFormat As WaveFormat, Float As Boolean)
         '释放所有托管播放器
-        [Stop](False)
+        [Stop](False, True)
 
-        '缓冲区
-        WaveProvider = New BufferedWaveProvider(WaveFormat) With {
-            .BufferDuration = TimeSpan.FromSeconds(2),
-            .DiscardOnBufferOverflow = True
-        }
+        Try
+            '缓冲区
+            WaveProvider = New BufferedWaveProvider(WaveFormat) With {
+                .BufferDuration = TimeSpan.FromSeconds(2),
+                .DiscardOnBufferOverflow = True
+            }
 
-        '音频处理
-        Dim Commit As ISampleProvider
-        If Settings.Settings.Audio.AllowAccompaniment Then
-            If Float Then
-                Dim p = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
-                MusicProvider = p
-                Commit = p
+            '音频处理
+            Dim Commit As ISampleProvider
+            If Settings.Settings.Audio.AllowAccompaniment Then
+                If Float Then
+                    Dim p = New AccompanimentProviderFloat(Me, Settings, WaveProvider.ToSampleProvider(), WaveFormat)
+                    MusicProvider = p
+                    Commit = p
+                Else
+                    Dim p = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
+                    MusicProvider = p
+                    Commit = p.ToSampleProvider()
+                End If
             Else
-                Dim p = New AccompanimentProvider(Me, Settings, WaveProvider, WaveFormat)
-                MusicProvider = p
-                Commit = p.ToSampleProvider()
+                Commit = WaveProvider.ToSampleProvider()
             End If
-        Else
-            Commit = WaveProvider.ToSampleProvider()
-        End If
 
-        '音量调整
-        InternalVolume = StoredVolume
-        VolumeProvider = New VolumeSampleProvider(Commit)
-        UpdateRealVolume()
+            '音量调整
+            InternalVolume = StoredVolume
+            VolumeProvider = New VolumeSampleProvider(Commit)
+            UpdateRealVolume()
+        Catch ex As Exception
+            Logger.Error("配置托管音频设备出错 - {0}", ex.Message)
+
+            '彻底卸载音频设备
+            [Stop](True, False)
+            Return
+        End Try
 
         '配置输出
-        ReloadDevice(vbNullString)
+        ReloadDevice(Nothing)
     End Sub
 
     Public Sub Append(Wave As Byte(), pts As Long)
         Loading.Wait()
-        If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
+        If Not Loaded OrElse Player Is Nothing OrElse WaveProvider Is Nothing Then Return
 
-        SyncLock Direct
+        SyncLock PlayerMutex
             WaveProvider.AddSamples(Wave, 0, Wave.Length)
         End SyncLock
     End Sub
@@ -211,57 +272,59 @@ Public Class DummyPlayer
 
     Private Sub Play(Force As Boolean)
         Loading.Wait()
-        If Direct Is Nothing Then Return
+        If Not Loaded OrElse Player Is Nothing Then Return
 
-        SyncLock Direct
-            If Force OrElse Direct.PlaybackState <> PlaybackState.Playing Then Direct.Play()
+        SyncLock PlayerMutex
+            If Force OrElse Player.PlaybackState <> PlaybackState.Playing Then Player.Play()
         End SyncLock
     End Sub
 
     Public Sub Pause()
         Loading.Wait()
-        If Direct Is Nothing Then Return
+        If Not Loaded OrElse Player Is Nothing Then Return
 
-        SyncLock Direct
-            Direct.Pause()
+        SyncLock PlayerMutex
+            Player.Pause()
         End SyncLock
     End Sub
 
     Public Sub CleanBuffer()
         Loading.Wait()
-        If Direct Is Nothing OrElse WaveProvider Is Nothing Then Return
+        If Not Loaded OrElse Player Is Nothing OrElse WaveProvider Is Nothing Then Return
 
-        SyncLock Direct
+        SyncLock PlayerMutex
             WaveProvider.ClearBuffer()
             If MusicProvider IsNot Nothing Then MusicProvider.Reset()
         End SyncLock
     End Sub
 
     Public Sub [Stop]()
-        [Stop](True)
+        [Stop](True, True)
     End Sub
 
-    ''' <summary>
-    ''' 
-    ''' </summary>
-    ''' <param name="Free"></param>
-    Private Sub [Stop](Free As Boolean)
-        '访问Direct之前先上锁
-        With Loading
-            .Wait()
-            .Reset()
-        End With
+    Private Sub [Stop](Free As Boolean, Wait As Boolean)
+        '访问Direct之前先确保上锁
+        If Wait Then
+            With Loading
+                .Wait()
+                .Reset()
+            End With
+        End If
 
-        If Direct IsNot Nothing Then
-            SyncLock Direct
+        Loaded = False
+
+        If Player IsNot Nothing Then
+            SyncLock PlayerMutex
                 Try
-                    Direct.Stop()
-                    Direct.Dispose()
+                    With Player
+                        .Stop()
+                        .Dispose()
+                    End With
                 Catch ex As Exception
                     Logger.Debug("卸载音频设备时出错 - {0}", ex.Message)
                 End Try
 
-                Direct = Nothing
+                Player = Nothing
             End SyncLock
         End If
 

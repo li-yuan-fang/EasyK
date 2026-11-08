@@ -149,7 +149,6 @@ Namespace DLNA.Protocol
             With Protocol.DLNA
                 If .Player Is Nothing OrElse .Player.Buffered Then Return Nothing
 
-                'TODO: 测试可行性
                 Dim TransportState As String = GetState("TransportState")
                 If TransportState = "PAUSED_PLAYBACK" Then
                     With .K.Player

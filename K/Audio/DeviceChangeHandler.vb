@@ -20,8 +20,8 @@ Public Class DeviceChangeHandler
     ''' <summary>
     ''' 播放设备更新事件
     ''' </summary>
-    ''' <param name="DeviceId">设备ID</param>
-    Public Event OnDeviceUpdate(DeviceId As String)
+    ''' <param name="Device">设备对象</param>
+    Public Event OnDeviceUpdate(Device As MMDevice)
 
     Private Sub OnDeviceStateChanged(deviceId As String, newState As DeviceState) Implements IMMNotificationClient.OnDeviceStateChanged
     End Sub
@@ -46,9 +46,7 @@ Public Class DeviceChangeHandler
                 Dim Dev = Emu.GetDevice(Device)
                 If Dev Is Nothing Then Return
 
-                Dim Guid = Dev.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID)
-
-                Task.Run(Sub() RaiseEvent OnDeviceUpdate(Guid.Value))
+                Task.Run(Sub() RaiseEvent OnDeviceUpdate(Dev))
             End If
         End SyncLock
     End Sub
