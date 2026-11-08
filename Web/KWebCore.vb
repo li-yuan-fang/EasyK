@@ -477,4 +477,20 @@ Public Class KWebCore
         Return StateManager.WebHandler(ctx)
     End Function
 
+    <WebApi("/debug", HttpMethod.Post)>
+    Private Function Debug(ctx As HttpContext) As Task
+        If Not Settings.Settings.DebugMode Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status404NotFound)
+
+        Dim Request As String = WebStartup.GetRequestBody(ctx)
+
+        Dim Logs As RequestDebug = JsonUtils.SafeDeserializeObject(Of RequestDebug)(Request)
+        If Logs Is Nothing Then Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status400BadRequest)
+
+        For Each l In Logs.GetLogs()
+            Logger.Debug("[Web] {0}> {1}", l.Item1, l.Item2)
+        Next
+
+        Return WebStartup.RespondStatusOnly(ctx, StatusCodes.Status200OK)
+    End Function
+
 End Class
