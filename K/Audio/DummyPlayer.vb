@@ -1,6 +1,5 @@
 ﻿Imports System.Text.RegularExpressions
 Imports System.Threading
-Imports Microsoft.Extensions.Logging
 Imports NAudio.CoreAudioApi
 Imports NAudio.Wave
 Imports NAudio.Wave.SampleProviders
@@ -37,7 +36,11 @@ Public Class DummyPlayer
     '播放设备传感器
     Private WithEvents DeviceSensor As New DeviceChangeHandler()
 
+    Private WithEvents K As EasyK
+
     Private ReadOnly Settings As SettingContainer
+
+    Private ReadOnly Builder As WavePlayerBuilder
 
     ''' <summary>
     ''' 初始化托管音频播放器
@@ -45,8 +48,10 @@ Public Class DummyPlayer
     ''' <param name="K"></param>
     ''' <param name="Settings">配置容器</param>
     Public Sub New(K As EasyK, Settings As SettingContainer)
+        Me.K = K
         Me.Settings = Settings
-        AddHandler K.OnPlayerTerminated, AddressOf OnPlayerTerminated
+
+        Builder = New WavePlayerBuilder(Settings)
     End Sub
 
     ''' <summary>
@@ -57,7 +62,7 @@ Public Class DummyPlayer
     End Sub
 
     '自动关闭伴唱
-    Private Sub OnPlayerTerminated()
+    Private Sub OnPlayerTerminated() Handles K.OnPlayerTerminated
         If Settings.Settings.Audio.AutoResetAccompaniment Then Accompaniment = False
     End Sub
 
@@ -113,35 +118,6 @@ Public Class DummyPlayer
         End If
     End Sub
 
-    Private Function BuildDirectPlayer(Device As MMDevice) As DirectSoundOut
-        If Device IsNot Nothing Then
-            Dim Id As String = Device.Properties(PropertyKeys.PKEY_AudioEndpoint_GUID).Value
-            If Not String.IsNullOrEmpty(Id) Then
-                Try
-                    Return New DirectSoundOut(Guid.Parse(Id))
-                Catch ex As Exception
-                    Logger.Debug("创建指定的 DirectSound 设备时出错 - {0}", ex.Message)
-                End Try
-            End If
-        End If
-
-        Return New DirectSoundOut()
-    End Function
-
-    Private Function BuildWASPlayer(Device As MMDevice) As WasapiOut
-        With Settings.Settings.Audio
-            If Device IsNot Nothing Then
-                Return New WasapiOut(Device, AudioClientShareMode.Shared, .WasApiSyncEvent, .WasApiLatency)
-            Else
-                Return New WasapiOut(AudioClientShareMode.Shared, .WasApiSyncEvent, .WasApiLatency)
-            End If
-        End With
-    End Function
-
-    Private Function BuildPlayer(Device As MMDevice) As IWavePlayer
-        Return If(Settings.Settings.Audio.DummyUseWasApi, BuildWASPlayer(Device), BuildDirectPlayer(Device))
-    End Function
-
     ''' <summary>
     ''' 重载播放设备
     ''' </summary>
@@ -180,12 +156,12 @@ Public Class DummyPlayer
             SyncLock PlayerMutex
                 If Trigger Then
                     StoredDevice = Device
-                    Player = BuildPlayer(Device)
+                    Player = Builder.Build(Device)
 
                     '如果是来自事件的更新 需要执行播放
                     Task.Run(Sub() Play(True))
                 Else
-                    Player = BuildPlayer(StoredDevice)
+                    Player = Builder.Build(StoredDevice)
                 End If
 
                 Player.Init(VolumeProvider)

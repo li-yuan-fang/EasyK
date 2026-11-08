@@ -527,6 +527,7 @@
     <Compile Include="K\Audio\DummyPlayer.vb" />
     <Compile Include="K\Audio\VlcAudioHandler.vb" />
     <Compile Include="K\Audio\AccompanimentProviderFloat.vb" />
+    <Compile Include="K\Audio\WavePlayerBuilder.vb" />
     <Compile Include="K\Cef\CefSetting.vb" />
     <Compile Include="K\Cef\CefStorage.vb" />
     <Compile Include="K\DLNA\DLNAServer.vb" />

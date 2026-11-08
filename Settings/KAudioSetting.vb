@@ -67,12 +67,11 @@ Public Class KAudioSetting
     Public Property AccompanimentVolumeGain As Single = 0.05F
 
     ''' <summary>
-    ''' 是否使用WASAPI
+    ''' 托管播放器API
     ''' </summary>
-    ''' <remarks>默认采用DirectsoundOut以获得更好的性能表现 但是切换音频设备时小概率可能会触发Bug 所以保留WASAPI备用</remarks>
     ''' <returns></returns>
-    <JsonProperty("dummy_use_wasapi")>
-    Public Property DummyUseWasApi As Boolean = False
+    <JsonProperty("dummy_api")>
+    Public Property DummyApiMode As WavePlayerBuilder.PlayerType = WavePlayerBuilder.PlayerType.WaveOut
 
     ''' <summary>
     ''' WASAPI模式下是否开启同步处理事件

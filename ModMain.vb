@@ -2,7 +2,6 @@
 Imports System.Threading
 Imports System.Windows.Forms
 Imports EasyK.ConsoleUtils
-Imports NAudio.Wave
 
 Module ModMain
 
