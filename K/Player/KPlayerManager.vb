@@ -3,7 +3,8 @@
     ''' <summary>
     ''' 播放状态更新事件
     ''' </summary>
-    Event OnPlayingUpdate()
+    ''' <param name="ForcePlay">强制切换状态为播放</param>
+    Event OnPlayingUpdate(ForcePlay As Boolean)
 
     ''' <summary>
     ''' 播放器解析完成事件

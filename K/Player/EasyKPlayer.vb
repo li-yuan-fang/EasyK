@@ -17,7 +17,8 @@ Public Class EasyKPlayer
     ''' <summary>
     ''' 播放状态更新事件
     ''' </summary>
-    Public Event OnPlayingUpdate() Implements KPlayerManager.OnPlayingUpdate
+    ''' <param name="ForcePlay">强制切换状态为播放</param>
+    Public Event OnPlayingUpdate(ForcePlay As Boolean) Implements KPlayerManager.OnPlayingUpdate
 
     ''' <summary>
     ''' 播放器解析完成事件
@@ -109,7 +110,7 @@ Public Class EasyKPlayer
                 .Rate = value
             End With
 
-            Task.Run(Sub() RaiseEvent OnPlayingUpdate())
+            Task.Run(Sub() RaiseEvent OnPlayingUpdate(False))
         End Set
     End Property
 
@@ -134,7 +135,7 @@ Public Class EasyKPlayer
                 .Position = value
             End With
 
-            Task.Run(Sub() RaiseEvent OnPlayingUpdate())
+            Task.Run(Sub() RaiseEvent OnPlayingUpdate(False))
         End Set
     End Property
 
@@ -204,6 +205,8 @@ Public Class EasyKPlayer
             If .IsDisposed OrElse Not .Setuped Then Return
             .Play()
         End With
+
+        Task.Run(Sub() RaiseEvent OnPlayingUpdate(True))
     End Sub
 
     ''' <summary>

@@ -458,8 +458,10 @@ Public Class FrmPlayer
                              Browser_Loaded.Wait()
                              BeginInvoke(Sub() Browser.EvaluateScriptAsync("(() => {{ let video = document.querySelector('#bilibili-player .bpx-player-video-wrap video'); if (!video) return; video.play(); }})();"))
                          End Sub)
-            Case EasyKType.Video, EasyKType.DLNA
+            Case EasyKType.Video
                 VLCPlayer.MediaPlayer.Play()
+            Case EasyKType.DLNA
+                DPlayer.Play()
         End Select
     End Sub
 

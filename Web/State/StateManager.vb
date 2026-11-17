@@ -131,7 +131,8 @@ Namespace KWeb.State
             Commit(New PlayerPushEvent(K, True))
         End Sub
 
-        Private Sub OnPlayerUpdate() Handles PlayerManager.OnPlayingUpdate
+        Private Sub OnPlayerUpdate(ForcePlay As Boolean) Handles PlayerManager.OnPlayingUpdate
+            If ForcePlay Then _State = PlayState.Playing
             Commit(New PlayerPlayingEvent(Me, K))
         End Sub
 
